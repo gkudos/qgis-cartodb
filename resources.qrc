@@ -1,0 +1,5 @@
+<RCC>
+  <qresource prefix="/plugins/qgis-cartodb/" >
+    <file>images/icon.png</file>
+  </qresource>
+</RCC>

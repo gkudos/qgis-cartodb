@@ -1,0 +1,19 @@
+[general]
+name=CartoDB Plugin
+description=CartoDB tables plugin.
+category=Web
+version=0.1.0
+qgisMinimumVersion=2.3
+icon=images/icon.png
+author=Kudos Ltda. and contributors
+email=michaelsalgado@gkudos.com
+changelog=0.1.0
+  - Init repo.
+  - Init functions.
+; tags are in comma separated value format, spaces are allowed
+tags=cartodb,OSM,tiles,kudos
+homepage=https://github.com/gkudos/qgis-cartodb
+tracker=https://github.com/gkudos/qgis-cartodb/issues
+repository=https://github.com/gkudos/qgis-cartodb
+experimental=False
+deprecated=False
