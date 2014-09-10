@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'UI_CartoDBPlugin.ui'
 #
-# Created: Tue Sep  9 18:02:22 2014
+# Created: Wed Sep 10 15:05:51 2014
 #      by: PyQt4 UI code generator 4.10.4
 #
 # WARNING! All changes made in this file will be lost!
@@ -63,9 +63,11 @@ class Ui_CartoDBPlugin(object):
         self.deleteConnectionBT.setObjectName(_fromUtf8("deleteConnectionBT"))
         self.horizontalLayout.addWidget(self.deleteConnectionBT)
         self.verticalLayout.addLayout(self.horizontalLayout)
-        self.cartoDBTablesTB = QtGui.QTableView(CartoDBPlugin)
-        self.cartoDBTablesTB.setObjectName(_fromUtf8("cartoDBTablesTB"))
-        self.verticalLayout.addWidget(self.cartoDBTablesTB)
+        self.tablesList = QtGui.QListWidget(CartoDBPlugin)
+        self.tablesList.setAlternatingRowColors(True)
+        self.tablesList.setSelectionMode(QtGui.QAbstractItemView.MultiSelection)
+        self.tablesList.setObjectName(_fromUtf8("tablesList"))
+        self.verticalLayout.addWidget(self.tablesList)
         self.buttonBox = QtGui.QDialogButtonBox(CartoDBPlugin)
         self.buttonBox.setOrientation(QtCore.Qt.Horizontal)
         self.buttonBox.setStandardButtons(QtGui.QDialogButtonBox.Cancel|QtGui.QDialogButtonBox.Ok)

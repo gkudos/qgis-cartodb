@@ -90,7 +90,14 @@
     </layout>
    </item>
    <item>
-    <widget class="QTableView" name="cartoDBTablesTB"/>
+    <widget class="QListWidget" name="tablesList">
+     <property name="alternatingRowColors">
+      <bool>true</bool>
+     </property>
+     <property name="selectionMode">
+      <enum>QAbstractItemView::MultiSelection</enum>
+     </property>
+    </widget>
    </item>
    <item>
     <widget class="QDialogButtonBox" name="buttonBox">

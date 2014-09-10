@@ -20,10 +20,20 @@ email                : michaelsalgado@gkudos.com, info@gkudos.com
 """
 from PyQt4 import QtCore, QtGui
 from UI_CartoDBPlugin import Ui_CartoDBPlugin
-# create the dialog for CartoDBPlugin
+
+
+# Create the dialog for CartoDBPlugin
 class CartoDBPluginDialog(QtGui.QDialog):
-  def __init__(self):
-    QtGui.QDialog.__init__(self)
-    # Set up the user interface from Designer.
-    self.ui = Ui_CartoDBPlugin ()
-    self.ui.setupUi(self)
+    def __init__(self):
+        QtGui.QDialog.__init__(self)
+        # Set up the user interface from Designer.
+        self.ui = Ui_CartoDBPlugin()
+        self.ui.setupUi(self)
+
+    def setTablesListItems(self, tables):
+        self.ui.tablesList.clear()
+        self.ui.tablesList.addItems(tables)
+        return True
+
+    def getTablesListSelectedItems(self):
+        return self.ui.tablesList.selectedItems()
