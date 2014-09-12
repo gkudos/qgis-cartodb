@@ -23,8 +23,9 @@ from PyQt4.QtGui import QDialog, QMessageBox
 
 from qgis.core import QgsMessageLog
 
-from QgisCartoDB.ui.UI_CartoDBPlugin import Ui_CartoDBPlugin
+from QgisCartoDB.cartodb import CartoDBAPIKey, CartoDBException
 from QgisCartoDB.dialogs.NewConnection import CartoDBNewConnectionDialog
+from QgisCartoDB.ui.UI_CartoDBPlugin import Ui_CartoDBPlugin
 
 
 # Create the dialog for CartoDBPlugin
@@ -38,6 +39,11 @@ class CartoDBPluginDialog(QDialog):
         self.populateConnectionList()
         self.ui.newConnectionBT.clicked.connect(self.openNewConnectionDialog)
         self.ui.editConnectionBT.clicked.connect(self.editConnectionDialog)
+        self.ui.deleteConnectionBT.clicked.connect(self.deleteConnectionDialog)
+        self.ui.connectBT.clicked.connect(self.findTables)
+
+        self.currentUser = None
+        self.currentApiKey = None
 
     def setTablesListItems(self, tables):
         self.ui.tablesList.clear()
@@ -52,55 +58,76 @@ class CartoDBPluginDialog(QDialog):
         self.ui.connectionList.clear()
         self.ui.connectionList.addItems(self.settings.childGroups())
         self.settings.endGroup()
-
         self.setConnectionListPosition()
 
-        if self.ui.connectionList.count() == 0:
-            self.ui.connectBT.setEnabled(False)
-            self.ui.deleteConnectionBT.setEnabled(False)
-            self.ui.editConnectionBT.setEnabled(False)
-
     def openNewConnectionDialog(self):
+        # Open new connection dialog.
         dlg = CartoDBNewConnectionDialog()
         dlg.setWindowTitle(self.tr('Add CartoDB Connection'))
-
         dlg.show()
-        result = dlg.exec_()
 
+        result = dlg.exec_()
         # See if OK was pressed
         if result == QDialog.Accepted:  # add to service list
             QgsMessageLog.logMessage('New connection saved', 'CartoDB Plugin', QgsMessageLog.INFO)
             self.populateConnectionList()
 
     def editConnectionDialog(self):
-        """modify existing connection"""
+        # Modify existing connection.
+        currentText = self.ui.connectionList.currentText()
+        apiKey = self.settings.value('/CartoDBPlugin/%s/api' % currentText)
 
-        current_text = self.ui.connectionList.currentText()
-        api_key = self.settings.value('/CartoDBPlugin/%s/api' % current_text)
-
-        conn_edit = CartoDBNewConnectionDialog(current_text)
-        conn_edit.setWindowTitle(self.tr('Edit CartoDB Connection'))
-        conn_edit.ui.userTX.setText(current_text)
-        conn_edit.ui.apiKeyTX.setText(api_key)
-        if conn_edit.exec_() == QDialog.Accepted:  # update service list
+        conEdit = CartoDBNewConnectionDialog(currentText)
+        conEdit.setWindowTitle(self.tr('Edit CartoDB Connection'))
+        conEdit.ui.userTX.setText(currentText)
+        conEdit.ui.apiKeyTX.setText(apiKey)
+        if conEdit.exec_() == QDialog.Accepted:
+            # Update connection list
             self.populateConnectionList()
 
+    def deleteConnectionDialog(self):
+        # Delete connection.
+        currentText = self.ui.connectionList.currentText()
+        key = '/CartoDBPlugin/%s' % currentText
+        msg = self.tr('Remove connection %s?' % currentText)
+
+        result = QMessageBox.information(self, self.tr('Confirm delete'), msg, QMessageBox.Ok | QMessageBox.Cancel)
+        if result == QMessageBox.Ok:
+            # Remove connection from list
+            self.settings.remove(key)
+            indexToDelete = self.ui.connectionList.currentIndex()
+            self.ui.connectionList.removeItem(indexToDelete)
+            self.setConnectionListPosition()
+
+    def findTables(self):
+        # Get tables from CartoDB.
+        self.currentUser = self.ui.connectionList.currentText()
+        self.currentApiKey = self.settings.value('/CartoDBPlugin/%s/api' % self.currentUser)
+
+        cl = CartoDBAPIKey(self.currentApiKey, self.currentUser)
+
+        try:
+            res = cl.sql("SELECT * FROM pg_catalog.pg_tables WHERE tableowner != 'postgres' ORDER BY tablename")
+            tables = []
+            for table in res['rows']:
+                tables.append(table['tablename'])
+            QgsMessageLog.logMessage('This account has ' + str(len(tables)) + ' tables', 'CartoDB Plugin', QgsMessageLog.INFO)
+            self.setTablesListItems(tables)
+        except CartoDBException as e:
+            QgsMessageLog.logMessage('Some error ocurred getting tables', 'CartoDB Plugin', QgsMessageLog.CRITICAL)
+            QMessageBox.information(self, self.tr('Error'), self.tr('Error getting tables'), QMessageBox.Ok)
+            self.ui.tablesList.clear()
+
     def setConnectionListPosition(self):
-        """set the current index to the selected connection"""
-        to_select = self.settings.value('/CartoDBPlugin/selected')
-        conn_count = self.ui.connectionList.count()
+        # Set the current index to the selected connection.
+        toSelect = self.settings.value('/CartoDBPlugin/selected')
+        conCount = self.ui.connectionList.count()
 
-        """
-        if conn_count == 0:
-            self.btnDelete.setEnabled(False)
-            self.btnServerInfo.setEnabled(False)
-            self.btnEdit.setEnabled(False)
-        """
+        self.setConnectionsFound(conCount > 0)
 
-        # does to_select exist in cmbConnectionsServices?
         exists = False
-        for i in range(conn_count):
-            if self.ui.connectionList.itemText(i) == to_select:
+        for i in range(conCount):
+            if self.ui.connectionList.itemText(i) == toSelect:
                 self.ui.connectionList.setCurrentIndex(i)
                 exists = True
                 break
@@ -109,14 +136,19 @@ class CartoDBPluginDialog(QDialog):
         # to the last item (this makes some sense when deleting items as it
         # allows the user to repeatidly click on delete to remove a whole
         # lot of items)
-        if not exists and conn_count > 0:
-            # If to_select is null, then the selected connection wasn't found
+        if not exists and conCount > 0:
+            # If toSelect is null, then the selected connection wasn't found
             # by QSettings, which probably means that this is the first time
-            # the user has used CSWClient, so default to the first in the list
+            # the user has used CartoDBPlugin, so default to the first in the list
             # of connetions. Otherwise default to the last.
-            if not to_select:
-                current_index = 0
+            if not toSelect:
+                currentIndex = 0
             else:
-                current_index = conn_count - 1
+                currentIndex = conCount - 1
 
-            self.ui.connectionList.setCurrentIndex(current_index)
+            self.ui.connectionList.setCurrentIndex(currentIndex)
+
+    def setConnectionsFound(self, found):
+        self.ui.connectBT.setEnabled(found)
+        self.ui.deleteConnectionBT.setEnabled(found)
+        self.ui.editConnectionBT.setEnabled(found)

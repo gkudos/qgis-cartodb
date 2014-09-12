@@ -86,4 +86,3 @@ class Ui_CartoDBPlugin(object):
         self.newConnectionBT.setText(_translate("CartoDBPlugin", "New", None))
         self.editConnectionBT.setText(_translate("CartoDBPlugin", "Edit", None))
         self.deleteConnectionBT.setText(_translate("CartoDBPlugin", "Delete", None))
-

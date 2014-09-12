@@ -83,29 +83,13 @@ class CartoDBPlugin:
         # self.datasource.Destroy()
 
     def run(self):
-        # create and show the dialog
+        # Create and show the dialog
         dlg = CartoDBPluginDialog()
-
-        apiKey = 'XXXXXXXX'
-        cartoDBDomain = 'XXXXXXXXXXX'
-        cl = CartoDBAPIKey(apiKey, cartoDBDomain)
-
-        try:
-            res = cl.sql("SELECT * FROM pg_catalog.pg_tables WHERE tableowner != 'postgres' ORDER BY tablename")
-            tables = []
-            for table in res['rows']:
-                tables.append(table['tablename'])
-            QgsMessageLog.logMessage('This account has ' + str(len(tables)) + ' tables', 'CartoDB Plugin', QgsMessageLog.INFO)
-            dlg.setTablesListItems(tables)
-        except CartoDBException as e:
-            QgsMessageLog.logMessage('Some error ocurred', 'CartoDB Plugin', QgsMessageLog.CRITICAL)
-
-        # show the dialog
         dlg.show()
-        result = dlg.exec_()
 
+        result = dlg.exec_()
         # See if OK was pressed
-        if result == 1:
+        if result == 1 and dlg.currentUser is not None and dlg.currentApiKey is not None:
             selectedItems = dlg.getTablesListSelectedItems()
             countLayers = len(selectedItems)
             if countLayers > 0:
@@ -116,7 +100,8 @@ class CartoDBPlugin:
                 progressMessageBar.layout().addWidget(progress)
                 self.iface.messageBar().pushWidget(progressMessageBar, self.iface.messageBar().INFO)
                 for i, table in enumerate(selectedItems):
-                    layer = CartoDBPluginLayer(table.text(), cartoDBDomain, apiKey)
+                    layer = CartoDBPluginLayer(table.text(), dlg.currentUser, dlg.currentApiKey)
+
                     if layer.readOnly:
                         self.iface.messageBar().pushMessage("Warning", 'Layer ' + layer.layerName + ' is loaded in readonly mode',
                                                             level=self.iface.messageBar().WARNING, duration=5)

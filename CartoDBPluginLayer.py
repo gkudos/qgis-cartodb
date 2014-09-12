@@ -55,6 +55,10 @@ class CartoDBPluginLayer(QgsVectorLayer):
         if dsGeoJSON is not None:
             jsonLayer = dsGeoJSON.GetLayerByName('OGRGeoJSON')
             if jsonLayer is not None:
+                i = 1
+                while datasource.GetLayerByName(str(layerName)) is not None:
+                    layerName = layerName + str(i)
+                    i = i + 1
                 newLyr = datasource.CopyLayer(jsonLayer, str(layerName), options=['FORMAT=SPATIALITE'])
                 datasource.Destroy()
 
@@ -82,3 +86,12 @@ class CartoDBPluginLayer(QgsVectorLayer):
         self.layerType = layerType
         self.readOnly = readOnly
         self.layerName = layerName
+        self.cartoTable = tableName
+        self.user = cartoName
+        self._apiKey = apiKey
+
+        self.editingStarted.connect(self.testConnect)
+
+    @pyqtSlot()
+    def testConnect(self):
+        QgsMessageLog.logMessage('Event fired', 'CartoDB Plugin', QgsMessageLog.INFO)
