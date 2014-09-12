@@ -23,33 +23,42 @@ email                : michaelsalgado@gkudos.com, info@gkudos.com
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 from qgis.core import *
+from osgeo import gdal
+from osgeo import ogr
 import resources
 
 from cartodb import CartoDBAPIKey, CartoDBException
-from CartoDBPluginDialog import CartoDBPluginDialog
+from QgisCartoDB.dialogs.Main import CartoDBPluginDialog
+from CartoDBPluginLayer import CartoDBPluginLayer
 
 import os.path
+import shutil
 
 from urllib import urlopen
-
-
-def openPublicReadonly(cartoName, tableName, apiKey):
-    sql = 'SELECT * FROM ' + tableName
-    cartoUrl = 'http://{}.cartodb.com/api/v2/sql?format=GeoJSON&q={}&api_key={}'.format(cartoName, sql, apiKey)
-    response = urlopen(cartoUrl)
-    content = response.read()
-    layer = QgsVectorLayer(content, tableName, 'ogr')
-    QgsMapLayerRegistry.instance().addMapLayer(layer)
-    QgsVectorFileWriter.writeAsVectorFormat(layer, layer.name() + ".sqlite", "utf-8", layer.crs(), "SpatiaLite", False, None, ["SPATIALITE=YES"])
 
 
 class CartoDBPlugin:
 
     def __init__(self, iface):
+        QgsMessageLog.logMessage('GDAL Version: ' + str(gdal.VersionInfo('VERSION_NUM')), 'CartoDB Plugin', QgsMessageLog.INFO)
+
         # Save reference to the QGIS interface
         self.iface = iface
         # initialize plugin directory
         self.plugin_dir = os.path.dirname(os.path.abspath(__file__))
+
+        # SQLite available?
+        driverName = "SQLite"
+        self.sqLiteDrv = ogr.GetDriverByName(driverName)
+        if self.sqLiteDrv is None:
+            QgsMessageLog.logMessage('SQLite driver not found', 'CartoDB Plugin', QgsMessageLog.CRITICAL)
+        else:
+            QgsMessageLog.logMessage('SQLite driver is found', 'CartoDB Plugin', QgsMessageLog.INFO)
+            # orDS = self.sqLiteDrv.Open(self.plugin_dir + '/db/init_database.sqlite')
+            # options=['SPATIALITE=YES']
+            self.databasePath = self.plugin_dir + '/db/database.sqlite'
+            shutil.copyfile(self.plugin_dir + '/db/init_database.sqlite', self.databasePath)
+            # self.datasource = self.sqLiteDrv.Open(self.plugin_dir + '/db/database.sqlite', True)
 
     def initGui(self):
         self._cdbMenu = QMenu("CartoDB plugin", self.iface.mainWindow())
@@ -71,15 +80,14 @@ class CartoDBPlugin:
     def unload(self):
         self.iface.removeToolBarIcon(self._mainAction)
         self.iface.webMenu().removeAction(self._cdbMenu.menuAction())
+        # self.datasource.Destroy()
 
     def run(self):
         # create and show the dialog
         dlg = CartoDBPluginDialog()
 
-        QgsMessageLog.logMessage('Drivers: ' + str(QgsVectorFileWriter.ogrDriverList()), 'CartoDB Plugin', QgsMessageLog.INFO)
-
-        apiKey = 'XXXXXXXXXXXXXXX'
-        cartoDBDomain = 'XXXXXXXXXXXXXXXXX'
+        apiKey = 'XXXXXXXX'
+        cartoDBDomain = 'XXXXXXXXXXX'
         cl = CartoDBAPIKey(apiKey, cartoDBDomain)
 
         try:
@@ -87,10 +95,10 @@ class CartoDBPlugin:
             tables = []
             for table in res['rows']:
                 tables.append(table['tablename'])
-            QgsMessageLog.logMessage('Cantidad de tablas encontras: ' + str(len(tables)), 'CartoDB Plugin', QgsMessageLog.INFO)
+            QgsMessageLog.logMessage('This account has ' + str(len(tables)) + ' tables', 'CartoDB Plugin', QgsMessageLog.INFO)
             dlg.setTablesListItems(tables)
         except CartoDBException as e:
-            QgsMessageLog.logMessage('Some error ocurred', 'CartoDB Plugin', QgsMessageLog.ERROR)
+            QgsMessageLog.logMessage('Some error ocurred', 'CartoDB Plugin', QgsMessageLog.CRITICAL)
 
         # show the dialog
         dlg.show()
@@ -99,7 +107,22 @@ class CartoDBPlugin:
         # See if OK was pressed
         if result == 1:
             selectedItems = dlg.getTablesListSelectedItems()
-            QgsMessageLog.logMessage('Tablas seleccionadas: ' + str(selectedItems), 'CartoDB Plugin', QgsMessageLog.INFO)
-            if len(selectedItems) > 0:
-                for table in selectedItems:
-                    openPublicReadonly(cartoDBDomain, table.text(), apiKey)
+            countLayers = len(selectedItems)
+            if countLayers > 0:
+                progressMessageBar = self.iface.messageBar().createMessage("Loading layers...")
+                progress = QProgressBar()
+                progress.setMaximum(countLayers)
+                progress.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+                progressMessageBar.layout().addWidget(progress)
+                self.iface.messageBar().pushWidget(progressMessageBar, self.iface.messageBar().INFO)
+                for i, table in enumerate(selectedItems):
+                    layer = CartoDBPluginLayer(table.text(), cartoDBDomain, apiKey)
+                    if layer.readOnly:
+                        self.iface.messageBar().pushMessage("Warning", 'Layer ' + layer.layerName + ' is loaded in readonly mode',
+                                                            level=self.iface.messageBar().WARNING, duration=5)
+                    QgsMapLayerRegistry.instance().addMapLayer(layer)
+                    percent = i / float(countLayers) * 100
+                    self.iface.mainWindow().statusBar().showMessage("Processed {} %".format(int(percent)))
+                    progress.setValue(i + 1)
+                self.iface.mainWindow().statusBar().clearMessage()
+                self.iface.messageBar().popWidget(progressMessageBar)

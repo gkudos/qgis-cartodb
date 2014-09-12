@@ -1,5 +1,5 @@
 # Makefile for CartoDB Plugin plugin
-UI_FILES = UI_CartoDBPlugin.py
+UI_FILES = ui/UI_CartoDBPlugin.py ui/NewConnection.py
 
 RESOURCE_FILES = resources.py
 
@@ -14,8 +14,8 @@ compile: $(UI_FILES) $(RESOURCE_FILES)
 	pyuic4 -o $@ $<
 
 install:
-	mkdir /home/$(USER)/.qgis2/python/plugins/qgis-cartodb/
-	cp -r ./* /home/$(USER)/.qgis2/python/plugins/qgis-cartodb/
+	mkdir /home/$(USER)/.qgis2/python/plugins/QgisCartoDB/
+	cp -r ./* /home/$(USER)/.qgis2/python/plugins/QgisCartoDB/
 
 clean:
-	rm -R /home/$(USER)/.qgis2/python/plugins/qgis-cartodb/
+	rm -R /home/$(USER)/.qgis2/python/plugins/QgisCartoDB/

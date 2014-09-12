@@ -20,7 +20,7 @@ email                : michaelsalgado@gkudos.com, info@gkudos.com
  This script initializes the plugin, making it known to QGIS.
 """
 
-from CartoDBPlugin import CartoDBPlugin
+from QgisCartoDB.CartoDBPlugin import CartoDBPlugin
 
 
 def classFactory(iface):
