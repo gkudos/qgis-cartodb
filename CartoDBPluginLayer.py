@@ -34,7 +34,7 @@ from urllib import urlopen
 class CartoDBPluginLayer(QgsVectorLayer):
     LAYER_TYPE = "cartodb"
 
-    def __init__(self, tableName, cartoName, apiKey):
+    def __init__(self, iface, tableName, cartoName, apiKey):
         # initialize plugin directory
         plugin_dir = os.path.dirname(os.path.abspath(__file__))
 
@@ -81,7 +81,7 @@ class CartoDBPluginLayer(QgsVectorLayer):
         if readOnly:
             QgsMessageLog.logMessage('CartoDB Layer is readonly mode', 'CartoDB Plugin', QgsMessageLog.WARNING)
 
-        QgsVectorLayer.__init__(self, path, layerName, layerType)
+        super(QgsVectorLayer, self).__init__(path, layerName, layerType)
         self.databasePath = databasePath
         self.layerType = layerType
         self.readOnly = readOnly
@@ -89,9 +89,31 @@ class CartoDBPluginLayer(QgsVectorLayer):
         self.cartoTable = tableName
         self.user = cartoName
         self._apiKey = apiKey
+        self.iface = iface
 
-        self.editingStarted.connect(self.testConnect)
+        self.initConnections()
 
-    @pyqtSlot()
-    def testConnect(self):
-        QgsMessageLog.logMessage('Event fired', 'CartoDB Plugin', QgsMessageLog.INFO)
+    def initConnections(self):
+        QgsMessageLog.logMessage('Init connections for: ' + self.layerName, 'CartoDB Plugin', QgsMessageLog.INFO)
+        self.editingStarted.connect(self._editingStarted)
+        self.attributeAdded[int].connect(self._attributeAdded)
+        self.beforeCommitChanges.connect(self._beforeCommitChanges)
+
+    def _editingStarted(self):
+        QgsMessageLog.logMessage('Editing started', 'CartoDB Plugin', QgsMessageLog.INFO)
+
+    def _attributeAdded(self, idx):
+        QgsMessageLog.logMessage('Attribute added at ' + str(idx) + ' index', 'CartoDB Plugin', QgsMessageLog.INFO)
+        fields = self.pendingFields()
+        field = fields.field(idx)
+        if field is not None:
+            QgsMessageLog.logMessage('Field is: ' + field.name(), 'CartoDB Plugin', QgsMessageLog.INFO)
+            self.deleteAttribute(idx)
+
+    def _beforeCommitChanges(self):
+        QgsMessageLog.logMessage('Before commit', 'CartoDB Plugin', QgsMessageLog.INFO)
+        editBuffer = self.editBuffer()
+        changedAttributeValues = editBuffer.changedAttributeValues()
+        for fieldID, v in changedAttributeValues.iteritems():
+            QgsMessageLog.logMessage('Field ID: ' + str(fieldID), 'CartoDB Plugin', QgsMessageLog.INFO)
+            QgsMessageLog.logMessage('Val: ' + str(v), 'CartoDB Plugin', QgsMessageLog.INFO)

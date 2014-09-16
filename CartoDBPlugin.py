@@ -37,9 +37,10 @@ import shutil
 from urllib import urlopen
 
 
-class CartoDBPlugin:
+class CartoDBPlugin(QObject):
 
     def __init__(self, iface):
+        super(QObject, self).__init__()
         QgsMessageLog.logMessage('GDAL Version: ' + str(gdal.VersionInfo('VERSION_NUM')), 'CartoDB Plugin', QgsMessageLog.INFO)
 
         # Save reference to the QGIS interface
@@ -59,6 +60,7 @@ class CartoDBPlugin:
             self.databasePath = self.plugin_dir + '/db/database.sqlite'
             shutil.copyfile(self.plugin_dir + '/db/init_database.sqlite', self.databasePath)
             # self.datasource = self.sqLiteDrv.Open(self.plugin_dir + '/db/database.sqlite', True)
+        self.layers = []
 
     def initGui(self):
         self._cdbMenu = QMenu("CartoDB plugin", self.iface.mainWindow())
@@ -100,12 +102,13 @@ class CartoDBPlugin:
                 progressMessageBar.layout().addWidget(progress)
                 self.iface.messageBar().pushWidget(progressMessageBar, self.iface.messageBar().INFO)
                 for i, table in enumerate(selectedItems):
-                    layer = CartoDBPluginLayer(table.text(), dlg.currentUser, dlg.currentApiKey)
+                    layer = CartoDBPluginLayer(self.iface, table.text(), dlg.currentUser, dlg.currentApiKey)
 
                     if layer.readOnly:
                         self.iface.messageBar().pushMessage("Warning", 'Layer ' + layer.layerName + ' is loaded in readonly mode',
                                                             level=self.iface.messageBar().WARNING, duration=5)
                     QgsMapLayerRegistry.instance().addMapLayer(layer)
+                    self.layers.append(layer)
                     percent = i / float(countLayers) * 100
                     self.iface.mainWindow().statusBar().showMessage("Processed {} %".format(int(percent)))
                     progress.setValue(i + 1)
