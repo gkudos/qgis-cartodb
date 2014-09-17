@@ -30,6 +30,8 @@ import os.path
 
 from urllib import urlopen
 
+from QgisCartoDB.cartodb import CartoDBAPIKey, CartoDBException
+
 
 class CartoDBPluginLayer(QgsVectorLayer):
     LAYER_TYPE = "cartodb"
@@ -91,16 +93,24 @@ class CartoDBPluginLayer(QgsVectorLayer):
         self._apiKey = apiKey
         self.iface = iface
 
-        self.initConnections()
+        if not self.readOnly:
+            self.initConnections()
+            self._uneditableFields()
 
     def initConnections(self):
         QgsMessageLog.logMessage('Init connections for: ' + self.layerName, 'CartoDB Plugin', QgsMessageLog.INFO)
         self.editingStarted.connect(self._editingStarted)
         self.attributeAdded[int].connect(self._attributeAdded)
+        self.featureDeleted.connect(self._featureDeleted)
         self.beforeCommitChanges.connect(self._beforeCommitChanges)
+
+    def _uneditableFields(self):
+        fieldMap = self.dataProvider().fieldNameMap()
+        self.setFieldEditable(fieldMap['cartodb_id'], False)
 
     def _editingStarted(self):
         QgsMessageLog.logMessage('Editing started', 'CartoDB Plugin', QgsMessageLog.INFO)
+        self._uneditableFields()
 
     def _attributeAdded(self, idx):
         QgsMessageLog.logMessage('Attribute added at ' + str(idx) + ' index', 'CartoDB Plugin', QgsMessageLog.INFO)
@@ -110,10 +120,82 @@ class CartoDBPluginLayer(QgsVectorLayer):
             QgsMessageLog.logMessage('Field is: ' + field.name(), 'CartoDB Plugin', QgsMessageLog.INFO)
             self.deleteAttribute(idx)
 
+    def _featureDeleted(self, featureID):
+        request = QgsFeatureRequest().setFilterFid(featureID)
+        try:
+            feature = self.getFeatures(request).next()
+        except StopIteration:
+            QgsMessageLog.logMessage('Can\'t get feature with fid: ' + str(featureID), 'CartoDB Plugin', QgsMessageLog.WARNING)
+
     def _beforeCommitChanges(self):
         QgsMessageLog.logMessage('Before commit', 'CartoDB Plugin', QgsMessageLog.INFO)
+        self._uneditableFields()
         editBuffer = self.editBuffer()
         changedAttributeValues = editBuffer.changedAttributeValues()
-        for fieldID, v in changedAttributeValues.iteritems():
-            QgsMessageLog.logMessage('Field ID: ' + str(fieldID), 'CartoDB Plugin', QgsMessageLog.INFO)
-            QgsMessageLog.logMessage('Val: ' + str(v), 'CartoDB Plugin', QgsMessageLog.INFO)
+        provider = self.dataProvider()
+        for featureID, v in changedAttributeValues.iteritems():
+            QgsMessageLog.logMessage('Update attributes for feature ID: ' + str(featureID), 'CartoDB Plugin', QgsMessageLog.INFO)
+            sql = "UPDATE " + self.cartoTable + " SET "
+            request = QgsFeatureRequest().setFilterFid(featureID)
+            try:
+                feature = self.getFeatures(request).next()
+                addComma = False
+                for fieldID, val in v.iteritems():
+                    if(addComma):
+                        sql = sql + ", "
+
+                    fieldValue = unicode(val)
+                    if fieldValue != 'NULL':
+                        fieldValue = "'" + fieldValue + "'"
+
+                    fName = provider.fields().field(fieldID).name()
+                    if fName != 'cartodb_id':
+                        sql = sql + fName + " = " + fieldValue
+                        addComma = True
+                    else:
+                        # TODO Rollback changes.
+                        pass
+
+                sql = sql + " WHERE cartodb_id = " + unicode(feature['cartodb_id'])
+                sql = sql.encode('utf-8')
+
+                self._updateSQL(sql, 'Some error ocurred getting tables')
+            except StopIteration:
+                QgsMessageLog.logMessage('Can\'t get feature with fid: ' + str(featureID), 'CartoDB Plugin', QgsMessageLog.WARNING)
+
+        changedGeometries = editBuffer.changedGeometries()
+        for featureID, geom in changedGeometries.iteritems():
+            QgsMessageLog.logMessage('Update geometry for feature ID: ' + str(featureID), 'CartoDB Plugin', QgsMessageLog.INFO)
+            QgsMessageLog.logMessage('Geom WKT: ' + geom.exportToWkt(), 'CartoDB Plugin', QgsMessageLog.INFO)
+            request = QgsFeatureRequest().setFilterFid(featureID)
+            try:
+                sql = "UPDATE " + self.cartoTable + " SET the_geom = "
+                feature = self.getFeatures(request).next()
+                sql = sql + "ST_GeomFromText('" + geom.exportToWkt() + "', ST_SRID(the_geom)) WHERE cartodb_id = " + unicode(feature['cartodb_id'])
+                sql = sql.encode('utf-8')
+
+                self._updateSQL(sql, 'Some error ocurred updating geometry')
+            except StopIteration:
+                QgsMessageLog.logMessage('Can\'t get feature with fid: ' + str(featureID), 'CartoDB Plugin', QgsMessageLog.WARNING)
+
+        deletedFeatureIds = editBuffer.deletedFeatureIds()
+        for featureID in deletedFeatureIds:
+            QgsMessageLog.logMessage('Delete feature with feature ID: ' + str(featureID), 'CartoDB Plugin', QgsMessageLog.INFO)
+            request = QgsFeatureRequest().setFilterFid(featureID)
+            try:
+                feature = self.getFeatures(request).next()
+                sql = "DELETE FROM " + self.cartoTable + " WHERE cartodb_id = " + unicode(feature['cartodb_id'])
+                self._updateSQL(sql, 'Some error ocurred deleting feature')
+            except StopIteration:
+                QgsMessageLog.logMessage('Can\'t get feature with fid: ' + str(featureID), 'CartoDB Plugin', QgsMessageLog.WARNING)
+
+    def _updateSQL(self, sql, errorMsg):
+        QgsMessageLog.logMessage('SQL: ' + unicode(sql), 'CartoDB Plugin', QgsMessageLog.INFO)
+        cl = CartoDBAPIKey(self._apiKey, self.user)
+        try:
+            res = cl.sql(sql, True, True)
+            QgsMessageLog.logMessage('Result: ' + str(res), 'CartoDB Plugin', QgsMessageLog.INFO)
+            return res
+        except CartoDBException as e:
+            QgsMessageLog.logMessage(errorMsg + ' - ' + str(e), 'CartoDB Plugin', QgsMessageLog.CRITICAL)
+            return e
