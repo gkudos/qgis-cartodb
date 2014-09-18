@@ -103,10 +103,14 @@ class CartoDBPluginLayer(QgsVectorLayer):
         self.attributeAdded[int].connect(self._attributeAdded)
         self.featureDeleted.connect(self._featureDeleted)
         self.beforeCommitChanges.connect(self._beforeCommitChanges)
+        self.selectionChanged.connect(self._selectionChanged)
 
     def _uneditableFields(self):
         fieldMap = self.dataProvider().fieldNameMap()
         self.setFieldEditable(fieldMap['cartodb_id'], False)
+
+    def _selectionChanged(self):
+        pass
 
     def _editingStarted(self):
         QgsMessageLog.logMessage('Editing started', 'CartoDB Plugin', QgsMessageLog.INFO)
@@ -183,6 +187,7 @@ class CartoDBPluginLayer(QgsVectorLayer):
             QgsMessageLog.logMessage('Delete feature with feature ID: ' + str(featureID), 'CartoDB Plugin', QgsMessageLog.INFO)
             request = QgsFeatureRequest().setFilterFid(featureID)
             try:
+                QgsMessageLog.logMessage('Features: ' + str(featureID), 'CartoDB Plugin', QgsMessageLog.WARNING)
                 feature = self.getFeatures(request).next()
                 sql = "DELETE FROM " + self.cartoTable + " WHERE cartodb_id = " + unicode(feature['cartodb_id'])
                 self._updateSQL(sql, 'Some error ocurred deleting feature')
