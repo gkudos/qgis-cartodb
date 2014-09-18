@@ -41,7 +41,7 @@ Comming soon
 
 Any idea, any issue, any comment, Open an issue labeling with respective. You want to contribute? Fork this project and get to work. All help is welcomed.
 
-Check [Contributing Guide](https://github.com/gkudos/qgis-cartodb/blob/master/README.md)
+Check [Contributing Guide](https://github.com/gkudos/qgis-cartodb/blob/master/CONTRIBUTING.md)
 
 ## Licence
 
