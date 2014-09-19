@@ -1,4 +1,4 @@
-![Logo](images/logo.png?raw=true "QGis CartoDB")
+![Logo](images/logo.gif?raw=true "QGis CartoDB")
 ================================================
 
 CartoDB Plugin for QGis integrate Quantum GIS with CartoDB. It add support for CartoDB layers, you can add, edit and delete your CartoDB tables from desktop application.
