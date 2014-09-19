@@ -40,6 +40,44 @@ Comming soon
 * Go to "Plugins"=>"Manage and install plugins"
 * Click at "Installed" and enable "CartoDB Plugin"
 
+## Quick Use
+
+After enabled plugin, click at the icon: ![Icon](images/icon.png?raw=true "Icon") or at the web menu item "CartoDB Plugin" => "Add CartoDB Layer"
+
+This open dialog:
+
+![Dialog 1](images/dialog1.png?raw=true "Add CartoDB Layer 1")
+
+#### Creating new connection
+
+Click in "New" buttom.
+
+![Dialog 2](images/dialog2.png?raw=true "New Connection")
+
+Add your CartoDB account. Your api key is in:
+
+    https://[youraccount].cartodb.com/your_apps
+
+Click in "Save" button.
+
+#### Adding CartoDB layer
+
+Select connection and click in "Connect" button.
+
+![Dialog 3](images/dialog3.png?raw=true "Adding layer")
+
+Select any table and click in "OK" button.
+
+Voilá !!!!
+
+![Voilá](images/layer.png?raw=true "Voilá !!!")
+
+## Limitations
+
+* Create new tables.
+* Add new attributes.
+* Get visualizations or cartoCSS styles.
+
 ## Help Wanted
 
 Any idea, any issue, any comment, Open an issue labeling with respective. You want to contribute? Fork this project and get to work. All help is welcomed.
