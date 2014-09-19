@@ -19,7 +19,7 @@ CartoDB Plugin for QGis integrate Quantum GIS with CartoDB. It add support for C
 
 ### From QGIS repositories
 
-Comming soon
+Coming soon
 
 ### From git repository
 
