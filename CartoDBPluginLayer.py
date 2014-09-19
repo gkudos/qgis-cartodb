@@ -56,13 +56,34 @@ class CartoDBPluginLayer(QgsVectorLayer):
         dsGeoJSON = ogr.Open(path)
         if dsGeoJSON is not None:
             jsonLayer = dsGeoJSON.GetLayerByName('OGRGeoJSON')
+
             if jsonLayer is not None:
+                """ TODO Convert to numbers numeric fields when it's null.
+                layerDefinition = jsonLayer.GetLayerDefn()
+                QgsMessageLog.logMessage("Layer def: " + str(layerDefinition), 'CartoDB Plugin', QgsMessageLog.INFO)
+                for i in range(layerDefinition.GetFieldCount()):
+                    fieldName = layerDefinition.GetFieldDefn(i).GetName()
+                    fieldTypeCode = layerDefinition.GetFieldDefn(i).GetType()
+                    fieldType = layerDefinition.GetFieldDefn(i).GetFieldTypeName(fieldTypeCode)
+                    fieldWidth = layerDefinition.GetFieldDefn(i).GetWidth()
+                    GetPrecision = layerDefinition.GetFieldDefn(i).GetPrecision()
+                    if fieldName == 'number':
+                        layerDefinition.GetFieldDefn(i).SetType(2)
+                        jsonLayer.StartTransaction()
+                        jsonLayer.AlterFieldDefn(i, layerDefinition.GetFieldDefn(i), ogr.ALTER_TYPE_FLAG)
+                        jsonLayer.CommitTransaction()
+
+                    fieldTypeCode = layerDefinition.GetFieldDefn(i).GetType()
+                    fieldType = layerDefinition.GetFieldDefn(i).GetFieldTypeName(fieldTypeCode)
+
+                    QgsMessageLog.logMessage(fieldName + " - " + fieldType + " " + str(fieldWidth) + " " + str(GetPrecision) + " code: " + str(fieldTypeCode), 'CartoDB Plugin', QgsMessageLog.INFO)
+                """
+
                 i = 1
                 while datasource.GetLayerByName(str(layerName)) is not None:
                     layerName = layerName + str(i)
                     i = i + 1
                 newLyr = datasource.CopyLayer(jsonLayer, str(layerName), options=['FORMAT=SPATIALITE'])
-                datasource.Destroy()
 
                 if newLyr is not None:
                     QgsMessageLog.logMessage('New Layer created', 'CartoDB Plugin', QgsMessageLog.INFO)
@@ -75,6 +96,7 @@ class CartoDBPluginLayer(QgsVectorLayer):
                     readOnly = False
                 else:
                     QgsMessageLog.logMessage('Some error ocurred opening SQLite datasource', 'CartoDB Plugin', QgsMessageLog.WARNING)
+                datasource.Destroy()
             else:
                 QgsMessageLog.logMessage('Some error ocurred opening GeoJSON layer', 'CartoDB Plugin', QgsMessageLog.WARNING)
         else:
@@ -110,7 +132,6 @@ class CartoDBPluginLayer(QgsVectorLayer):
                 WHERE data_type != 'USER-DEFINED' AND table_schema = 'public' AND table_name = '" + self.cartoTable + "' \
                 ORDER BY ordinal_position"
 
-        QgsMessageLog.logMessage('SQL: ' + str(sql), 'CartoDB Plugin', QgsMessageLog.INFO)
         cl = CartoDBAPIKey(self._apiKey, self.user)
         try:
             res = cl.sql(sql, True, True)
@@ -139,7 +160,6 @@ class CartoDBPluginLayer(QgsVectorLayer):
         self.setFieldEditable(self.fieldNameIndex('GEOMETRY'), False)
 
     def _editingStarted(self):
-        QgsMessageLog.logMessage('Editing started', 'CartoDB Plugin', QgsMessageLog.INFO)
         self._uneditableFields()
 
     def _attributeAdded(self, idx):
@@ -148,7 +168,7 @@ class CartoDBPluginLayer(QgsVectorLayer):
         field = fields.field(idx)
         if field is not None:
             QgsMessageLog.logMessage('Field is: ' + field.name(), 'CartoDB Plugin', QgsMessageLog.INFO)
-            self.deleteAttribute(idx)
+            self.editBuffer().deleteAttribute(idx)
 
     def _beforeCommitChanges(self):
         QgsMessageLog.logMessage('Before commit', 'CartoDB Plugin', QgsMessageLog.INFO)
@@ -252,7 +272,6 @@ class CartoDBPluginLayer(QgsVectorLayer):
                 self.setFieldEditable(self.fieldNameIndex('cartodb_id'), True)
                 self.editBuffer().changeAttributeValue(featureID, self.fieldNameIndex('cartodb_id'), res['rows'][0]['cartodb_id'], None)
                 self.setFieldEditable(self.fieldNameIndex('cartodb_id'), False)
-                # self._updateGeometries({featureID: feature.geometry()})
 
     def _deleteFeatures(self, deletedFeatureIds):
         provider = self.dataProvider()

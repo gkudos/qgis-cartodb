@@ -6,9 +6,11 @@ CartoDB Plugin for QGis integrate Quantum GIS with CartoDB. It add support for C
 
 ## Features
 
+![QGis CartoDB](images/screenshot.png?raw=true "QGis CartoDB")
+
 * Manage CartoDB connections.
 * Add CartoDB layers to QGis projects.
-* Add data and update features in CartoDB.
+* Add features to CartoDB tables.
 * Edit data and update CartoDB tables.
 * Edit data and update geometries.
 * Delete features.
@@ -42,7 +44,7 @@ Comming soon
 
 Any idea, any issue, any comment, Open an issue labeling with respective. You want to contribute? Fork this project and get to work. All help is welcomed.
 
-Check [Contributing Guide](https://github.com/gkudos/qgis-cartodb/blob/master/CONTRIBUTING.md)
+Check [Contributing Guide](CONTRIBUTING.md)
 
 ## Licence
 

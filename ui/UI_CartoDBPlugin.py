@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'ui/UI_CartoDBPlugin.ui'
 #
-# Created: Thu Sep 11 17:55:52 2014
+# Created: Fri Sep 19 10:57:54 2014
 #      by: PyQt4 UI code generator 4.10.4
 #
 # WARNING! All changes made in this file will be lost!
@@ -77,6 +77,7 @@ class Ui_CartoDBPlugin(object):
         self.retranslateUi(CartoDBPlugin)
         QtCore.QObject.connect(self.buttonBox, QtCore.SIGNAL(_fromUtf8("accepted()")), CartoDBPlugin.accept)
         QtCore.QObject.connect(self.buttonBox, QtCore.SIGNAL(_fromUtf8("rejected()")), CartoDBPlugin.reject)
+        QtCore.QObject.connect(self.tablesList, QtCore.SIGNAL(_fromUtf8("itemDoubleClicked(QListWidgetItem*)")), CartoDBPlugin.accept)
         QtCore.QMetaObject.connectSlotsByName(CartoDBPlugin)
 
     def retranslateUi(self, CartoDBPlugin):
@@ -86,3 +87,4 @@ class Ui_CartoDBPlugin(object):
         self.newConnectionBT.setText(_translate("CartoDBPlugin", "New", None))
         self.editConnectionBT.setText(_translate("CartoDBPlugin", "Edit", None))
         self.deleteConnectionBT.setText(_translate("CartoDBPlugin", "Delete", None))
+
