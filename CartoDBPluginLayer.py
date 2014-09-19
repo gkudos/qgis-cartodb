@@ -92,6 +92,7 @@ class CartoDBPluginLayer(QgsVectorLayer):
         self.user = cartoName
         self._apiKey = apiKey
         self.iface = iface
+        self._deletedFeatures = []
 
         if not self.readOnly:
             self.initConnections()
@@ -101,16 +102,41 @@ class CartoDBPluginLayer(QgsVectorLayer):
         QgsMessageLog.logMessage('Init connections for: ' + self.layerName, 'CartoDB Plugin', QgsMessageLog.INFO)
         self.editingStarted.connect(self._editingStarted)
         self.attributeAdded[int].connect(self._attributeAdded)
-        self.featureDeleted.connect(self._featureDeleted)
         self.beforeCommitChanges.connect(self._beforeCommitChanges)
-        self.selectionChanged.connect(self._selectionChanged)
 
     def _uneditableFields(self):
-        fieldMap = self.dataProvider().fieldNameMap()
-        self.setFieldEditable(fieldMap['cartodb_id'], False)
+        sql = "SELECT table_name, column_name, column_default, is_nullable, data_type, table_schema \
+                FROM information_schema.columns \
+                WHERE data_type != 'USER-DEFINED' AND table_schema = 'public' AND table_name = '" + self.cartoTable + "' \
+                ORDER BY ordinal_position"
 
-    def _selectionChanged(self):
-        pass
+        QgsMessageLog.logMessage('SQL: ' + str(sql), 'CartoDB Plugin', QgsMessageLog.INFO)
+        cl = CartoDBAPIKey(self._apiKey, self.user)
+        try:
+            res = cl.sql(sql, True, True)
+            for pgField in res['rows']:
+                if pgField['data_type'] == 'timestamp with time zone':
+                    self.setEditorWidgetV2(self.fieldNameIndex(pgField['column_name']), 'DateTime')
+                    self.setEditorWidgetV2Config(self.fieldNameIndex(pgField['column_name']), {
+                                                 u'display_format': u'yyyy-MM-dd hh:mm:ss',
+                                                 u'field_format': u'yyyy-MM-dd hh:mm:ss',
+                                                 u'calendar_popup': True})
+                elif pgField['data_type'] == 'boolean':
+                    self.setEditorWidgetV2(self.fieldNameIndex(pgField['column_name']), 'CheckBox')
+                    self.setEditorWidgetV2Config(self.fieldNameIndex(pgField['column_name']), {
+                                                 u'CheckedState': u'true',
+                                                 u'UncheckedState': u'false'})
+        except CartoDBException as e:
+            QgsMessageLog.logMessage(errorMsg + ' - ' + str(e), 'CartoDB Plugin', QgsMessageLog.CRITICAL)
+
+        self.setFieldEditable(self.fieldNameIndex('cartodb_id'), False)
+        self.setEditorWidgetV2(self.fieldNameIndex('cartodb_id'), 'Hidden')
+        self.setFieldEditable(self.fieldNameIndex('updated_at'), False)
+        self.setEditorWidgetV2(self.fieldNameIndex('updated_at'), 'Hidden')
+        self.setFieldEditable(self.fieldNameIndex('created_at'), False)
+        self.setEditorWidgetV2(self.fieldNameIndex('created_at'), 'Hidden')
+        self.setFieldEditable(self.fieldNameIndex('OGC_FID'), False)
+        self.setFieldEditable(self.fieldNameIndex('GEOMETRY'), False)
 
     def _editingStarted(self):
         QgsMessageLog.logMessage('Editing started', 'CartoDB Plugin', QgsMessageLog.INFO)
@@ -124,18 +150,17 @@ class CartoDBPluginLayer(QgsVectorLayer):
             QgsMessageLog.logMessage('Field is: ' + field.name(), 'CartoDB Plugin', QgsMessageLog.INFO)
             self.deleteAttribute(idx)
 
-    def _featureDeleted(self, featureID):
-        request = QgsFeatureRequest().setFilterFid(featureID)
-        try:
-            feature = self.getFeatures(request).next()
-        except StopIteration:
-            QgsMessageLog.logMessage('Can\'t get feature with fid: ' + str(featureID), 'CartoDB Plugin', QgsMessageLog.WARNING)
-
     def _beforeCommitChanges(self):
         QgsMessageLog.logMessage('Before commit', 'CartoDB Plugin', QgsMessageLog.INFO)
         self._uneditableFields()
         editBuffer = self.editBuffer()
-        changedAttributeValues = editBuffer.changedAttributeValues()
+
+        self._updateAttributes(editBuffer.changedAttributeValues())
+        self._updateGeometries(editBuffer.changedGeometries())
+        self._addFeatures(editBuffer.addedFeatures())
+        self._deleteFeatures(editBuffer.deletedFeatureIds())
+
+    def _updateAttributes(self, changedAttributeValues):
         provider = self.dataProvider()
         for featureID, v in changedAttributeValues.iteritems():
             QgsMessageLog.logMessage('Update attributes for feature ID: ' + str(featureID), 'CartoDB Plugin', QgsMessageLog.INFO)
@@ -145,7 +170,7 @@ class CartoDBPluginLayer(QgsVectorLayer):
                 feature = self.getFeatures(request).next()
                 addComma = False
                 for fieldID, val in v.iteritems():
-                    if(addComma):
+                    if addComma:
                         sql = sql + ", "
 
                     fieldValue = unicode(val)
@@ -163,11 +188,17 @@ class CartoDBPluginLayer(QgsVectorLayer):
                 sql = sql + " WHERE cartodb_id = " + unicode(feature['cartodb_id'])
                 sql = sql.encode('utf-8')
 
-                self._updateSQL(sql, 'Some error ocurred getting tables')
+                res = self._updateSQL(sql, 'Some error ocurred getting tables')
+                if isinstance(res, dict) and res['total_rows'] == 1:
+                    self.iface.messageBar().pushMessage('Info',
+                                                        'Data for cartodb_id ' + str(feature['cartodb_id']) + ' from ' +
+                                                        str(self.cartoTable) + ' was updated from CartoDB servers',
+                                                        level=self.iface.messageBar().INFO, duration=10)
             except StopIteration:
-                QgsMessageLog.logMessage('Can\'t get feature with fid: ' + str(featureID), 'CartoDB Plugin', QgsMessageLog.WARNING)
+                self.iface.messageBar().pushMessage("Warning", 'Can\'t get feature with fid ' + str(featureID),
+                                                    level=self.iface.messageBar().WARNING, duration=10)
 
-        changedGeometries = editBuffer.changedGeometries()
+    def _updateGeometries(self, changedGeometries):
         for featureID, geom in changedGeometries.iteritems():
             QgsMessageLog.logMessage('Update geometry for feature ID: ' + str(featureID), 'CartoDB Plugin', QgsMessageLog.INFO)
             QgsMessageLog.logMessage('Geom WKT: ' + geom.exportToWkt(), 'CartoDB Plugin', QgsMessageLog.INFO)
@@ -178,24 +209,72 @@ class CartoDBPluginLayer(QgsVectorLayer):
                 sql = sql + "ST_GeomFromText('" + geom.exportToWkt() + "', ST_SRID(the_geom)) WHERE cartodb_id = " + unicode(feature['cartodb_id'])
                 sql = sql.encode('utf-8')
 
-                self._updateSQL(sql, 'Some error ocurred updating geometry')
-            except StopIteration:
-                QgsMessageLog.logMessage('Can\'t get feature with fid: ' + str(featureID), 'CartoDB Plugin', QgsMessageLog.WARNING)
+                res = self._updateSQL(sql, 'Some error ocurred updating geometry')
+                if isinstance(res, dict) and res['total_rows'] == 1:
+                    self.iface.messageBar().pushMessage('Info',
+                                                        'Geometry for cartodb_id ' + str(feature['cartodb_id']) +
+                                                        ' was updated from ' + str(self.cartoTable) + ' at CartoDB servers',
+                                                        level=self.iface.messageBar().INFO, duration=10)
 
-        deletedFeatureIds = editBuffer.deletedFeatureIds()
+            except StopIteration:
+                self.iface.messageBar().pushMessage('Warning', 'Can\'t get feature with fid ' + str(featureID),
+                                                    level=self.iface.messageBar().WARNING, duration=10)
+
+    def _addFeatures(self, addedFeatures):
+        provider = self.dataProvider()
+        for featureID, feature in addedFeatures.iteritems():
+            QgsMessageLog.logMessage('Add feature with feature ID: ' + str(featureID), 'CartoDB Plugin', QgsMessageLog.INFO)
+            sql = "INSERT INTO " + self.cartoTable + " ("
+            addComma = False
+            for field in feature.fields():
+                if unicode(feature[field.name()]) == 'NULL' or feature[field.name()] is None:
+                    continue
+                if addComma:
+                    sql = sql + ", "
+                sql = sql + field.name()
+                addComma = True
+            sql = sql + ", the_geom) VALUES ("
+            addComma = False
+            for field in feature.fields():
+                if unicode(feature[field.name()]) == 'NULL' or feature[field.name()] is None:
+                    continue
+                if addComma:
+                    sql = sql + ", "
+                sql = sql + "'" + unicode(feature[field.name()]) + "'"
+                addComma = True
+            sql = sql + ", ST_GeomFromText('" + feature.geometry().exportToWkt() + "', 4326)) RETURNING cartodb_id"
+            sql = sql.encode('utf-8')
+            res = self._updateSQL(sql, 'Some error ocurred inserting feature')
+            if isinstance(res, dict) and res['total_rows'] == 1:
+                self.iface.messageBar().pushMessage('Info',
+                                                    'Feature inserted at CartoDB servers',
+                                                    level=self.iface.messageBar().INFO, duration=10)
+                self.setFieldEditable(self.fieldNameIndex('cartodb_id'), True)
+                self.editBuffer().changeAttributeValue(featureID, self.fieldNameIndex('cartodb_id'), res['rows'][0]['cartodb_id'], None)
+                self.setFieldEditable(self.fieldNameIndex('cartodb_id'), False)
+                # self._updateGeometries({featureID: feature.geometry()})
+
+    def _deleteFeatures(self, deletedFeatureIds):
+        provider = self.dataProvider()
         for featureID in deletedFeatureIds:
             QgsMessageLog.logMessage('Delete feature with feature ID: ' + str(featureID), 'CartoDB Plugin', QgsMessageLog.INFO)
             request = QgsFeatureRequest().setFilterFid(featureID)
             try:
-                QgsMessageLog.logMessage('Features: ' + str(featureID), 'CartoDB Plugin', QgsMessageLog.WARNING)
-                feature = self.getFeatures(request).next()
+                feature = provider.getFeatures(request).next()
                 sql = "DELETE FROM " + self.cartoTable + " WHERE cartodb_id = " + unicode(feature['cartodb_id'])
-                self._updateSQL(sql, 'Some error ocurred deleting feature')
+                res = self._updateSQL(sql, 'Some error ocurred deleting feature')
+                if isinstance(res, dict) and res['total_rows'] == 1:
+                    self.iface.messageBar().pushMessage('Info',
+                                                        'Feature with cartodb_id ' + str(feature['cartodb_id']) +
+                                                        ' was deleted from ' + str(self.cartoTable) + ' at CartoDB servers',
+                                                        level=self.iface.messageBar().INFO, duration=10)
             except StopIteration:
-                QgsMessageLog.logMessage('Can\'t get feature with fid: ' + str(featureID), 'CartoDB Plugin', QgsMessageLog.WARNING)
+                self.iface.messageBar().pushMessage('Warning', 'Can\'t get feature from dataprovider with fid ' + str(featureID),
+                                                    level=self.iface.messageBar().WARNING, duration=10)
+        self._deletedFeatures = []
 
     def _updateSQL(self, sql, errorMsg):
-        QgsMessageLog.logMessage('SQL: ' + unicode(sql), 'CartoDB Plugin', QgsMessageLog.INFO)
+        QgsMessageLog.logMessage('SQL: ' + str(sql), 'CartoDB Plugin', QgsMessageLog.INFO)
         cl = CartoDBAPIKey(self._apiKey, self.user)
         try:
             res = cl.sql(sql, True, True)
@@ -203,4 +282,5 @@ class CartoDBPluginLayer(QgsVectorLayer):
             return res
         except CartoDBException as e:
             QgsMessageLog.logMessage(errorMsg + ' - ' + str(e), 'CartoDB Plugin', QgsMessageLog.CRITICAL)
+            self.iface.messageBar().pushMessage('Error!!', errorMsg, level=self.iface.messageBar().CRITICAL, duration=10)
             return e

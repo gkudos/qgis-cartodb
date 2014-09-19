@@ -113,6 +113,7 @@ class CartoDBPluginDialog(QDialog):
                 tables.append(table['tablename'])
             QgsMessageLog.logMessage('This account has ' + str(len(tables)) + ' tables', 'CartoDB Plugin', QgsMessageLog.INFO)
             self.setTablesListItems(tables)
+            self.settings.setValue('/CartoDBPlugin/selected', self.currentUser)
         except CartoDBException as e:
             QgsMessageLog.logMessage('Some error ocurred getting tables', 'CartoDB Plugin', QgsMessageLog.CRITICAL)
             QMessageBox.information(self, self.tr('Error'), self.tr('Error getting tables'), QMessageBox.Ok)
