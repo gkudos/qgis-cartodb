@@ -142,7 +142,11 @@ class CartoDBAPIKey(CartoDBBase):
     def __init__(self, api_key, cartodb_domain, host='cartodb.com', protocol='https', proxy_info=None, *args, **kwargs):
         super(CartoDBAPIKey, self).__init__(cartodb_domain, host, protocol, *args, **kwargs)
         self.api_key = api_key
-        self.client = httplib2.Http()
+        
+        import certifi
+        certificate_location =  certifi.where()
+        self.client = httplib2.Http(ca_certs=certificate_location)
+
         if protocol != 'https':
             warnings.warn("you are using API key auth method with http") 
 
