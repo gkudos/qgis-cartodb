@@ -1,7 +1,7 @@
 ![Logo](images/logo.png?raw=true "QGis CartoDB")
 ================================================
 
-CartoDB Plugin for QGis integrate Quantum GIS with CartoDB. It add support for CartoDB layers, you can add, edit and delete your CartoDB tables from desktop application.
+CartoDB Plugin for QGis.  It allows to view,  create, edit or delete data from  your CartoDB account using your favorite opensource desktop GIS: QGIS.  
 
 
 ## Features
@@ -14,6 +14,10 @@ CartoDB Plugin for QGis integrate Quantum GIS with CartoDB. It add support for C
 * Edit data and update CartoDB tables.
 * Edit data and update geometries.
 * Delete features.
+ 
+## Supported Versions
+
+Minimum QGIS version:  2.3
 
 ## Install
 
