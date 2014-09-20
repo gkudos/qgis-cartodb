@@ -14,7 +14,7 @@ CartoDB Plugin for QGis.  It allows to view,  create, edit or delete data from  
 * Edit data and update CartoDB tables.
 * Edit data and update geometries.
 * Delete features.
- 
+
 ## Supported Versions
 
 Minimum QGIS version:  2.3
@@ -28,26 +28,30 @@ Coming soon
 ### From git repository
 
 #### Downloading code
-* Download the code from [Here](https://github.com/gkudos/qgis-cartodb/archive/master.zip)
+* Download the code from [here](https://github.com/gkudos/qgis-cartodb/archive/master.zip)
 * Extract from zip file.
 * Rename folder to QgisCartoDB
 * Copy the plugin folder to $HOME/.qgis2/python/plugins/
 
 #### Cloning repo
 
-* Open a terminal
-* Execute `cd $HOME/.qgis2/`
-* Execute `git clone https://github.com/gkudos/qgis-cartodb.git QgisCartoDB`
+* Open a terminal.
+* Execute `cd $HOME/.qgis2/python/plugins/`
+* Execute:
+
+```terminal
+git clone https://github.com/gkudos/qgis-cartodb.git QgisCartoDB
+```
 
 #### Enabling plugin
 
 * Open QGIS
 * Go to "Plugins"=>"Manage and install plugins"
-* Click at "Installed" and enable "CartoDB Plugin"
+* Click on "Installed" and enable "CartoDB Plugin"
 
 ## Quick Use
 
-After enabled plugin, click at the icon: ![Icon](images/icon.png?raw=true "Icon") or at the web menu item "CartoDB Plugin" => "Add CartoDB Layer"
+After enabled plugin, click on the icon: ![Icon](images/icon.png?raw=true "Icon") or on the web menu item "CartoDB Plugin" => "Add CartoDB Layer"
 
 This open dialog:
 
@@ -55,7 +59,7 @@ This open dialog:
 
 #### Creating new connection
 
-Click in "New" buttom.
+Click on "New" button.
 
 ![Dialog 2](images/dialog2.png?raw=true "New Connection")
 
@@ -63,15 +67,15 @@ Add your CartoDB account. Your api key is in:
 
     https://[youraccount].cartodb.com/your_apps
 
-Click in "Save" button.
+Click on "Save" button.
 
 #### Adding CartoDB layer
 
-Select connection and click in "Connect" button.
+Select connection and click on "Connect" button.
 
 ![Dialog 3](images/dialog3.png?raw=true "Adding layer")
 
-Select any table and click in "OK" button.
+Select any table and click on "OK" button.
 
 Voilá !!!!
 
@@ -85,9 +89,9 @@ Voilá !!!!
 
 ## Help Wanted
 
-Any idea, any issue, any comment, Open an issue labeling with respective. You want to contribute? Fork this project and get to work. All help is welcomed.
+Any idea, issue or comment, Please open an issue with related label. You want to contribute? Fork this project and get to work. All help is welcomed.
 
-Check [Contributing Guide](CONTRIBUTING.md)
+Please check our [Contributing Guide](CONTRIBUTING.md)
 
 ## Licence
 
