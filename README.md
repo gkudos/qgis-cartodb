@@ -30,6 +30,7 @@ Coming soon
 #### Downloading code
 * Download the code from [Here](https://github.com/gkudos/qgis-cartodb/archive/master.zip)
 * Extract from zip file.
+* Rename folder to QgisCartoDB
 * Copy the plugin folder to $HOME/.qgis2/python/plugins/
 
 #### Cloning repo
