@@ -66,7 +66,7 @@ class CartoDBPlugin(QObject):
         self._cdbMenu = QMenu("CartoDB plugin", self.iface.mainWindow())
         self._cdbMenu.setIcon(QIcon(":/plugins/qgis-cartodb/images/icon.png"))
         self._mainAction = QAction("Add CartoDB Layer", self.iface.mainWindow())
-        self._mainAction.setIcon(QIcon("%s/%s" % (self.plugin_dir, "images/icon.png")))
+        self._mainAction.setIcon(QIcon(":/plugins/qgis-cartodb/images/add.png"))
         QObject.connect(self._mainAction, SIGNAL("activated()"), self.run)
 
         self._cdbMenu.addAction(self._mainAction)

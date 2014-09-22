@@ -51,7 +51,7 @@ git clone https://github.com/gkudos/qgis-cartodb.git QgisCartoDB
 
 ## Quick Use
 
-After enabled plugin, click on the icon: ![Icon](images/icon.png?raw=true "Icon") or on the web menu item "CartoDB Plugin" => "Add CartoDB Layer"
+After enabled plugin, click on the icon: ![Icon](images/add.png?raw=true "Icon") or on the web menu item "CartoDB Plugin" => "Add CartoDB Layer"
 
 This open dialog:
 
@@ -85,7 +85,7 @@ Voilá !!!!
 
 * Create new tables.
 * Add new attributes.
-* Get visualizations or cartoCSS styles.
+* Get visualizations or CartoCSS styles.
 
 ## Help Wanted
 

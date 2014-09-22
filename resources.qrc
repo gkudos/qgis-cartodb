@@ -2,4 +2,7 @@
   <qresource prefix="/plugins/qgis-cartodb/" >
     <file>images/icon.png</file>
   </qresource>
+  <qresource prefix="/plugins/qgis-cartodb/" >
+    <file>images/add.png</file>
+  </qresource>
 </RCC>
