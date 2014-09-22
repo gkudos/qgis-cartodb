@@ -107,7 +107,7 @@ class CartoDBPluginDialog(QDialog):
         cl = CartoDBAPIKey(self.currentApiKey, self.currentUser)
 
         try:
-            res = cl.sql("SELECT * FROM pg_catalog.pg_tables WHERE tableowner != 'postgres' ORDER BY tablename")
+            res = cl.sql("SELECT CDB_UserTables() order by 1")
             tables = []
             for table in res['rows']:
                 tables.append(table['tablename'])
