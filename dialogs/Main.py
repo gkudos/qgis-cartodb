@@ -110,7 +110,7 @@ class CartoDBPluginDialog(QDialog):
             res = cl.sql("SELECT CDB_UserTables() order by 1")
             tables = []
             for table in res['rows']:
-                tables.append(table['tablename'])
+                tables.append(table['cdb_usertables'])
             QgsMessageLog.logMessage('This account has ' + str(len(tables)) + ' tables', 'CartoDB Plugin', QgsMessageLog.INFO)
             self.setTablesListItems(tables)
             self.settings.setValue('/CartoDBPlugin/selected', self.currentUser)
