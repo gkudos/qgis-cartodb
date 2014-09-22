@@ -1,4 +1,4 @@
-![Logo](images/logo.png?raw=true "QGis CartoDB")
+![Logo](images/logo.jpg?raw=true "QGis CartoDB")
 ================================================
 
 CartoDB Plugin for QGis.  It allows to view,  create, edit or delete data from  your CartoDB account using your favorite opensource desktop GIS: QGIS.  
