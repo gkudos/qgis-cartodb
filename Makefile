@@ -1,21 +1,85 @@
 # Makefile for CartoDB Plugin plugin
+
+#Add iso code for any locales you want to support here (space separated)
+LOCALES = es
+
+PLUGINNAME = QgisCartoDB
+
+EXTRAS = icon.png metadata.txt
+
 UI_FILES = ui/UI_CartoDBPlugin.py ui/NewConnection.py
 
 RESOURCE_FILES = resources.py
+
+RESOURCE_SRC=$(shell grep '^ *<file' resources.qrc | sed 's@</file>@@g;s/.*>//g' | tr '\n' ' ')
+
+QGISDIR=.qgis2
 
 default: compile
 
 compile: $(UI_FILES) $(RESOURCE_FILES)
 
-%.py : %.qrc
+%.py : %.qrc $(RESOURCES_SRC)
 	pyrcc4 -o $@  $<
 
 %.py : %.ui
 	pyuic4 -o $@ $<
 
-install:
-	mkdir /home/$(USER)/.qgis2/python/plugins/QgisCartoDB/
-	cp -r ./* /home/$(USER)/.qgis2/python/plugins/QgisCartoDB/
+install: transcompile compile
+	@echo
+	@echo "-------------------------------------------"
+	@echo "Installing plugin to your .qgis2 directory."
+	@echo "-------------------------------------------"
+	mkdir -p $(HOME)/$(QGISDIR)/python/plugins/$(PLUGINNAME)
+	cp -vr ./* $(HOME)/$(QGISDIR)/python/plugins/$(PLUGINNAME)
+	rm -R $(HOME)/$(QGISDIR)/python/plugins/$(PLUGINNAME)/scripts
+	@echo " "
+
+uninstall:
+	@echo
+	@echo "-----------------------------------------------"
+	@echo "Uninstalling plugin from your .qgis2 directory."
+	@echo "-----------------------------------------------"
+	rm -f -R $(HOME)/$(QGISDIR)/python/plugins/$(PLUGINNAME)
+	@echo " "
+
+transcompile:
+	@echo
+	@echo "----------------------------------------"
+	@echo "Compiled translation files to .qm files."
+	@echo "----------------------------------------"
+	@chmod +x scripts/compile-strings.sh
+	@scripts/compile-strings.sh $(LOCALES)
+
+transclean:
+	@echo
+	@echo "------------------------------------"
+	@echo "Removing compiled translation files."
+	@echo "------------------------------------"
+	rm -f i18n/*.qm
+
+
+dclean:
+	@echo
+	@echo "-----------------------------------"
+	@echo "Removing any compiled python files."
+	@echo "-----------------------------------"
+	find $(HOME)/$(QGISDIR)/python/plugins/$(PLUGINNAME) -iname "*.pyc" -delete
+	find $(HOME)/$(QGISDIR)/python/plugins/$(PLUGINNAME) -iname ".git" -prune -exec rm -Rf {} \;
+
+zip: install dclean
+	@echo
+	@echo "---------------------------"
+	@echo "Creating plugin zip bundle."
+	@echo "---------------------------"
+	# The zip target deploys the plugin and creates a zip file with the deployed
+	# content. You can then upload the zip file on http://plugins.qgis.org
+	rm -f $(PLUGINNAME).zip
+	cd $(HOME)/$(QGISDIR)/python/plugins; zip -9r $(CURDIR)/$(PLUGINNAME).zip $(PLUGINNAME)
 
 clean:
-	rm -R /home/$(USER)/.qgis2/python/plugins/QgisCartoDB/
+	@echo
+	@echo "------------------------------------"
+	@echo "Removing uic and rcc generated files"
+	@echo "------------------------------------"
+	rm -f $(UI_FILES) $(RESOURCE_FILES)

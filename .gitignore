@@ -36,6 +36,7 @@ coverage.xml
 
 # Translations
 *.mo
+i18n/*.qm
 
 # Mr Developer
 .mr.developer.cfg
@@ -52,3 +53,12 @@ coverage.xml
 # Sphinx documentation
 docs/_build/
 
+# Zip file
+*.zip
+
+# UI Compiled files
+ui/*.py
+!ui/__init__.py
+
+# Resources Compiled files
+resources.py

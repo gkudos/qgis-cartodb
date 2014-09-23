@@ -36,12 +36,10 @@ Coming soon
 #### Cloning repo
 
 * Open a terminal.
-* Execute `cd $HOME/.qgis2/python/plugins/`
 * Execute:
-
-```terminal
-git clone https://github.com/gkudos/qgis-cartodb.git QgisCartoDB
-```
+    * `git clone https://github.com/gkudos/qgis-cartodb.git`
+    * `cd qgis-cartodb`
+    * `make install`
 
 #### Enabling plugin
 
@@ -80,6 +78,13 @@ Select any table and click on "OK" button.
 Voilá !!!!
 
 ![Voilá](images/layer.png?raw=true "Voilá !!!")
+
+## Dependencies
+
+* [CartoDB](https://github.com/Vizzuality/cartodb-python)
+* oauth2
+* simplejson
+* certifi
 
 ## Limitations
 
