@@ -15,6 +15,8 @@ RESOURCE_SRC=$(shell grep '^ *<file' resources.qrc | sed 's@</file>@@g;s/.*>//g'
 
 QGISDIR=.qgis2
 
+PLUGIN_UPLOAD = ./plugin_upload.py
+
 default: compile
 
 compile: $(UI_FILES) $(RESOURCE_FILES)
@@ -30,6 +32,7 @@ install: transcompile compile
 	@echo "-------------------------------------------"
 	@echo "Installing plugin to your .qgis2 directory."
 	@echo "-------------------------------------------"
+	rm -f $(PLUGINNAME).zip
 	mkdir -p $(HOME)/$(QGISDIR)/python/plugins/$(PLUGINNAME)
 	cp -vr ./* $(HOME)/$(QGISDIR)/python/plugins/$(PLUGINNAME)
 	rm -R $(HOME)/$(QGISDIR)/python/plugins/$(PLUGINNAME)/scripts
@@ -65,7 +68,9 @@ dclean:
 	@echo "Removing any compiled python files."
 	@echo "-----------------------------------"
 	find $(HOME)/$(QGISDIR)/python/plugins/$(PLUGINNAME) -iname "*.pyc" -delete
-	find $(HOME)/$(QGISDIR)/python/plugins/$(PLUGINNAME) -iname ".git" -prune -exec rm -Rf {} \;
+	find $(HOME)/$(QGISDIR)/python/plugins/$(PLUGINNAME) -iname ".zip" -delete
+	rm -f $(HOME)/$(QGISDIR)/python/plugins/$(PLUGINNAME)/db/database.sqlite
+
 
 zip: install dclean
 	@echo
@@ -76,6 +81,13 @@ zip: install dclean
 	# content. You can then upload the zip file on http://plugins.qgis.org
 	rm -f $(PLUGINNAME).zip
 	cd $(HOME)/$(QGISDIR)/python/plugins; zip -9r $(CURDIR)/$(PLUGINNAME).zip $(PLUGINNAME)
+
+upload: zip
+	@echo
+	@echo "-------------------------------------"
+	@echo "Uploading plugin to QGIS Plugin repo."
+	@echo "-------------------------------------"
+	$(PLUGIN_UPLOAD) $(PLUGINNAME).zip
 
 clean:
 	@echo

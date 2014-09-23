@@ -7,6 +7,7 @@ A QGIS plugin
 begin                : 2014-09-08
 copyright            : (C) 2014 by Michael Salgado, Kudos Ltda.
 email                : michaelsalgado@gkudos.com, info@gkudos.com
+author               : Kudos Ltda.
  ***************************************************************************/
 
 /***************************************************************************

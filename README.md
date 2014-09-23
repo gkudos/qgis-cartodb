@@ -27,7 +27,7 @@ Coming soon
 
 ### From git repository
 
-#### Downloading code
+#### Downloading release code
 * Download the code from [here](https://github.com/gkudos/qgis-cartodb/releases/latest)
 * Extract from zip file.
 * Rename folder to QgisCartoDB
