@@ -96,7 +96,8 @@ Voilá !!!!
 
 ## Help Wanted
 
-Any idea, issue or comment, Please open an issue with related label. You want to contribute? Fork this project and get to work. All help is welcomed.
+Any idea, issue or comment?, Please open an issue with related label. 
+Do You want to contribute? Fork this project and get to work. Your time and help is greatly appreciated.
 
 Please check our [Contributing Guide](CONTRIBUTING.md)
 
