@@ -80,9 +80,11 @@ class CartoDBPluginLayer(QgsVectorLayer):
                 """
 
                 i = 1
-                while datasource.GetLayerByName(str(layerName)) is not None:
-                    layerName = layerName + str(i)
+                tempLayerName = layerName
+                while datasource.GetLayerByName(str(tempLayerName)) is not None:
+                    tempLayerName = layerName + str(i)
                     i = i + 1
+                layerName = tempLayerName
                 newLyr = datasource.CopyLayer(jsonLayer, str(layerName), options=['FORMAT=SPATIALITE'])
 
                 if newLyr is not None:

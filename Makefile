@@ -34,7 +34,7 @@ install: transcompile compile
 	@echo "-------------------------------------------"
 	rm -f $(PLUGINNAME).zip
 	mkdir -p $(HOME)/$(QGISDIR)/python/plugins/$(PLUGINNAME)
-	cp -vr ./* $(HOME)/$(QGISDIR)/python/plugins/$(PLUGINNAME)
+	cp -r ./* $(HOME)/$(QGISDIR)/python/plugins/$(PLUGINNAME)
 	rm -R $(HOME)/$(QGISDIR)/python/plugins/$(PLUGINNAME)/scripts
 	@echo " "
 
