@@ -29,6 +29,7 @@ import resources
 
 from cartodb import CartoDBAPIKey, CartoDBException
 from QgisCartoDB.dialogs.Main import CartoDBPluginDialog
+from QgisCartoDB.dialogs.NewSQL import CartoDBNewSQLDialog
 from CartoDBPluginLayer import CartoDBPluginLayer
 
 import os.path
@@ -67,10 +68,16 @@ class CartoDBPlugin(QObject):
         self._cdbMenu.setIcon(QIcon(":/plugins/qgis-cartodb/images/icon.png"))
         self._mainAction = QAction("Add CartoDB Layer", self.iface.mainWindow())
         self._mainAction.setIcon(QIcon(":/plugins/qgis-cartodb/images/add.png"))
+        self._addSQLAction = QAction("Add SQL CartoDB Layer", self.iface.mainWindow())
+        self._addSQLAction.setIcon(QIcon(":/plugins/qgis-cartodb/images/add_sql.png"))
+
         QObject.connect(self._mainAction, SIGNAL("activated()"), self.run)
+        QObject.connect(self._addSQLAction, SIGNAL("activated()"), self.addSQL)
 
         self._cdbMenu.addAction(self._mainAction)
-        self.iface.addToolBarIcon(self._mainAction)
+        self._cdbMenu.addAction(self._addSQLAction)
+        self.iface.addWebToolBarIcon(self._mainAction)
+        self.iface.addWebToolBarIcon(self._addSQLAction)
 
         # Create Web menu, if it doesn't exist yet
         tmpAction = QAction("Temporal", self.iface.mainWindow())
@@ -114,3 +121,12 @@ class CartoDBPlugin(QObject):
                     progress.setValue(i + 1)
                 self.iface.mainWindow().statusBar().clearMessage()
                 self.iface.messageBar().popWidget(progressMessageBar)
+
+    def addSQL(self):
+        # Create and show the dialog
+        dlg = CartoDBNewSQLDialog()
+        dlg.show()
+
+        result = dlg.exec_()
+        if result == 1:
+            pass

@@ -7,7 +7,7 @@ PLUGINNAME = QgisCartoDB
 
 EXTRAS = icon.png metadata.txt
 
-UI_FILES = ui/UI_CartoDBPlugin.py ui/NewConnection.py
+UI_FILES = ui/UI_CartoDBPlugin.py ui/NewConnection.py ui/NewSQL.py
 
 RESOURCE_FILES = resources.py
 
