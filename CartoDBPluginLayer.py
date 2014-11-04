@@ -223,7 +223,6 @@ class CartoDBPluginLayer(QgsVectorLayer):
     def _updateGeometries(self, changedGeometries):
         for featureID, geom in changedGeometries.iteritems():
             QgsMessageLog.logMessage('Update geometry for feature ID: ' + str(featureID), 'CartoDB Plugin', QgsMessageLog.INFO)
-            QgsMessageLog.logMessage('Geom WKT: ' + geom.exportToWkt(), 'CartoDB Plugin', QgsMessageLog.INFO)
             request = QgsFeatureRequest().setFilterFid(featureID)
             try:
                 sql = "UPDATE " + self.cartoTable + " SET the_geom = "
@@ -295,7 +294,7 @@ class CartoDBPluginLayer(QgsVectorLayer):
         self._deletedFeatures = []
 
     def _updateSQL(self, sql, errorMsg):
-        QgsMessageLog.logMessage('SQL: ' + str(sql), 'CartoDB Plugin', QgsMessageLog.INFO)
+        # QgsMessageLog.logMessage('SQL: ' + str(sql), 'CartoDB Plugin', QgsMessageLog.INFO)
         cl = CartoDBAPIKey(self._apiKey, self.user)
         try:
             res = cl.sql(sql, True, True)
