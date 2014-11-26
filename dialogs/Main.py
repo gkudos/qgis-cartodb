@@ -24,14 +24,15 @@ from PyQt4.QtGui import QDialog, QMessageBox
 from qgis.core import QgsMessageLog
 
 from QgisCartoDB.cartodb import CartoDBAPIKey, CartoDBException
+from QgisCartoDB.dialogs.ConnectionsManager import CartoDBConnectionsManager
 from QgisCartoDB.dialogs.NewConnection import CartoDBNewConnectionDialog
 from QgisCartoDB.ui.UI_CartoDBPlugin import Ui_CartoDBPlugin
 
 
 # Create the dialog for CartoDBPlugin
-class CartoDBPluginDialog(QDialog):
+class CartoDBPluginDialog(CartoDBConnectionsManager):
     def __init__(self):
-        QDialog.__init__(self)
+        CartoDBConnectionsManager.__init__(self)
         self.settings = QSettings()
         # Set up the user interface from Designer.
         self.ui = Ui_CartoDBPlugin()
@@ -53,52 +54,6 @@ class CartoDBPluginDialog(QDialog):
     def getTablesListSelectedItems(self):
         return self.ui.tablesList.selectedItems()
 
-    def populateConnectionList(self):
-        self.settings.beginGroup('/CartoDBPlugin/')
-        self.ui.connectionList.clear()
-        self.ui.connectionList.addItems(self.settings.childGroups())
-        self.settings.endGroup()
-        self.setConnectionListPosition()
-
-    def openNewConnectionDialog(self):
-        # Open new connection dialog.
-        dlg = CartoDBNewConnectionDialog()
-        dlg.setWindowTitle(self.tr('Add CartoDB Connection'))
-        dlg.show()
-
-        result = dlg.exec_()
-        # See if OK was pressed
-        if result == QDialog.Accepted:  # add to service list
-            QgsMessageLog.logMessage('New connection saved', 'CartoDB Plugin', QgsMessageLog.INFO)
-            self.populateConnectionList()
-
-    def editConnectionDialog(self):
-        # Modify existing connection.
-        currentText = self.ui.connectionList.currentText()
-        apiKey = self.settings.value('/CartoDBPlugin/%s/api' % currentText)
-
-        conEdit = CartoDBNewConnectionDialog(currentText)
-        conEdit.setWindowTitle(self.tr('Edit CartoDB Connection'))
-        conEdit.ui.userTX.setText(currentText)
-        conEdit.ui.apiKeyTX.setText(apiKey)
-        if conEdit.exec_() == QDialog.Accepted:
-            # Update connection list
-            self.populateConnectionList()
-
-    def deleteConnectionDialog(self):
-        # Delete connection.
-        currentText = self.ui.connectionList.currentText()
-        key = '/CartoDBPlugin/%s' % currentText
-        msg = self.tr('Remove connection %s?' % currentText)
-
-        result = QMessageBox.information(self, self.tr('Confirm delete'), msg, QMessageBox.Ok | QMessageBox.Cancel)
-        if result == QMessageBox.Ok:
-            # Remove connection from list
-            self.settings.remove(key)
-            indexToDelete = self.ui.connectionList.currentIndex()
-            self.ui.connectionList.removeItem(indexToDelete)
-            self.setConnectionListPosition()
-
     def findTables(self):
         # Get tables from CartoDB.
         self.currentUser = self.ui.connectionList.currentText()
@@ -118,36 +73,6 @@ class CartoDBPluginDialog(QDialog):
             QgsMessageLog.logMessage('Some error ocurred getting tables', 'CartoDB Plugin', QgsMessageLog.CRITICAL)
             QMessageBox.information(self, self.tr('Error'), self.tr('Error getting tables'), QMessageBox.Ok)
             self.ui.tablesList.clear()
-
-    def setConnectionListPosition(self):
-        # Set the current index to the selected connection.
-        toSelect = self.settings.value('/CartoDBPlugin/selected')
-        conCount = self.ui.connectionList.count()
-
-        self.setConnectionsFound(conCount > 0)
-
-        exists = False
-        for i in range(conCount):
-            if self.ui.connectionList.itemText(i) == toSelect:
-                self.ui.connectionList.setCurrentIndex(i)
-                exists = True
-                break
-
-        # If we couldn't find the stored item, but there are some, default
-        # to the last item (this makes some sense when deleting items as it
-        # allows the user to repeatidly click on delete to remove a whole
-        # lot of items)
-        if not exists and conCount > 0:
-            # If toSelect is null, then the selected connection wasn't found
-            # by QSettings, which probably means that this is the first time
-            # the user has used CartoDBPlugin, so default to the first in the list
-            # of connetions. Otherwise default to the last.
-            if not toSelect:
-                currentIndex = 0
-            else:
-                currentIndex = conCount - 1
-
-            self.ui.connectionList.setCurrentIndex(currentIndex)
 
     def setConnectionsFound(self, found):
         self.ui.connectBT.setEnabled(found)

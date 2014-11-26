@@ -21,19 +21,32 @@ email                : michaelsalgado@gkudos.com, info@gkudos.com
 
 from PyQt4.QtCore import QSettings
 from PyQt4.QtGui import QDialog, QSizePolicy, QColor
-from QgisCartoDB.ui.NewSQL import Ui_NewSQL
-
 from PyQt4.Qsci import QsciScintilla, QsciScintillaBase, QsciLexerSQL
 
+from qgis.core import QgsMessageLog
 
-class CartoDBNewSQLDialog(QDialog):
+from QgisCartoDB.cartodb import CartoDBAPIKey, CartoDBException
+from QgisCartoDB.ui.NewSQL import Ui_NewSQL
+from QgisCartoDB.dialogs.ConnectionsManager import CartoDBConnectionsManager
+from QgisCartoDB.dialogs.NewConnection import CartoDBNewConnectionDialog
+
+
+class CartoDBNewSQLDialog(CartoDBConnectionsManager):
     def __init__(self):
-        QDialog.__init__(self)
+        CartoDBConnectionsManager.__init__(self)
         self.settings = QSettings()
         self.ui = Ui_NewSQL()
         self.ui.setupUi(self)
         self._initEditor()
         self.populateConnectionList()
+
+        self.ui.newConnectionBT.clicked.connect(self.openNewConnectionDialog)
+        self.ui.editConnectionBT.clicked.connect(self.editConnectionDialog)
+        self.ui.deleteConnectionBT.clicked.connect(self.deleteConnectionDialog)
+        self.ui.loadTableBT.clicked.connect(self.findTables)
+
+        self.ui.cancelBT.clicked.connect(self.reject)
+        self.ui.addLayerBT.clicked.connect(self.accept)
 
     def _initEditor(self):
         self.ui.sqlEditor = QsciScintilla(self)
@@ -61,41 +74,38 @@ class CartoDBNewSQLDialog(QDialog):
         sizePolicy.setHeightForWidth(self.ui.sqlEditor.sizePolicy().hasHeightForWidth())
         self.ui.sqlEditor.setSizePolicy(sizePolicy)
 
-        self.ui.verticalLayout.insertWidget(0, self.ui.sqlEditor)
+        self.ui.splitter.setSizes([self.size().width() * 0.6, self.size().height() * 0.4])
+        self.ui.leftContainer.insertWidget(1, self.ui.sqlEditor)
 
-    def populateConnectionList(self):
-        self.settings.beginGroup('/CartoDBPlugin/')
-        self.ui.connectionList.clear()
-        self.ui.connectionList.addItems(self.settings.childGroups())
-        self.settings.endGroup()
-        self.setConnectionListPosition()
+    def setTablesListItems(self, tables):
+        self.ui.tablesList.clear()
+        self.ui.tablesList.addItems(tables)
+        return True
 
-    def setConnectionListPosition(self):
-        # Set the current index to the selected connection.
-        toSelect = self.settings.value('/CartoDBPlugin/selected')
-        conCount = self.ui.connectionList.count()
+    def getTablesListSelectedItems(self):
+        return self.ui.tablesList.selectedItems()
 
-        # self.setConnectionsFound(conCount > 0)
+    def findTables(self):
+        # Get tables from CartoDB.
+        self.currentUser = self.ui.connectionList.currentText()
+        self.currentApiKey = self.settings.value('/CartoDBPlugin/%s/api' % self.currentUser)
 
-        exists = False
-        for i in range(conCount):
-            if self.ui.connectionList.itemText(i) == toSelect:
-                self.ui.connectionList.setCurrentIndex(i)
-                exists = True
-                break
+        cl = CartoDBAPIKey(self.currentApiKey, self.currentUser)
 
-        # If we couldn't find the stored item, but there are some, default
-        # to the last item (this makes some sense when deleting items as it
-        # allows the user to repeatidly click on delete to remove a whole
-        # lot of items)
-        if not exists and conCount > 0:
-            # If toSelect is null, then the selected connection wasn't found
-            # by QSettings, which probably means that this is the first time
-            # the user has used CartoDBPlugin, so default to the first in the list
-            # of connetions. Otherwise default to the last.
-            if not toSelect:
-                currentIndex = 0
-            else:
-                currentIndex = conCount - 1
+        try:
+            res = cl.sql("SELECT CDB_UserTables() order by 1")
+            tables = []
+            for table in res['rows']:
+                tables.append(table['cdb_usertables'])
+            QgsMessageLog.logMessage('This account has ' + str(len(tables)) + ' tables', 'CartoDB Plugin', QgsMessageLog.INFO)
+            self.setTablesListItems(tables)
+            self.settings.setValue('/CartoDBPlugin/selected', self.currentUser)
+        except CartoDBException as e:
+            QgsMessageLog.logMessage('Some error ocurred getting tables', 'CartoDB Plugin', QgsMessageLog.CRITICAL)
+            QMessageBox.information(self, self.tr('Error'), self.tr('Error getting tables'), QMessageBox.Ok)
+            self.ui.tablesList.clear()
 
-            self.ui.connectionList.setCurrentIndex(currentIndex)
+    def setConnectionsFound(self, found):
+        self.ui.loadTableBT.setEnabled(found)
+        self.ui.deleteConnectionBT.setEnabled(found)
+        self.ui.editConnectionBT.setEnabled(found)
