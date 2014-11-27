@@ -107,7 +107,7 @@ This plugin is free software; you can redistribute it and/or modify it under the
 
 #### Icons designed by:
 
-** From the [Noun Project](http://www.thenounproject.com): **
+**From the [Noun Project](http://www.thenounproject.com):**
 
 Calculator by [Ricardo Augusto Cherem](http://www.thenounproject.com/ricardo.cherem) <br />
 Accounting by [Scott Lewis](http://www.thenounproject.com/iconify)
