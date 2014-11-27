@@ -1,7 +1,9 @@
 <a name="0.1.1"></a>
-### 0.1.1 (2014-10-23)
+### 0.1.1 (2014-11-27)
 
 #### New Features
+
+* Load cartodb layers from SQL Queries.
 
 #### Fixes.
 

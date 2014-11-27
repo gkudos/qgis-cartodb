@@ -19,7 +19,7 @@ email                : michaelsalgado@gkudos.com, info@gkudos.com
  ***************************************************************************/
 """
 from PyQt4.QtCore import QSettings
-from PyQt4.QtGui import QDialog, QMessageBox
+from PyQt4.QtGui import QDialog, QMessageBox, QListWidgetItem, QIcon
 
 from qgis.core import QgsMessageLog
 
@@ -27,6 +27,8 @@ from QgisCartoDB.cartodb import CartoDBAPIKey, CartoDBException
 from QgisCartoDB.dialogs.ConnectionsManager import CartoDBConnectionsManager
 from QgisCartoDB.dialogs.NewConnection import CartoDBNewConnectionDialog
 from QgisCartoDB.ui.UI_CartoDBPlugin import Ui_CartoDBPlugin
+
+import QgisCartoDB.resources
 
 
 # Create the dialog for CartoDBPlugin
@@ -48,7 +50,8 @@ class CartoDBPluginDialog(CartoDBConnectionsManager):
 
     def setTablesListItems(self, tables):
         self.ui.tablesList.clear()
-        self.ui.tablesList.addItems(tables)
+        for item in tables:
+            self.ui.tablesList.addItem(item)
         return True
 
     def getTablesListSelectedItems(self):
@@ -65,8 +68,10 @@ class CartoDBPluginDialog(CartoDBConnectionsManager):
             res = cl.sql("SELECT CDB_UserTables() order by 1")
             tables = []
             for table in res['rows']:
-                tables.append(table['cdb_usertables'])
-            QgsMessageLog.logMessage('This account has ' + str(len(tables)) + ' tables', 'CartoDB Plugin', QgsMessageLog.INFO)
+                item = QListWidgetItem()
+                item.setText(table['cdb_usertables'])
+                item.setIcon(QIcon(":/plugins/qgis-cartodb/images/icons/layers.png"))
+                tables.append(item)
             self.setTablesListItems(tables)
             self.settings.setValue('/CartoDBPlugin/selected', self.currentUser)
         except CartoDBException as e:

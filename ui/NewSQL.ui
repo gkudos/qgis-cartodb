@@ -22,7 +22,7 @@
      <widget class="QWidget" name="verticalLayoutWidget">
       <layout class="QVBoxLayout" name="leftContainer">
        <item>
-        <widget class="QLabel" name="label_2">
+        <widget class="QLabel" name="sqlLB">
          <property name="text">
           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;SQL Query&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
@@ -81,7 +81,7 @@
      <widget class="QWidget" name="verticalLayoutWidget_2">
       <layout class="QVBoxLayout" name="rightContainer">
        <item>
-        <widget class="QLabel" name="label">
+        <widget class="QLabel" name="tablesLB">
          <property name="text">
           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Tables&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
@@ -91,7 +91,25 @@
         </widget>
        </item>
        <item>
-        <widget class="QListWidget" name="tablesList"/>
+        <widget class="QTreeWidget" name="tablesTree">
+         <property name="indentation">
+          <number>10</number>
+         </property>
+         <property name="wordWrap">
+          <bool>false</bool>
+         </property>
+         <property name="headerHidden">
+          <bool>true</bool>
+         </property>
+         <property name="columnCount">
+          <number>1</number>
+         </property>
+         <column>
+          <property name="text">
+           <string notr="true">1</string>
+          </property>
+         </column>
+        </widget>
        </item>
       </layout>
      </widget>
@@ -124,6 +142,9 @@
      </item>
      <item>
       <widget class="QPushButton" name="testBT">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
        <property name="text">
         <string>Test Query</string>
        </property>
@@ -131,6 +152,9 @@
      </item>
      <item>
       <widget class="QPushButton" name="addLayerBT">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
        <property name="text">
         <string>Add Layer</string>
        </property>

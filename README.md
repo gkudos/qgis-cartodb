@@ -23,9 +23,9 @@ Minimum QGIS version:  2.3
 
 ### From QGIS repositories
 
-* Go to "Plugins -> Manage and Install Plugins" 
-* Mark "Show also experimental plugins" in "Settings" 
-* Search for "CartoDB Plugin" in "Search" 
+* Go to "Plugins -> Manage and Install Plugins"
+* Mark "Show also experimental plugins" in "Settings"
+* Search for "CartoDB Plugin" in "Search"
 
 ### From git repository
 
@@ -96,7 +96,7 @@ Voilá !!!!
 
 ## Help Wanted
 
-Any idea, issue or comment?, Please open an issue with related label. 
+Any idea, issue or comment?, Please open an issue with related label.
 Do You want to contribute? Fork this project and get to work. Your time and help is greatly appreciated.
 
 Please check our [Contributing Guide](CONTRIBUTING.md)
@@ -104,3 +104,10 @@ Please check our [Contributing Guide](CONTRIBUTING.md)
 ## Licence
 
 This plugin is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
+
+#### Icons designed by:
+
+** From the [Noun Project](http://www.thenounproject.com): **
+
+Calculator by [Ricardo Augusto Cherem](http://www.thenounproject.com/ricardo.cherem) <br />
+Accounting by [Scott Lewis](http://www.thenounproject.com/iconify)
