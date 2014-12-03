@@ -87,8 +87,9 @@ class CartoDBPlugin(QObject):
         self.iface.removePluginWebMenu("_tmp", tmpAction)
 
     def unload(self):
-        self.iface.removeToolBarIcon(self._mainAction)
-        self.iface.webMenu().removeAction(self._cdbMenu.menuAction())
+        self.iface.removeWebToolBarIcon(self._mainAction)
+        self.iface.removeWebToolBarIcon(self._addSQLAction)
+	self.iface.webMenu().removeAction(self._cdbMenu.menuAction())
         # self.datasource.Destroy()
 
     def run(self):
