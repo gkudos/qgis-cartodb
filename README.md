@@ -81,6 +81,12 @@ Voilá !!!!
 
 ![Voilá](images/layer.png?raw=true "Voilá !!!")
 
+#### Adding SQL CartoDB layer
+
+Click on the icon: ![Icon](images/add_sql.png?raw=true "Icon") or on the web menu item "CartoDB Plugin" => "Add SQL CartoDB Layer"
+
+![Dialog 3](images/sql_dialog.png?raw=true "Adding SQL layer")
+
 ## Dependencies
 
 * [CartoDB](https://github.com/Vizzuality/cartodb-python)
