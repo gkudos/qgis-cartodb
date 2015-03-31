@@ -19,19 +19,174 @@ email                : michaelsalgado@gkudos.com, info@gkudos.com
  ***************************************************************************/
 """
 
-from PyQt4.QtGui import QDialog
+from PyQt4.QtCore import QSettings
+from PyQt4.QtGui import QDialog, QSizePolicy, QColor, QTreeWidgetItem, QIcon
+from PyQt4.Qsci import QsciScintilla, QsciScintillaBase, QsciLexerSQL, QsciAPIs
+
+from qgis.core import QgsMessageLog
+from qgis.gui import QgsMessageBar
+
+from QgisCartoDB.cartodb import CartoDBAPIKey, CartoDBException
 from QgisCartoDB.ui.NewSQL import Ui_NewSQL
+from QgisCartoDB.dialogs.ConnectionsManager import CartoDBConnectionsManager
+from QgisCartoDB.dialogs.NewConnection import CartoDBNewConnectionDialog
 
-from PyQt4.QtGui import *
+from urllib import urlopen
 
-from qgis.core import *
-from qgis.gui import *
+import json
+import QgisCartoDB.resources
 
 
-class CartoDBNewSQLDialog(QDialog):
+class CartoDBNewSQLDialog(CartoDBConnectionsManager):
     def __init__(self):
-        QDialog.__init__(self)
+        CartoDBConnectionsManager.__init__(self)
+        self.settings = QSettings()
         self.ui = Ui_NewSQL()
         self.ui.setupUi(self)
-        self.ui.sqlEditor = QgsCodeEditorSQL(self)
-        self.ui.verticalLayout.addWidget(self.ui.sqlEditor)
+        self._initEditor()
+        self.populateConnectionList()
+
+        self.ui.bar = QgsMessageBar()
+        self.ui.bar.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        self.ui.verticalLayout.insertWidget(0, self.ui.bar)
+
+        self.ui.newConnectionBT.clicked.connect(self.openNewConnectionDialog)
+        self.ui.editConnectionBT.clicked.connect(self.editConnectionDialog)
+        self.ui.deleteConnectionBT.clicked.connect(self.deleteConnectionDialog)
+        self.ui.loadTableBT.clicked.connect(self.findTables)
+        self.ui.testBT.clicked.connect(self.testQuery)
+
+        self.ui.cancelBT.clicked.connect(self.reject)
+        self.ui.addLayerBT.clicked.connect(self.accept)
+
+    def _initEditor(self):
+        self.ui.sqlEditor = QsciScintilla(self)
+        self.ui.sqlEditor.textChanged.connect(self.setValidQuery)
+        # Don't want to see the horizontal scrollbar at all
+        self.ui.sqlEditor.SendScintilla(QsciScintilla.SCI_SETHSCROLLBAR, 0)
+
+        self.ui.sqlEditor.setMarginLineNumbers(0, True)
+        self.ui.sqlEditor.setMarginWidth(0, "000")
+        self.ui.sqlEditor.setMarginsForegroundColor(QColor("#2468A7"))
+
+        # Brace matching: enable for a brace immediately before or after
+        # the current position.
+        self.ui.sqlEditor.setBraceMatching(QsciScintilla.SloppyBraceMatch)
+
+        # Current line visible with special background color
+        self.ui.sqlEditor.setCaretLineVisible(True)
+        self.ui.sqlEditor.setCaretLineBackgroundColor(QColor("#E4EEFF"))
+
+        lexer = QsciLexerSQL()
+        self.ui.sqlEditor.setLexer(lexer)
+
+        ''' TODO autocomplete.
+        api = QsciAPIs(lexer)
+        api.add('aLongString')
+        api.add('aLongerString')
+        api.add('aDifferentString')
+        api.add('sOmethingElse')
+        api.prepare()
+
+        self.ui.sqlEditor.setAutoCompletionThreshold(1)
+        self.ui.sqlEditor.setAutoCompletionSource(QsciScintilla.AcsAPIs)
+        '''
+
+        sizePolicy = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.ui.sqlEditor.sizePolicy().hasHeightForWidth())
+        self.ui.sqlEditor.setSizePolicy(sizePolicy)
+
+        self.ui.splitter.setSizes([self.size().width() * 0.6, self.size().height() * 0.4])
+        self.ui.leftContainer.insertWidget(1, self.ui.sqlEditor)
+
+    def setTablesListItems(self, tables):
+        self.ui.tablesTree.clear()
+        self.ui.tablesTree.addTopLevelItems(tables)
+        return True
+
+    def getTablesListSelectedItems(self):
+        return []   # self.ui.tablesTree.selectedItems()
+
+    def findTables(self):
+        # Get tables from CartoDB.
+        self.currentUser = self.ui.connectionList.currentText()
+        self.currentApiKey = self.settings.value('/CartoDBPlugin/%s/api' % self.currentUser)
+        self.ui.testBT.setEnabled(True)
+
+        cl = CartoDBAPIKey(self.currentApiKey, self.currentUser)
+
+        try:
+            res = cl.sql(
+                "SELECT *, CDB_ColumnType(table_name, column_name) column_type \
+                    FROM ( \
+                        SELECT *, CDB_ColumnNames(table_name) column_name \
+                            FROM (SELECT CDB_UserTables() table_name) t1 \
+                    ) t2 \
+                    WHERE CDB_ColumnType(table_name, column_name) != 'USER-DEFINED' \
+                    ORDER BY table_name, column_name")
+            tables = []
+            oldTableName = None
+            parentTableItem = None
+            for table in res['rows']:
+
+                if table['table_name'] != oldTableName:
+                    parentTableItem = QTreeWidgetItem()
+                    oldTableName = table['table_name']
+                    parentTableItem.setText(0, self.tr(oldTableName))
+                    parentTableItem.setIcon(0, QIcon(":/plugins/qgis-cartodb/images/icons/layers.png"))
+                    tables.append(parentTableItem)
+
+                tableItem = QTreeWidgetItem(parentTableItem)
+                tableItem.setText(0, self.tr(table['column_name']))
+                tableItem.setToolTip(0, self.tr(table['column_type']))
+                tableItem.setIcon(0, QIcon(":/plugins/qgis-cartodb/images/icons/text.png"))
+                if table['column_type'] == 'integer' or table['column_type'] == 'double precision':
+                    tableItem.setIcon(0, QIcon(":/plugins/qgis-cartodb/images/icons/number.png"))
+                elif table['column_type'] == 'timestamp with time zone':
+                    tableItem.setIcon(0, QIcon(":/plugins/qgis-cartodb/images/icons/calendar.png"))
+            self.setTablesListItems(tables)
+            self.settings.setValue('/CartoDBPlugin/selected', self.currentUser)
+        except CartoDBException as e:
+            QgsMessageLog.logMessage('Some error ocurred getting tables', 'CartoDB Plugin', QgsMessageLog.CRITICAL)
+            QMessageBox.information(self, self.tr('Error'), self.tr('Error getting tables'), QMessageBox.Ok)
+            self.ui.tablesList.clear()
+
+    def testQuery(self):
+        self.ui.bar.clearWidgets()
+        self.ui.bar.pushMessage("Info", "Validating Query", level=QgsMessageBar.INFO)
+        sql = self.ui.sqlEditor.text()
+
+        if sql is None or sql == '':
+            self.ui.bar.clearWidgets()
+            self.ui.bar.pushMessage("Warning", "Please write the sql query", level=QgsMessageBar.WARNING, duration=5)
+            self.setValidQuery(False)
+            return
+
+        sql = 'SELECT count(cartodb_id) num, ST_Union(the_geom) the_geom FROM (' + sql + ') a'
+        cartoUrl = 'http://{}.cartodb.com/api/v2/sql?format=GeoJSON&q={}&api_key={}'.format(self.currentUser, sql, self.currentApiKey)
+        response = urlopen(cartoUrl)
+        result = json.loads(response.read())
+
+        self.ui.bar.clearWidgets()
+        if 'error' not in result:
+            self.ui.bar.pushMessage("Info", "Query is valid", level=QgsMessageBar.INFO, duration=5)
+            self.setValidQuery(True)
+        else:
+            if 'hint' in result:
+                self.ui.bar.pushMessage("Warning", result['hint'], level=QgsMessageBar.WARNING, duration=10)
+            for error in result['error']:
+                self.ui.bar.pushMessage("Error", error, level=QgsMessageBar.CRITICAL, duration=5)
+            self.setValidQuery(False)
+
+    def setConnectionsFound(self, found):
+        self.ui.loadTableBT.setEnabled(found)
+        self.ui.deleteConnectionBT.setEnabled(found)
+        self.ui.editConnectionBT.setEnabled(found)
+
+    def setValidQuery(self, valid=False):
+        self.ui.addLayerBT.setEnabled(valid)
+
+    def getQuery(self):
+        return self.ui.sqlEditor.text()

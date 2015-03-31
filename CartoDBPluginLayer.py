@@ -36,7 +36,7 @@ from QgisCartoDB.cartodb import CartoDBAPIKey, CartoDBException
 class CartoDBPluginLayer(QgsVectorLayer):
     LAYER_TYPE = "cartodb"
 
-    def __init__(self, iface, tableName, cartoName, apiKey):
+    def __init__(self, iface, tableName, cartoName, apiKey, sql=None):
         # initialize plugin directory
         plugin_dir = os.path.dirname(os.path.abspath(__file__))
 
@@ -48,8 +48,13 @@ class CartoDBPluginLayer(QgsVectorLayer):
         databasePath = plugin_dir + '/db/database.sqlite'
         datasource = sqLiteDrv.Open(databasePath, True)
         layerName = tableName
+        forceReadOnly = False
 
-        sql = 'SELECT * FROM ' + tableName
+        if sql is None:
+            sql = 'SELECT * FROM ' + tableName
+        else:
+            forceReadOnly = True
+
         cartoUrl = 'http://{}.cartodb.com/api/v2/sql?format=GeoJSON&q={}&api_key={}'.format(cartoName, sql, apiKey)
         response = urlopen(cartoUrl)
         path = response.read()
@@ -104,6 +109,8 @@ class CartoDBPluginLayer(QgsVectorLayer):
         else:
             QgsMessageLog.logMessage('Some error ocurred opening GeoJSON datasource', 'CartoDB Plugin', QgsMessageLog.WARNING)
 
+        if forceReadOnly:
+            readOnly = True
         if readOnly:
             QgsMessageLog.logMessage('CartoDB Layer is readonly mode', 'CartoDB Plugin', QgsMessageLog.WARNING)
 

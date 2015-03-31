@@ -87,8 +87,9 @@ class CartoDBPlugin(QObject):
         self.iface.removePluginWebMenu("_tmp", tmpAction)
 
     def unload(self):
-        self.iface.removeToolBarIcon(self._mainAction)
-        self.iface.webMenu().removeAction(self._cdbMenu.menuAction())
+        self.iface.removeWebToolBarIcon(self._mainAction)
+        self.iface.removeWebToolBarIcon(self._addSQLAction)
+	self.iface.webMenu().removeAction(self._cdbMenu.menuAction())
         # self.datasource.Destroy()
 
     def run(self):
@@ -102,12 +103,7 @@ class CartoDBPlugin(QObject):
             selectedItems = dlg.getTablesListSelectedItems()
             countLayers = len(selectedItems)
             if countLayers > 0:
-                progressMessageBar = self.iface.messageBar().createMessage("Loading layers...")
-                progress = QProgressBar()
-                progress.setMaximum(countLayers)
-                progress.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
-                progressMessageBar.layout().addWidget(progress)
-                self.iface.messageBar().pushWidget(progressMessageBar, self.iface.messageBar().INFO)
+                progressMessageBar, progress = self.addLoadingMsg(countLayers)
                 for i, table in enumerate(selectedItems):
                     layer = CartoDBPluginLayer(self.iface, table.text(), dlg.currentUser, dlg.currentApiKey)
 
@@ -128,5 +124,22 @@ class CartoDBPlugin(QObject):
         dlg.show()
 
         result = dlg.exec_()
-        if result == 1:
-            pass
+        if result == 1 and dlg.currentUser is not None and dlg.currentApiKey is not None:
+            sql = dlg.getQuery()
+            progressMessageBar, progress = self.addLoadingMsg(1)
+            QgsMessageLog.logMessage('SQL: ' + sql, 'CartoDB Plugin', QgsMessageLog.INFO)
+            layer = CartoDBPluginLayer(self.iface, 'SQLQuery', dlg.currentUser, dlg.currentApiKey, sql)
+            QgsMapLayerRegistry.instance().addMapLayer(layer)
+            self.layers.append(layer)
+            progress.setValue(1)
+            self.iface.mainWindow().statusBar().clearMessage()
+            self.iface.messageBar().popWidget(progressMessageBar)
+
+    def addLoadingMsg(self, countLayers):
+        progressMessageBar = self.iface.messageBar().createMessage("Loading layers...")
+        progress = QProgressBar()
+        progress.setMaximum(countLayers)
+        progress.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+        progressMessageBar.layout().addWidget(progress)
+        self.iface.messageBar().pushWidget(progressMessageBar, self.iface.messageBar().INFO)
+        return progressMessageBar, progress
