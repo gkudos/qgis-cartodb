@@ -2,12 +2,14 @@
 name=QGISCartoDB
 description=CartoDB Plugin for QGis. It allows to view, create, edit or delete data from your CartoDB account using your favorite opensource desktop GIS: QGIS.
 category=Web
-version=0.1.1
+version=0.1.2
 qgisMinimumVersion=2.3
 icon=images/icon.png
 author=Kudos Ltda. and contributors
 email=michaelsalgado@gkudos.com
-changelog=0.1.1
+changelog=0.1.2
+  - Filter tables by name.
+  0.1.1
   - Load cartodb layers from SQL Queries.
   - New connection dialog is now a modal window.
   - Fix error when repeat layer name at spatialite database..
@@ -16,7 +18,7 @@ changelog=0.1.1
   - Init functions.
   - Add, edit and delete features.
   - Add, edit and delete data.
-  - Manage connections  
+  - Manage connections
 ; tags are in comma separated value format, spaces are allowed
 tags=cartodb,OSM,tiles,kudos
 homepage=https://github.com/gkudos/qgis-cartodb
