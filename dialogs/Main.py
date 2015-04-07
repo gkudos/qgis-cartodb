@@ -30,6 +30,8 @@ from QgisCartoDB.ui.UI_CartoDBPlugin import Ui_CartoDBPlugin
 
 import QgisCartoDB.resources
 
+import copy
+
 
 # Create the dialog for CartoDBPlugin
 class CartoDBPluginDialog(CartoDBConnectionsManager):
@@ -44,6 +46,7 @@ class CartoDBPluginDialog(CartoDBConnectionsManager):
         self.ui.editConnectionBT.clicked.connect(self.editConnectionDialog)
         self.ui.deleteConnectionBT.clicked.connect(self.deleteConnectionDialog)
         self.ui.connectBT.clicked.connect(self.findTables)
+        self.ui.searchTX.textChanged.connect(self.filterTables)
 
         self.currentUser = None
         self.currentApiKey = None
@@ -66,18 +69,36 @@ class CartoDBPluginDialog(CartoDBConnectionsManager):
 
         try:
             res = cl.sql("SELECT CDB_UserTables() order by 1")
-            tables = []
+            self.tables = []
+            items = []
             for table in res['rows']:
                 item = QListWidgetItem()
                 item.setText(table['cdb_usertables'])
                 item.setIcon(QIcon(":/plugins/qgis-cartodb/images/icons/layers.png"))
-                tables.append(item)
-            self.setTablesListItems(tables)
+                self.tables.append(table['cdb_usertables'])
+                items.append(item)
+            self.setTablesListItems(items)
             self.settings.setValue('/CartoDBPlugin/selected', self.currentUser)
+            self.ui.searchTX.setEnabled(True)
         except CartoDBException as e:
             QgsMessageLog.logMessage('Some error ocurred getting tables', 'CartoDB Plugin', QgsMessageLog.CRITICAL)
             QMessageBox.information(self, self.tr('Error'), self.tr('Error getting tables'), QMessageBox.Ok)
             self.ui.tablesList.clear()
+            self.ui.searchTX.setEnabled(False)
+
+    def filterTables(self):
+        text = self.ui.searchTX.text()
+        if text == '':
+            newTables = self.tables
+        else:
+            newTables = [t for t in self.tables if text in t]
+        items = []
+        for table in newTables:
+            item = QListWidgetItem()
+            item.setText(table)
+            item.setIcon(QIcon(":/plugins/qgis-cartodb/images/icons/layers.png"))
+            items.append(item)
+        self.setTablesListItems(items)
 
     def setConnectionsFound(self, found):
         self.ui.connectBT.setEnabled(found)

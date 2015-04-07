@@ -1,3 +1,11 @@
+<a name="0.1.2"></a>
+### 0.1.2 (2015-04-06)
+
+#### New Features
+
+* Filter tables by name. Fix #4
+
+
 <a name="0.1.1"></a>
 ### 0.1.1 (2014-11-27)
 
