@@ -32,6 +32,7 @@ class CartoDBPluginLayerType(QgsPluginLayerType):
         QgsPluginLayerType.__init__(self, CartoDBPluginLayer.LAYER_TYPE)
 
     def createLayer(self):
+        qDebug('CartoDBLayer from project file')
         return CartoDBPluginLayer()
 
     def showLayerProperties(self, layer):

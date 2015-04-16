@@ -311,3 +311,17 @@ class CartoDBPluginLayer(QgsVectorLayer):
             QgsMessageLog.logMessage(errorMsg + ' - ' + str(e), 'CartoDB Plugin', QgsMessageLog.CRITICAL)
             self.iface.messageBar().pushMessage('Error!!', errorMsg, level=self.iface.messageBar().CRITICAL, duration=10)
             return e
+
+    def readXml(self, node):
+        res = QgsVectorLayer.readXml(node)
+        qDebug('ReadXML: ' + str(node))
+        return res
+
+    def writeXml(self, node, doc):
+        res = super(QgsVectorLayer, self).writeXml(node, doc)
+        qDebug('WriteXML: ' + str(node))
+        element = node.toElement()
+        # write plugin layer type to project (essential to be read from project)
+        element.setAttribute("type", "plugin")
+        element.setAttribute("name", CartoDBPluginLayer.LAYER_TYPE)
+        return res

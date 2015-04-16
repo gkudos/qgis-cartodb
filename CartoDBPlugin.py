@@ -31,6 +31,7 @@ from cartodb import CartoDBAPIKey, CartoDBException
 from QgisCartoDB.dialogs.Main import CartoDBPluginDialog
 from QgisCartoDB.dialogs.NewSQL import CartoDBNewSQLDialog
 from CartoDBPluginLayer import CartoDBPluginLayer
+from CartoDBPluginLayerType import CartoDBPluginLayerType
 
 import os.path
 import shutil
@@ -42,6 +43,7 @@ class CartoDBPlugin(QObject):
 
     def __init__(self, iface):
         super(QObject, self).__init__()
+        qDebug('Probando q debug')
         QgsMessageLog.logMessage('GDAL Version: ' + str(gdal.VersionInfo('VERSION_NUM')), 'CartoDB Plugin', QgsMessageLog.INFO)
 
         # Save reference to the QGIS interface
@@ -86,11 +88,16 @@ class CartoDBPlugin(QObject):
         self._menu.addMenu(self._cdbMenu)
         self.iface.removePluginWebMenu("_tmp", tmpAction)
 
+        # Register plugin layer type
+        QgsPluginLayerRegistry.instance().addPluginLayerType(CartoDBPluginLayerType())
+
     def unload(self):
         self.iface.removeWebToolBarIcon(self._mainAction)
         self.iface.removeWebToolBarIcon(self._addSQLAction)
-	self.iface.webMenu().removeAction(self._cdbMenu.menuAction())
+        self.iface.webMenu().removeAction(self._cdbMenu.menuAction())
         # self.datasource.Destroy()
+        # Unregister plugin layer type
+        QgsPluginLayerRegistry.instance().removePluginLayerType(CartoDBPluginLayer.LAYER_TYPE)
 
     def run(self):
         # Create and show the dialog
