@@ -23,17 +23,21 @@ from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 from qgis.core import *
 
-from CartoDBPluginLayer import CartoDBPluginLayer
+from QgisCartoDB.layers import CartoDBPluginLayer
 
 
 class CartoDBPluginLayerType(QgsPluginLayerType):
 
-    def __init__(self):
+    def __init__(self, iface, createCB):
+        qDebug('Init CartoDBPluginLayerType')
         QgsPluginLayerType.__init__(self, CartoDBPluginLayer.LAYER_TYPE)
+        self.iface = iface
+        self.createCB = createCB
 
     def createLayer(self):
         qDebug('CartoDBLayer from project file')
-        return CartoDBPluginLayer()
+        layer = CartoDBPluginLayer(self.iface, self.createCB)
+        return layer
 
     def showLayerProperties(self, layer):
         return True

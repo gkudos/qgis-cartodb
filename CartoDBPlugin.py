@@ -30,8 +30,7 @@ import resources
 from cartodb import CartoDBAPIKey, CartoDBException
 from QgisCartoDB.dialogs.Main import CartoDBPluginDialog
 from QgisCartoDB.dialogs.NewSQL import CartoDBNewSQLDialog
-from CartoDBPluginLayer import CartoDBPluginLayer
-from CartoDBPluginLayerType import CartoDBPluginLayerType
+from QgisCartoDB.layers import CartoDBLayer, CartoDBPluginLayer, CartoDBPluginLayerType
 
 import os.path
 import shutil
@@ -40,16 +39,15 @@ from urllib import urlopen
 
 
 class CartoDBPlugin(QObject):
+    # initialize plugin directory
+    PLUGIN_DIR = os.path.dirname(os.path.abspath(__file__))
 
     def __init__(self, iface):
         super(QObject, self).__init__()
-        qDebug('Probando q debug')
         QgsMessageLog.logMessage('GDAL Version: ' + str(gdal.VersionInfo('VERSION_NUM')), 'CartoDB Plugin', QgsMessageLog.INFO)
 
         # Save reference to the QGIS interface
         self.iface = iface
-        # initialize plugin directory
-        self.plugin_dir = os.path.dirname(os.path.abspath(__file__))
 
         # SQLite available?
         driverName = "SQLite"
@@ -58,11 +56,8 @@ class CartoDBPlugin(QObject):
             QgsMessageLog.logMessage('SQLite driver not found', 'CartoDB Plugin', QgsMessageLog.CRITICAL)
         else:
             QgsMessageLog.logMessage('SQLite driver is found', 'CartoDB Plugin', QgsMessageLog.INFO)
-            # orDS = self.sqLiteDrv.Open(self.plugin_dir + '/db/init_database.sqlite')
-            # options=['SPATIALITE=YES']
-            self.databasePath = self.plugin_dir + '/db/database.sqlite'
-            shutil.copyfile(self.plugin_dir + '/db/init_database.sqlite', self.databasePath)
-            # self.datasource = self.sqLiteDrv.Open(self.plugin_dir + '/db/database.sqlite', True)
+            self.databasePath = CartoDBPlugin.PLUGIN_DIR + '/db/database.sqlite'
+            shutil.copyfile(CartoDBPlugin.PLUGIN_DIR + '/db/init_database.sqlite', self.databasePath)
         self.layers = []
 
     def initGui(self):
@@ -89,13 +84,15 @@ class CartoDBPlugin(QObject):
         self.iface.removePluginWebMenu("_tmp", tmpAction)
 
         # Register plugin layer type
-        QgsPluginLayerRegistry.instance().addPluginLayerType(CartoDBPluginLayerType())
+        self.pluginLayerType = CartoDBPluginLayerType(self.iface, self.createLayerCB)
+        QgsPluginLayerRegistry.instance().addPluginLayerType(self.pluginLayerType)
 
     def unload(self):
         self.iface.removeWebToolBarIcon(self._mainAction)
         self.iface.removeWebToolBarIcon(self._addSQLAction)
         self.iface.webMenu().removeAction(self._cdbMenu.menuAction())
         # self.datasource.Destroy()
+
         # Unregister plugin layer type
         QgsPluginLayerRegistry.instance().removePluginLayerType(CartoDBPluginLayer.LAYER_TYPE)
 
@@ -112,7 +109,7 @@ class CartoDBPlugin(QObject):
             if countLayers > 0:
                 progressMessageBar, progress = self.addLoadingMsg(countLayers)
                 for i, table in enumerate(selectedItems):
-                    layer = CartoDBPluginLayer(self.iface, table.text(), dlg.currentUser, dlg.currentApiKey)
+                    layer = CartoDBLayer(self.iface, table.text(), dlg.currentUser, dlg.currentApiKey)
 
                     if layer.readOnly:
                         self.iface.messageBar().pushMessage("Warning", 'Layer ' + layer.layerName + ' is loaded in readonly mode',
@@ -135,7 +132,7 @@ class CartoDBPlugin(QObject):
             sql = dlg.getQuery()
             progressMessageBar, progress = self.addLoadingMsg(1)
             QgsMessageLog.logMessage('SQL: ' + sql, 'CartoDB Plugin', QgsMessageLog.INFO)
-            layer = CartoDBPluginLayer(self.iface, 'SQLQuery', dlg.currentUser, dlg.currentApiKey, sql)
+            layer = CartoDBLayer(self.iface, 'SQLQuery', dlg.currentUser, dlg.currentApiKey, sql)
             QgsMapLayerRegistry.instance().addMapLayer(layer)
             self.layers.append(layer)
             progress.setValue(1)
@@ -150,3 +147,19 @@ class CartoDBPlugin(QObject):
         progressMessageBar.layout().addWidget(progress)
         self.iface.messageBar().pushWidget(progressMessageBar, self.iface.messageBar().INFO)
         return progressMessageBar, progress
+
+    def createLayerCB(self, layer):
+        qDebug('Opening cartodb layer')
+        lr = QgsMapLayerRegistry.instance()
+        lr.layerWasAdded.connect(self._onAddProjectLayer)
+        # lr.removeMapLayer(layer.id())
+        # lr.addMapLayer(layer.cartodbLayer)
+        self.layers.append(layer)
+
+    def _onAddProjectLayer(self, ly):
+        lr = QgsMapLayerRegistry.instance()
+        lr.layerWasAdded.disconnect(self._onAddProjectLayer)
+        qDebug('Layer id: ' + ly.id())
+        qDebug('Cartodb Layer: ' + str(ly.cartodbLayer))
+        # lr.removeMapLayer(ly.id())
+        # lr.addMapLayer(ly.cartodbLayer)

@@ -30,22 +30,21 @@ import os.path
 
 from urllib import urlopen
 
+import QgisCartoDB.CartoDBPlugin
 from QgisCartoDB.cartodb import CartoDBAPIKey, CartoDBException
 
-
-class CartoDBPluginLayer(QgsVectorLayer):
-    LAYER_TYPE = "cartodb"
+class CartoDBLayer(QgsVectorLayer):
+    LAYER_CNAME_PROPERTY = 'cartoName'
+    LAYER_TNAME_PROPERTY = 'tableName'
+    LAYER_SQL_PROPERTY = 'cartoSQL'
 
     def __init__(self, iface, tableName, cartoName, apiKey, sql=None):
-        # initialize plugin directory
-        plugin_dir = os.path.dirname(os.path.abspath(__file__))
-
         # SQLite available?
         layerType = 'ogr'
         readOnly = True
         driverName = "SQLite"
         sqLiteDrv = ogr.GetDriverByName(driverName)
-        databasePath = plugin_dir + '/db/database.sqlite'
+        databasePath = QgisCartoDB.CartoDBPlugin.PLUGIN_DIR + '/db/database.sqlite'
         datasource = sqLiteDrv.Open(databasePath, True)
         layerName = tableName
         forceReadOnly = False
@@ -128,6 +127,11 @@ class CartoDBPluginLayer(QgsVectorLayer):
         if not self.readOnly:
             self.initConnections()
             self._uneditableFields()
+
+        self.setCustomProperty(CartoDBLayer.LAYER_CNAME_PROPERTY, cartoName)
+        self.setCustomProperty(CartoDBLayer.LAYER_TNAME_PROPERTY, tableName)
+        if forceReadOnly:
+            self.setCustomProperty(CartoDBLayer.LAYER_SQL_PROPERTY, sql)
 
     def initConnections(self):
         QgsMessageLog.logMessage('Init connections for: ' + self.layerName, 'CartoDB Plugin', QgsMessageLog.INFO)
@@ -318,6 +322,7 @@ class CartoDBPluginLayer(QgsVectorLayer):
         return res
 
     def writeXml(self, node, doc):
+        from QgisCartoDB.layers.CartoDBPluginLayer import CartoDBPluginLayer
         res = super(QgsVectorLayer, self).writeXml(node, doc)
         qDebug('WriteXML: ' + str(node))
         element = node.toElement()

@@ -7,7 +7,6 @@ A QGIS plugin
 begin                : 2014-09-08
 copyright            : (C) 2014 by Michael Salgado, Kudos Ltda.
 email                : michaelsalgado@gkudos.com, info@gkudos.com
-author               : Kudos Ltda.
  ***************************************************************************/
 
 /***************************************************************************
@@ -18,11 +17,9 @@ author               : Kudos Ltda.
  *   (at your option) any later version.                                   *
  *                                                                         *
  ***************************************************************************/
- This script initializes the plugin, making it known to QGIS.
 """
 
-from QgisCartoDB.CartoDBPlugin import *
 
-
-def classFactory(iface):
-    return CartoDBPlugin(iface)
+from CartoDBLayer import *
+from CartoDBPluginLayer import *
+from CartoDBPluginLayerType import *
