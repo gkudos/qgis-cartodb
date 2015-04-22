@@ -24,7 +24,6 @@ Minimum QGIS version:  2.3
 ### From QGIS repositories
 
 * Go to "Plugins -> Manage and Install Plugins"
-* Mark "Show also experimental plugins" in "Settings"
 * Search for "CartoDB Plugin" in "Search"
 
 ### From git repository
