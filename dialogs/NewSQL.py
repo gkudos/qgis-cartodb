@@ -117,7 +117,7 @@ class CartoDBNewSQLDialog(CartoDBConnectionsManager):
 
         self.ui.testBT.setEnabled(True)
 
-        if not self.currentMultiuser:
+        if not str(self.currentMultiuser) in ['true', '1', 'True']:
             sqlTables = "SELECT CDB_UserTables() table_name"
         else:
             sqlTables = "SELECT string_agg(privilege_type, ', ') AS privileges, table_schema, table_name \

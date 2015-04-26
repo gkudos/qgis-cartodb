@@ -70,7 +70,7 @@ class CartoDBPluginDialog(CartoDBConnectionsManager):
         cl = CartoDBAPIKey(self.currentApiKey, self.currentUser)
 
         try:
-            if not self.currentMultiuser:
+            if not str(self.currentMultiuser) in ['true', '1', 'True']:
                 res = cl.sql("SELECT CDB_UserTables() order by 1")
             else:
                 res = cl.sql(
