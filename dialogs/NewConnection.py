@@ -37,6 +37,7 @@ class CartoDBNewConnectionDialog(QDialog):
     def accept(self):
         user = self.ui.userTX.text().strip()
         apiKey = self.ui.apiKeyTX.text().strip()
+        multiuser = self.ui.multiuserCH.isChecked()
 
         if any([user == '', apiKey == '']):
             QMessageBox.warning(self, self.tr('Save connection'),
@@ -46,6 +47,7 @@ class CartoDBNewConnectionDialog(QDialog):
         if user is not None:
             key = '/CartoDBPlugin/%s' % user
             keyapi = '%s/api' % key
+            keymultiuser = '%s/multiuser' % key
             key_orig = '/CartoDBPlugin/%s' % self.user_orig
             # warn if entry was renamed to an existing connection
             if all([self.user_orig != user,
@@ -60,6 +62,7 @@ class CartoDBNewConnectionDialog(QDialog):
                 self.settings.remove(key_orig)
 
             self.settings.setValue(keyapi, apiKey)
+            self.settings.setValue(keymultiuser, multiuser)
             self.settings.setValue('/CartoDBPlugin/selected', user)
 
             QDialog.accept(self)

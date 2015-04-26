@@ -28,24 +28,20 @@ import urlparse
 import oauth2 as oauth
 import urllib
 import httplib2
-import urllib2
-import sys
+import certifi
 
 try:
     import json
 except ImportError:
     import simplejson as json
 
-from oauth2 import Request
-
-#REQUEST_TOKEN_URL = 'https://%(user)s.%(domain)s/oauth/request_token'
 ACCESS_TOKEN_URL = '%(protocol)s://%(user)s.%(domain)s/oauth/access_token'
-#AUTHORIZATION_URL = 'https://%(user)s.%(domain)s/oauth/authorize'
 RESOURCE_URL = '%(protocol)s://%(user)s.%(domain)s/api/%(api_version)s/sql'
 
 
 class CartoDBException(Exception):
     pass
+
 
 class CartoDBBase(object):
     """ basic client to access cartodb api """
@@ -71,12 +67,13 @@ class CartoDBBase(object):
                 parse_json = False
         p = urllib.urlencode(params)
         url = self.resource_url
+
         # depending on query size do a POST or GET
         if len(sql) < self.MAX_GET_QUERY_LEN and not do_post:
             url = url + '?' + p
-            resp, content = self.req(url);
+            resp, content = self.req(url)
         else:
-            resp, content = self.req(url, 'POST', body=p);
+            resp, content = self.req(url, 'POST', body=p)
 
         if resp['status'] == '200':
             if parse_json:
@@ -91,12 +88,12 @@ class CartoDBBase(object):
         else:
             raise CartoDBException('Unknown error occurred')
 
-
         return None
+
 
 class CartoDBOAuth(CartoDBBase):
     """
-    This client allows to auth in cartodb using oauth. 
+    This client allows to auth in cartodb using oauth.
     """
     def __init__(self, key, secret, email, password, cartodb_domain, host='cartodb.com', protocol='https', proxy_info=None, *args, **kwargs):
         super(CartoDBOAuth, self).__init__(cartodb_domain, host, protocol, *args, **kwargs)
@@ -122,7 +119,6 @@ class CartoDBOAuth(CartoDBBase):
         # prepare client
         self.client = oauth.Client(consumer, token)
 
-
     def req(self, url, http_method="GET", http_headers=None, body=''):
         """ make an autorized request """
         resp, content = self.client.request(
@@ -133,6 +129,7 @@ class CartoDBOAuth(CartoDBBase):
         )
         return resp, content
 
+
 class CartoDBAPIKey(CartoDBBase):
     """
     this class provides you access to auth CartoDB API using your API. You can find your API key in https://USERNAME.cartodb.com/your_apps/api_key.
@@ -142,14 +139,12 @@ class CartoDBAPIKey(CartoDBBase):
     def __init__(self, api_key, cartodb_domain, host='cartodb.com', protocol='https', proxy_info=None, *args, **kwargs):
         super(CartoDBAPIKey, self).__init__(cartodb_domain, host, protocol, *args, **kwargs)
         self.api_key = api_key
-        
-        import certifi
-        certificate_location =  certifi.where()
+
+        certificate_location = certifi.where()
         self.client = httplib2.Http(ca_certs=certificate_location)
 
         if protocol != 'https':
-            warnings.warn("you are using API key auth method with http") 
-
+            warnings.warn("you are using API key auth method with http")
 
     def req(self, url, http_method="GET", http_headers={}, body=''):
         api_key_param = 'api_key=' + self.api_key
@@ -163,4 +158,3 @@ class CartoDBAPIKey(CartoDBBase):
             resp, content = self.client.request(url, headers=http_headers)
 
         return resp, content
-

@@ -20,7 +20,7 @@ email                : michaelsalgado@gkudos.com, info@gkudos.com
 """
 
 from PyQt4.QtCore import QSettings
-from PyQt4.QtGui import QDialog, QSizePolicy, QColor, QTreeWidgetItem, QIcon
+from PyQt4.QtGui import QDialog, QSizePolicy, QColor, QTreeWidgetItem, QIcon, QMessageBox
 from PyQt4.Qsci import QsciScintilla, QsciScintillaBase, QsciLexerSQL, QsciAPIs
 
 from qgis.core import QgsMessageLog
@@ -113,7 +113,24 @@ class CartoDBNewSQLDialog(CartoDBConnectionsManager):
         # Get tables from CartoDB.
         self.currentUser = self.ui.connectionList.currentText()
         self.currentApiKey = self.settings.value('/CartoDBPlugin/%s/api' % self.currentUser)
+        self.currentMultiuser = self.settings.value('/CartoDBPlugin/%s/multiuser' % self.currentUser, False)
+
         self.ui.testBT.setEnabled(True)
+
+        if not self.currentMultiuser:
+            sqlTables = "SELECT CDB_UserTables() table_name"
+        else:
+            sqlTables = "SELECT string_agg(privilege_type, ', ') AS privileges, table_schema, table_name \
+                            FROM information_schema.role_table_grants tg \
+                            JOIN ( \
+                                SELECT DISTINCT u.usename \
+                                FROM information_schema.tables t \
+                                JOIN pg_catalog.pg_class c ON (t.table_name = c.relname) \
+                                JOIN pg_catalog.pg_user u ON (c.relowner = u.usesysid) \
+                                WHERE t.table_schema = '" + self.currentUser + "') u ON u.usename = tg.grantee \
+                        WHERE table_schema NOT IN ('pg_catalog', 'information_schema', 'cartodb', 'public', 'cdb_importer') \
+                        GROUP BY table_schema, table_name \
+                        ORDER BY table_schema, table_name"
 
         cl = CartoDBAPIKey(self.currentApiKey, self.currentUser)
 
@@ -122,7 +139,7 @@ class CartoDBNewSQLDialog(CartoDBConnectionsManager):
                 "SELECT *, CDB_ColumnType(table_name, column_name) column_type \
                     FROM ( \
                         SELECT *, CDB_ColumnNames(table_name) column_name \
-                            FROM (SELECT CDB_UserTables() table_name) t1 \
+                            FROM (" + sqlTables + ") t1 \
                     ) t2 \
                     WHERE CDB_ColumnType(table_name, column_name) != 'USER-DEFINED' \
                     ORDER BY table_name, column_name")
@@ -149,9 +166,9 @@ class CartoDBNewSQLDialog(CartoDBConnectionsManager):
             self.setTablesListItems(tables)
             self.settings.setValue('/CartoDBPlugin/selected', self.currentUser)
         except CartoDBException as e:
-            QgsMessageLog.logMessage('Some error ocurred getting tables', 'CartoDB Plugin', QgsMessageLog.CRITICAL)
+            QgsMessageLog.logMessage('Some error ocurred getting tables: ' + str(e.args), 'CartoDB Plugin', QgsMessageLog.CRITICAL)
             QMessageBox.information(self, self.tr('Error'), self.tr('Error getting tables'), QMessageBox.Ok)
-            self.ui.tablesList.clear()
+            self.ui.tablesTree.clear()
 
     def testQuery(self):
         self.ui.bar.clearWidgets()

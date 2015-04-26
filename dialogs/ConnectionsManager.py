@@ -84,11 +84,14 @@ class CartoDBConnectionsManager(QDialog):
         # Modify existing connection.
         currentText = self.ui.connectionList.currentText()
         apiKey = self.settings.value('/CartoDBPlugin/%s/api' % currentText)
+        multiuser = self.settings.value('/CartoDBPlugin/%s/multiuser' % currentText, False)
+        QgsMessageLog.logMessage('Multiuser:' + str(multiuser) + ' - ' + str(bool(multiuser)), 'CartoDB Plugin', QgsMessageLog.INFO)
 
         conEdit = CartoDBNewConnectionDialog(currentText)
         conEdit.setWindowTitle(self.tr('Edit CartoDB Connection'))
         conEdit.ui.userTX.setText(currentText)
         conEdit.ui.apiKeyTX.setText(apiKey)
+        conEdit.ui.multiuserCH.setChecked(str(multiuser) in ['true', '1', 'True'])
         result = conEdit.exec_()
 
         if result == QDialog.Accepted:

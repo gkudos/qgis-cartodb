@@ -50,6 +50,7 @@ class CartoDBPluginDialog(CartoDBConnectionsManager):
 
         self.currentUser = None
         self.currentApiKey = None
+        self.currentMultiuser = None
 
     def setTablesListItems(self, tables):
         self.ui.tablesList.clear()
@@ -64,11 +65,27 @@ class CartoDBPluginDialog(CartoDBConnectionsManager):
         # Get tables from CartoDB.
         self.currentUser = self.ui.connectionList.currentText()
         self.currentApiKey = self.settings.value('/CartoDBPlugin/%s/api' % self.currentUser)
+        self.currentMultiuser = self.settings.value('/CartoDBPlugin/%s/multiuser' % self.currentUser, False)
 
         cl = CartoDBAPIKey(self.currentApiKey, self.currentUser)
 
         try:
-            res = cl.sql("SELECT CDB_UserTables() order by 1")
+            if not self.currentMultiuser:
+                res = cl.sql("SELECT CDB_UserTables() order by 1")
+            else:
+                res = cl.sql(
+                    "SELECT string_agg(privilege_type, ', ') AS privileges, table_schema, table_name as cdb_usertables \
+                        FROM information_schema.role_table_grants tg \
+                        JOIN ( \
+                            SELECT DISTINCT u.usename \
+                            FROM information_schema.tables t \
+                            JOIN pg_catalog.pg_class c ON (t.table_name = c.relname) \
+                            JOIN pg_catalog.pg_user u ON (c.relowner = u.usesysid) \
+                            WHERE t.table_schema = '" + self.currentUser + "') u ON u.usename = tg.grantee \
+                    WHERE table_schema NOT IN ('pg_catalog', 'information_schema', 'cartodb', 'public', 'cdb_importer') \
+                    GROUP BY table_schema, table_name \
+                    ORDER BY table_schema, table_name")
+
             self.tables = []
             items = []
             for table in res['rows']:

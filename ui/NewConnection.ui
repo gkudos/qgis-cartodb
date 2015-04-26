@@ -73,6 +73,13 @@
      <item row="1" column="1">
       <widget class="QLineEdit" name="apiKeyTX"/>
      </item>
+     <item row="2" column="0">
+      <widget class="QCheckBox" name="multiuserCH">
+       <property name="text">
+        <string>Multiuser Account?</string>
+       </property>
+      </widget>
+     </item>
     </layout>
    </item>
    <item>
