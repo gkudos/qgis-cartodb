@@ -9,6 +9,8 @@ author=Kudos Ltda. and contributors
 email=michaelsalgado@gkudos.com
 changelog=0.1.2
   - Filter tables by name.
+  - Indicate READ_ONLY tables for multiuser accounts.
+  - Fix error at multiusers accounts.
   0.1.1
   - Load cartodb layers from SQL Queries.
   - New connection dialog is now a modal window.
@@ -24,5 +26,5 @@ tags=cartodb,OSM,tiles,kudos
 homepage=https://github.com/gkudos/qgis-cartodb
 tracker=https://github.com/gkudos/qgis-cartodb/issues
 repository=https://github.com/gkudos/qgis-cartodb
-experimental=False
+experimental=True
 deprecated=False

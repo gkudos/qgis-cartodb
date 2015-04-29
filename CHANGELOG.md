@@ -4,6 +4,11 @@
 #### New Features
 
 * Filter tables by name. Fix #4
+* Indicate READ_ONLY tables for multiuser accounts.
+
+#### Fixes.
+
+* Fix error at multiusers accounts #15
 
 
 <a name="0.1.1"></a>

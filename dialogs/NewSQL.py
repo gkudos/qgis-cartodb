@@ -117,32 +117,38 @@ class CartoDBNewSQLDialog(CartoDBConnectionsManager):
 
         self.ui.testBT.setEnabled(True)
 
-        if not str(self.currentMultiuser) in ['true', '1', 'True']:
-            sqlTables = "SELECT CDB_UserTables() table_name"
-        else:
-            sqlTables = "SELECT string_agg(privilege_type, ', ') AS privileges, table_schema, table_name \
-                            FROM information_schema.role_table_grants tg \
-                            JOIN ( \
-                                SELECT DISTINCT u.usename \
-                                FROM information_schema.tables t \
-                                JOIN pg_catalog.pg_class c ON (t.table_name = c.relname) \
-                                JOIN pg_catalog.pg_user u ON (c.relowner = u.usesysid) \
-                                WHERE t.table_schema = '" + self.currentUser + "') u ON u.usename = tg.grantee \
-                        WHERE table_schema NOT IN ('pg_catalog', 'information_schema', 'cartodb', 'public', 'cdb_importer') \
-                        GROUP BY table_schema, table_name \
-                        ORDER BY table_schema, table_name"
-
         cl = CartoDBAPIKey(self.currentApiKey, self.currentUser)
-
         try:
-            res = cl.sql(
-                "SELECT *, CDB_ColumnType(table_name, column_name) column_type \
-                    FROM ( \
-                        SELECT *, CDB_ColumnNames(table_name) column_name \
-                            FROM (" + sqlTables + ") t1 \
-                    ) t2 \
-                    WHERE CDB_ColumnType(table_name, column_name) != 'USER-DEFINED' \
-                    ORDER BY table_name, column_name")
+            if not str(self.currentMultiuser) in ['true', '1', 'True']:
+                sqlTables = "SELECT CDB_UserTables() table_name"
+                res = cl.sql(
+                    "SELECT *, CDB_ColumnType(table_name, column_name) column_type \
+                        FROM ( \
+                            SELECT *, CDB_ColumnNames(table_name) column_name \
+                                FROM (" + sqlTables + ") t1 \
+                        ) t2 \
+                        WHERE CDB_ColumnType(table_name, column_name) != 'USER-DEFINED' \
+                        ORDER BY table_name, column_name")
+            else:
+                sqlTables = "SELECT string_agg(privilege_type, ', ') AS privileges, table_schema, table_name \
+                                FROM information_schema.role_table_grants tg \
+                                JOIN ( \
+                                    SELECT DISTINCT u.usename \
+                                    FROM information_schema.tables t \
+                                    JOIN pg_catalog.pg_class c ON (t.table_name = c.relname) \
+                                    JOIN pg_catalog.pg_user u ON (c.relowner = u.usesysid) \
+                                    WHERE t.table_schema = '" + self.currentUser + "') u ON u.usename = tg.grantee \
+                            WHERE table_schema NOT IN ('pg_catalog', 'information_schema', 'cartodb', 'public', 'cdb_importer') \
+                            GROUP BY table_schema, table_name \
+                            ORDER BY table_schema, table_name"
+                res = cl.sql(
+                    "WITH usertables AS (" + sqlTables + ") \
+                     SELECT ut.table_name, c.column_name, c.data_type column_type, ut.privileges \
+                        FROM usertables ut \
+                        JOIN information_schema.columns c ON c.table_name = ut.table_name \
+                     WHERE c.data_type != 'USER-DEFINED' \
+                     ORDER BY ut.table_name, c.column_name")
+
             tables = []
             oldTableName = None
             parentTableItem = None
@@ -153,10 +159,14 @@ class CartoDBNewSQLDialog(CartoDBConnectionsManager):
                     oldTableName = table['table_name']
                     parentTableItem.setText(0, self.tr(oldTableName))
                     parentTableItem.setIcon(0, QIcon(":/plugins/qgis-cartodb/images/icons/layers.png"))
+                    if str(self.currentMultiuser) in ['true', '1', 'True'] and table['privileges'] == 'SELECT':
+                        parentTableItem.setTextColor(0, QColor('#999999'))
                     tables.append(parentTableItem)
 
                 tableItem = QTreeWidgetItem(parentTableItem)
                 tableItem.setText(0, self.tr(table['column_name']))
+                if str(self.currentMultiuser) in ['true', '1', 'True'] and table['privileges'] == 'SELECT':
+                    tableItem.setTextColor(0, QColor('#999999'))
                 tableItem.setToolTip(0, self.tr(table['column_type']))
                 tableItem.setIcon(0, QIcon(":/plugins/qgis-cartodb/images/icons/text.png"))
                 if table['column_type'] == 'integer' or table['column_type'] == 'double precision':

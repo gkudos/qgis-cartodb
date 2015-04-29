@@ -19,7 +19,7 @@ email                : michaelsalgado@gkudos.com, info@gkudos.com
  ***************************************************************************/
 """
 from PyQt4.QtCore import QSettings
-from PyQt4.QtGui import QDialog, QMessageBox, QListWidgetItem, QIcon
+from PyQt4.QtGui import QDialog, QMessageBox, QListWidgetItem, QIcon, QColor
 
 from qgis.core import QgsMessageLog
 
@@ -86,15 +86,8 @@ class CartoDBPluginDialog(CartoDBConnectionsManager):
                     GROUP BY table_schema, table_name \
                     ORDER BY table_schema, table_name")
 
-            self.tables = []
-            items = []
-            for table in res['rows']:
-                item = QListWidgetItem()
-                item.setText(table['cdb_usertables'])
-                item.setIcon(QIcon(":/plugins/qgis-cartodb/images/icons/layers.png"))
-                self.tables.append(table['cdb_usertables'])
-                items.append(item)
-            self.setTablesListItems(items)
+            self.tables = res['rows']
+            self.updateList(self.tables)
             self.settings.setValue('/CartoDBPlugin/selected', self.currentUser)
             self.ui.searchTX.setEnabled(True)
         except CartoDBException as e:
@@ -108,11 +101,16 @@ class CartoDBPluginDialog(CartoDBConnectionsManager):
         if text == '':
             newTables = self.tables
         else:
-            newTables = [t for t in self.tables if text in t]
+            newTables = [t for t in self.tables if text in t['cdb_usertables']]
+        self.updateList(newTables)
+
+    def updateList(self, tables):
         items = []
-        for table in newTables:
+        for table in tables:
             item = QListWidgetItem()
-            item.setText(table)
+            item.setText(table['cdb_usertables'])
+            if str(self.currentMultiuser) in ['true', '1', 'True'] and table['privileges'] == 'SELECT':
+                item.setTextColor(QColor('#999999'))
             item.setIcon(QIcon(":/plugins/qgis-cartodb/images/icons/layers.png"))
             items.append(item)
         self.setTablesListItems(items)
