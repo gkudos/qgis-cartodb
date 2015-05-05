@@ -18,12 +18,12 @@ email                : michaelsalgado@gkudos.com, info@gkudos.com
  *                                                                         *
  ***************************************************************************/
 """
-from PyQt4.QtCore import QSettings
+from PyQt4.QtCore import QSettings, pyqtSlot
 from PyQt4.QtGui import QDialog, QMessageBox, QListWidgetItem, QIcon, QColor
 
 from qgis.core import QgsMessageLog
 
-from QgisCartoDB.cartodb import CartoDBAPIKey, CartoDBException
+from QgisCartoDB.cartodb import CartoDBAPIKey, CartoDBException, CartoDBApi
 from QgisCartoDB.dialogs.ConnectionsManager import CartoDBConnectionsManager
 from QgisCartoDB.dialogs.NewConnection import CartoDBNewConnectionDialog
 from QgisCartoDB.ui.UI_CartoDBPlugin import Ui_CartoDBPlugin
@@ -68,6 +68,8 @@ class CartoDBPluginDialog(CartoDBConnectionsManager):
         self.currentMultiuser = self.settings.value('/CartoDBPlugin/%s/multiuser' % self.currentUser, False)
 
         cl = CartoDBAPIKey(self.currentApiKey, self.currentUser)
+
+        self.getUserData(self.currentUser, self.currentApiKey, self.currentMultiuser)
 
         try:
             if not str(self.currentMultiuser) in ['true', '1', 'True']:
@@ -119,3 +121,12 @@ class CartoDBPluginDialog(CartoDBConnectionsManager):
         self.ui.connectBT.setEnabled(found)
         self.ui.deleteConnectionBT.setEnabled(found)
         self.ui.editConnectionBT.setEnabled(found)
+
+    def getUserData(self, cartodbUser, apiKey, multiuser=False):
+        cartoDBApi = CartoDBApi(cartodbUser, apiKey, multiuser)
+        cartoDBApi.fetchContent.connect(self.cbUserData)
+        cartoDBApi.getUserDetails()
+
+    @pyqtSlot(str)
+    def cbUserData(self, data):
+        QgsMessageLog.logMessage('User data: ' + str(data), 'CartoDB Plugin', QgsMessageLog.CRITICAL)

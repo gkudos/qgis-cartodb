@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>538</width>
-    <height>337</height>
+    <height>401</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -65,7 +65,7 @@
     </layout>
    </item>
    <item>
-    <layout class="QHBoxLayout" name="horizontalLayout">
+    <layout class="QHBoxLayout" name="searchLayout">
      <item>
       <widget class="QLineEdit" name="searchTX">
        <property name="enabled">
@@ -104,9 +104,6 @@
       </widget>
      </item>
     </layout>
-   </item>
-   <item>
-    <layout class="QHBoxLayout" name="searchLayout"/>
    </item>
    <item>
     <widget class="QListWidget" name="tablesList">

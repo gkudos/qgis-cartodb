@@ -62,3 +62,6 @@ ui/*.py
 
 # Resources Compiled files
 resources.py
+
+# Config File for tests
+config.py
