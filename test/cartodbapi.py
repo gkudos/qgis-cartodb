@@ -8,6 +8,8 @@ from PyQt4.QtCore import QObject, QEventLoop, pyqtSlot
 from PyQt4.QtGui import QApplication
 from cartodb.cartodbapi import CartoDBApi
 
+import json
+
 _instance = None
 
 
@@ -18,7 +20,10 @@ class SignalsObject(QObject):
 
     @pyqtSlot(str)
     def cb_show_user_data(self, data):
-        self.test.logger.debug("Trajo contenido: " + data)
+        self.test.logger.debug("*******************************************************************************")
+        self.test.logger.debug("Trajo contenido: " + json.dumps(data, sort_keys=True, indent=2, separators=(',', ': ')))
+        self.test.logger.debug("*******************************************************************************")
+        self.test.assertTrue(data['username'] == cartodb_user)
 
 
 class UsesQApplication(unittest.TestCase):
@@ -65,7 +70,7 @@ class CartoDBApiTest(UsesQApplication):
         cartodbApi = CartoDBApi(cartodb_user, api_key, True)
         cartodbApi.fetchContent.connect(self.signalsObject.cb_show_user_data)
         cartodbApi.getUserDetails()
-        self.assertTrue(True)
+
 
 
 if __name__ == '__main__':

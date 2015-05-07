@@ -18,8 +18,9 @@ email                : michaelsalgado@gkudos.com, info@gkudos.com
  *                                                                         *
  ***************************************************************************/
 """
-from PyQt4.QtCore import QSettings, pyqtSlot
-from PyQt4.QtGui import QDialog, QMessageBox, QListWidgetItem, QIcon, QColor
+from PyQt4.QtCore import QSettings, QUrl, QEventLoop, pyqtSlot, Qt, QBuffer
+from PyQt4.QtGui import QDialog, QMessageBox, QListWidgetItem, QIcon, QColor, QImage, QPixmap, QImageReader
+from PyQt4.QtNetwork import QNetworkAccessManager, QNetworkRequest, QNetworkReply
 
 from qgis.core import QgsMessageLog
 
@@ -127,6 +128,31 @@ class CartoDBPluginDialog(CartoDBConnectionsManager):
         cartoDBApi.fetchContent.connect(self.cbUserData)
         cartoDBApi.getUserDetails()
 
-    @pyqtSlot(str)
+    @pyqtSlot(dict)
     def cbUserData(self, data):
-        QgsMessageLog.logMessage('User data: ' + str(data), 'CartoDB Plugin', QgsMessageLog.CRITICAL)
+        self.currentUserData = data
+
+        QgsMessageLog.logMessage('User avatar: ' + data['avatar_url'], 'CartoDB Plugin', QgsMessageLog.CRITICAL)
+
+        self.ui.nameLB.setText(data['username'])
+        manager = QNetworkAccessManager()
+        manager.finished.connect(self.returnAvatar)
+        imageUrl = QUrl('http:' + data['avatar_url'])
+        request = QNetworkRequest(imageUrl)
+        reply = manager.get(request)
+        loop = QEventLoop()
+        reply.finished.connect(loop.exit)
+        loop.exec_()
+
+    def returnAvatar(self, reply):
+        QgsMessageLog.logMessage('User avatar: ' + str(reply.readAll()), 'CartoDB Plugin', QgsMessageLog.CRITICAL)
+        imageReader = QImageReader(QBuffer(self), reply.readAll())
+        # imageReader.setAutoDetectImageFormat(False)
+        image = imageReader.read()
+
+        lbl = self.ui.avatarLB
+        pixMap = QPixmap.fromImage(image).scaled(lbl.size(), Qt.KeepAspectRatio)
+        lbl.setPixmap(pixMap)
+        pixMap.save('/home/elesdoar/image.png')
+        # lbl.setText("")
+        lbl.show()

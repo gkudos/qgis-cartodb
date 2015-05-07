@@ -2,11 +2,14 @@ from PyQt4.QtCore import QObject, QUrl, qDebug, QEventLoop, pyqtSignal
 
 from PyQt4.QtNetwork import QNetworkAccessManager, QNetworkRequest, QNetworkReply
 
-from json import loads
+try:
+    import json
+except ImportError:
+    import simplejson as json
 
 
 class CartoDBApi(QObject):
-    fetchContent = pyqtSignal(str)
+    fetchContent = pyqtSignal(dict)
 
     def __init__(self, cartodbUser, apiKey, multiuser=False, hostname='cartodb.com'):
         QObject.__init__(self)
@@ -35,4 +38,4 @@ class CartoDBApi(QObject):
         loop.exec_()
 
     def returnFetchContent(self, reply):
-        self.fetchContent.emit(str(reply.readAll()))
+        self.fetchContent.emit(json.loads(str(reply.readAll())))
