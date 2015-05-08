@@ -86,6 +86,14 @@ Click on the icon: ![Icon](images/add_sql.png?raw=true "Icon") or on the web men
 
 ![Dialog 3](images/sql_dialog.png?raw=true "Adding SQL layer")
 
+## Testing
+
+Open a terminal and execute into project folder:
+
+``` bash
+python setup.py test
+```
+
 ## Dependencies
 
 * [CartoDB](https://github.com/Vizzuality/cartodb-python)

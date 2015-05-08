@@ -1,15 +1,16 @@
 <a name="0.1.2"></a>
-### 0.1.2 (2015-04-06)
+### 0.1.2 (2015-05-07)
 
 #### New Features
 
 * Filter tables by name. Fix #4
 * Indicate READ_ONLY tables for multiuser accounts.
+* Add unit test to project.
+* Add user information at main dialog.
 
 #### Fixes.
 
 * Fix error at multiusers accounts #15
-
 
 <a name="0.1.1"></a>
 ### 0.1.1 (2014-11-27)
