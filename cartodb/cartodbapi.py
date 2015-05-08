@@ -2,6 +2,8 @@ from PyQt4.QtCore import QObject, QUrl, qDebug, QEventLoop, pyqtSignal
 
 from PyQt4.QtNetwork import QNetworkAccessManager, QNetworkRequest, QNetworkReply
 
+import urllib
+
 try:
     import json
 except ImportError:
@@ -26,11 +28,38 @@ class CartoDBApi(QObject):
         self.manager = QNetworkAccessManager()
         self.manager.finished.connect(self.returnFetchContent)
 
-    def getUserDetails(self):
-        url = QUrl(self.apiUrl + "users/{}/?api_key={}".format(self.cartodbUser, self.apiKey))
+    def _getRequest(self, url):
         request = QNetworkRequest(url)
         request.setRawHeader("Content-Type", "application/json")
         request.setRawHeader('User-Agent', 'QGIS 2.x')
+        return request
+
+    def getUserDetails(self):
+        url = QUrl(self.apiUrl + "users/{}/?api_key={}".format(self.cartodbUser, self.apiKey))
+        request = self._getRequest(url)
+
+        reply = self.manager.get(request)
+        loop = QEventLoop()
+        reply.finished.connect(loop.exit)
+        loop.exec_()
+
+    def getUserTables(self):
+        payload = {
+            'tag_name': '',
+            'q': '',
+            'page': '1',
+            'type': '',
+            'exclude_shared': 'false',
+            'per_page': '20',
+            'tags': '',
+            'shared': 'no',
+            'locked': 'false',
+            'only_liked': 'false',
+            'order': 'updated_at',
+            'types': 'table'
+        }
+        url = QUrl(self.apiUrl + "viz?api_key={}&{}".format(self.apiKey, urllib.urlencode(payload)))
+        request = self._getRequest(url)
 
         reply = self.manager.get(request)
         loop = QEventLoop()

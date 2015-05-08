@@ -18,12 +18,19 @@ class SignalsObject(QObject):
         QObject.__init__(self)
         self.test = test
 
-    @pyqtSlot(str)
+    @pyqtSlot(dict)
     def cb_show_user_data(self, data):
         self.test.logger.debug("*******************************************************************************")
-        self.test.logger.debug("Trajo contenido: " + json.dumps(data, sort_keys=True, indent=2, separators=(',', ': ')))
+        self.test.logger.debug("User data loaded: " + json.dumps(data, sort_keys=True, indent=2, separators=(',', ': ')))
         self.test.logger.debug("*******************************************************************************")
         self.test.assertTrue(data['username'] == cartodb_user)
+
+    @pyqtSlot(dict)
+    def cb_show_user_tables(self, data):
+        self.test.logger.debug("*******************************************************************************")
+        self.test.logger.debug("User tables loaded: " + json.dumps(data, sort_keys=True, indent=2, separators=(',', ': ')))
+        self.test.logger.debug("*******************************************************************************")
+        self.test.assertTrue(True)
 
 
 class UsesQApplication(unittest.TestCase):
@@ -66,11 +73,20 @@ class CartoDBApiTest(UsesQApplication):
         super(CartoDBApiTest, self).tearDown()
 
     def test_show_user_data(self):
+        self.logger.debug("*******************************************************************************")
         self.logger.debug('\nTest get user details for: ' + cartodb_user)
-        cartodbApi = CartoDBApi(cartodb_user, api_key, True)
+        self.logger.debug("*******************************************************************************")
+        cartodbApi = CartoDBApi(cartodb_user, api_key, is_multiuser)
         cartodbApi.fetchContent.connect(self.signalsObject.cb_show_user_data)
         cartodbApi.getUserDetails()
 
+    def test_show_user_tables(self):
+        self.logger.debug("*******************************************************************************")
+        self.logger.debug('\nTest get user tables for: ' + cartodb_user)
+        self.logger.debug("*******************************************************************************")
+        cartodbApi = CartoDBApi(cartodb_user, api_key, is_multiuser)
+        cartodbApi.fetchContent.connect(self.signalsObject.cb_show_user_tables)
+        cartodbApi.getUserTables()
 
 
 if __name__ == '__main__':

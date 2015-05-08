@@ -18,7 +18,7 @@ email                : michaelsalgado@gkudos.com, info@gkudos.com
  *                                                                         *
  ***************************************************************************/
 """
-from PyQt4.QtCore import QSettings, QUrl, QEventLoop, pyqtSlot, Qt, QBuffer
+from PyQt4.QtCore import QSettings, QUrl, QEventLoop, pyqtSlot, Qt, qDebug
 from PyQt4.QtGui import QDialog, QMessageBox, QListWidgetItem, QIcon, QColor, QImage, QPixmap, QImageReader
 from PyQt4.QtNetwork import QNetworkAccessManager, QNetworkRequest, QNetworkReply
 
@@ -32,6 +32,7 @@ from QgisCartoDB.ui.UI_CartoDBPlugin import Ui_CartoDBPlugin
 import QgisCartoDB.resources
 
 import copy
+import math
 
 
 # Create the dialog for CartoDBPlugin
@@ -131,28 +132,50 @@ class CartoDBPluginDialog(CartoDBConnectionsManager):
     @pyqtSlot(dict)
     def cbUserData(self, data):
         self.currentUserData = data
-
-        QgsMessageLog.logMessage('User avatar: ' + data['avatar_url'], 'CartoDB Plugin', QgsMessageLog.CRITICAL)
-
-        self.ui.nameLB.setText(data['username'])
         manager = QNetworkAccessManager()
         manager.finished.connect(self.returnAvatar)
-        imageUrl = QUrl('http:' + data['avatar_url'])
+
+        if 's3.amazonaws.com' in data['avatar_url']:
+            imageUrl = QUrl(data['avatar_url'])
+        else:
+            imageUrl = QUrl('http:' + data['avatar_url'])
+
         request = QNetworkRequest(imageUrl)
+        request.setRawHeader('User-Agent', 'QGIS 2.x')
         reply = manager.get(request)
         loop = QEventLoop()
         reply.finished.connect(loop.exit)
         loop.exec_()
 
+    def setUpUserData(self):
+        usedQuota = (float(self.currentUserData['quota_in_bytes']) - float(self.currentUserData['remaining_byte_quota']))/1024/1024
+        quota = float(self.currentUserData['quota_in_bytes'])/1024/1024
+
+        self.ui.remainingBar.setValue(math.ceil(usedQuota/quota*100))
+
+        if usedQuota >= 1000:
+            usedQuota = "{:.2f}".format(usedQuota/1024) + ' GB'
+        else:
+            usedQuota = "{:.2f}".format(usedQuota) + ' MB'
+
+        if quota >= 1000:
+            quota = "{:.2f}".format(quota/1024) + ' GB'
+        else:
+            quota = "{:.2f}".format(quota) + ' MB'
+
+        self.ui.nameLB.setText(self.currentUserData['username'] + ', using ' + usedQuota + ' of ' + quota)
+
     def returnAvatar(self, reply):
-        QgsMessageLog.logMessage('User avatar: ' + str(reply.readAll()), 'CartoDB Plugin', QgsMessageLog.CRITICAL)
-        imageReader = QImageReader(QBuffer(self), reply.readAll())
-        # imageReader.setAutoDetectImageFormat(False)
+        imageReader = QImageReader(reply)
         image = imageReader.read()
 
         lbl = self.ui.avatarLB
-        pixMap = QPixmap.fromImage(image).scaled(lbl.size(), Qt.KeepAspectRatio)
-        lbl.setPixmap(pixMap)
-        pixMap.save('/home/elesdoar/image.png')
-        # lbl.setText("")
-        lbl.show()
+        if reply.error() == QNetworkReply.NoError:
+            pixMap = QPixmap.fromImage(image).scaled(lbl.size(), Qt.KeepAspectRatio)
+            lbl.setPixmap(pixMap)
+            lbl.show()
+        else:
+            # TODO Put default image if not load from URL.
+            pass
+
+        self.setUpUserData()
