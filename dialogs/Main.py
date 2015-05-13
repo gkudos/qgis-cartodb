@@ -47,12 +47,16 @@ class CartoDBPluginDialog(CartoDBConnectionsManager):
         self.ui.newConnectionBT.clicked.connect(self.openNewConnectionDialog)
         self.ui.editConnectionBT.clicked.connect(self.editConnectionDialog)
         self.ui.deleteConnectionBT.clicked.connect(self.deleteConnectionDialog)
-        self.ui.connectBT.clicked.connect(self.findTables)
+        self.ui.connectBT.clicked.connect(self.connect)
         self.ui.searchTX.textChanged.connect(self.filterTables)
+        self.ui.tablesList.verticalScrollBar().valueChanged.connect(self.onScroll)
 
         self.currentUser = None
         self.currentApiKey = None
         self.currentMultiuser = None
+
+        self.isLoadingTables = False
+        self.noLoadTables = False
 
     def setTablesListItems(self, tables):
         self.ui.tablesList.clear()
@@ -63,16 +67,19 @@ class CartoDBPluginDialog(CartoDBConnectionsManager):
     def getTablesListSelectedItems(self):
         return self.ui.tablesList.selectedItems()
 
-    def findTables(self):
+    def connect(self):
         # Get tables from CartoDB.
         self.currentUser = self.ui.connectionList.currentText()
         self.currentApiKey = self.settings.value('/CartoDBPlugin/%s/api' % self.currentUser)
         self.currentMultiuser = self.settings.value('/CartoDBPlugin/%s/multiuser' % self.currentUser, False)
 
-        cl = CartoDBAPIKey(self.currentApiKey, self.currentUser)
-
+        self.tablesPage = 1
+        self.noLoadTables = False
+        self.ui.searchTX.setText('')
+        self.getTables(self.currentUser, self.currentApiKey, self.currentMultiuser)
         self.getUserData(self.currentUser, self.currentApiKey, self.currentMultiuser)
 
+        '''
         try:
             if not str(self.currentMultiuser) in ['true', '1', 'True']:
                 res = cl.sql("SELECT CDB_UserTables() order by 1")
@@ -99,22 +106,30 @@ class CartoDBPluginDialog(CartoDBConnectionsManager):
             QMessageBox.information(self, self.tr('Error'), self.tr('Error getting tables'), QMessageBox.Ok)
             self.ui.tablesList.clear()
             self.ui.searchTX.setEnabled(False)
+        '''
 
     def filterTables(self):
         text = self.ui.searchTX.text()
         if text == '':
-            newTables = self.tables
+            newVisualizations = self.visualizations
         else:
-            newTables = [t for t in self.tables if text in t['cdb_usertables']]
-        self.updateList(newTables)
+            newVisualizations = [t for t in self.visualizations if text in t['name']]
+        self.updateList(newVisualizations)
 
-    def updateList(self, tables):
+    def updateList(self, visualizations):
         items = []
-        for table in tables:
+        for visualization in visualizations:
             item = QListWidgetItem()
-            item.setText(table['cdb_usertables'])
-            if str(self.currentMultiuser) in ['true', '1', 'True'] and table['privileges'] == 'SELECT':
+            item.setText(visualization['name'])
+            readonly = False
+            if visualization['permission'] is not None and visualization['permission']['acl'] is not None:
+                for acl in visualization['permission']['acl']:
+                    if acl['type'] == 'user' and acl['entity']['username'] == self.currentUser and acl['access'] == 'r':
+                        readonly = True
+                        break
+            if readonly:
                 item.setTextColor(QColor('#999999'))
+
             item.setIcon(QIcon(":/plugins/qgis-cartodb/images/icons/layers.png"))
             items.append(item)
         self.setTablesListItems(items)
@@ -146,6 +161,30 @@ class CartoDBPluginDialog(CartoDBConnectionsManager):
         loop = QEventLoop()
         reply.finished.connect(loop.exit)
         loop.exec_()
+
+    def getTables(self, cartodbUser, apiKey, multiuser=False):
+        cartoDBApi = CartoDBApi(cartodbUser, apiKey, multiuser)
+        cartoDBApi.fetchContent.connect(self.cbTables)
+        self.isLoadingTables = True
+        cartoDBApi.getUserTables(self.tablesPage)
+
+    @pyqtSlot(dict)
+    def cbTables(self, data):
+        self.totalTables = data['total_user_entries']
+        self.totalShared = data['total_shared']
+
+        if len(data['visualizations']) == 0:
+            self.noLoadTables = True
+
+        if self.tablesPage == 1:
+            self.visualizations = data['visualizations']
+        else:
+            self.visualizations.extend(data['visualizations'])
+
+        self.updateList(self.visualizations)
+        self.settings.setValue('/CartoDBPlugin/selected', self.currentUser)
+        self.ui.searchTX.setEnabled(True)
+        self.isLoadingTables = False
 
     def setUpUserData(self):
         usedQuota = (float(self.currentUserData['quota_in_bytes']) - float(self.currentUserData['remaining_byte_quota']))/1024/1024
@@ -179,3 +218,9 @@ class CartoDBPluginDialog(CartoDBConnectionsManager):
             pass
 
         self.setUpUserData()
+
+    def onScroll(self, val):
+        maximum = self.ui.tablesList.verticalScrollBar().maximum()
+        if val >= maximum - 4 and not self.isLoadingTables and not self.noLoadTables:
+            self.tablesPage = self.tablesPage + 1
+            self.getTables(self.currentUser, self.currentApiKey, self.currentMultiuser)

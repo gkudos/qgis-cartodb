@@ -73,17 +73,17 @@ class CartoDBApiTest(UsesQApplication):
         super(CartoDBApiTest, self).tearDown()
 
     def test_show_user_data(self):
-        self.logger.debug("*******************************************************************************")
+        self.logger.debug("\n*******************************************************************************")
         self.logger.debug('\nTest get user details for: ' + cartodb_user)
-        self.logger.debug("*******************************************************************************")
+        self.logger.debug("\n*******************************************************************************")
         cartodbApi = CartoDBApi(cartodb_user, api_key, is_multiuser)
         cartodbApi.fetchContent.connect(self.signalsObject.cb_show_user_data)
         cartodbApi.getUserDetails()
 
     def test_show_user_tables(self):
-        self.logger.debug("*******************************************************************************")
+        self.logger.debug("\n*******************************************************************************")
         self.logger.debug('\nTest get user tables for: ' + cartodb_user)
-        self.logger.debug("*******************************************************************************")
+        self.logger.debug("\n*******************************************************************************")
         cartodbApi = CartoDBApi(cartodb_user, api_key, is_multiuser)
         cartodbApi.fetchContent.connect(self.signalsObject.cb_show_user_tables)
         cartodbApi.getUserTables()

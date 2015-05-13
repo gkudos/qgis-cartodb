@@ -43,19 +43,19 @@ class CartoDBApi(QObject):
         reply.finished.connect(loop.exit)
         loop.exec_()
 
-    def getUserTables(self):
+    def getUserTables(self, page=1, per_page=20, shared='yes'):
         payload = {
             'tag_name': '',
             'q': '',
-            'page': '1',
+            'page': page,
             'type': '',
             'exclude_shared': 'false',
-            'per_page': '20',
+            'per_page': per_page,
             'tags': '',
-            'shared': 'no',
+            'shared': shared,
             'locked': 'false',
             'only_liked': 'false',
-            'order': 'updated_at',
+            'order': 'name',
             'types': 'table'
         }
         url = QUrl(self.apiUrl + "viz?api_key={}&{}".format(self.apiKey, urllib.urlencode(payload)))

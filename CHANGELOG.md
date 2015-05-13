@@ -7,6 +7,8 @@
 * Indicate READ_ONLY tables for multiuser accounts.
 * Add unit test to project.
 * Add user information at main dialog.
+* Load Tables from viz API.
+* Paginate tables on scroll.
 
 #### Fixes.
 

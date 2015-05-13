@@ -11,6 +11,8 @@ changelog=0.1.2
   - Filter tables by name.
   - Indicate READ_ONLY tables for multiuser accounts.
   - Add user information at main dialog.
+  - Load Tables from viz API.
+  - Paginate tables on scroll.
   - Fix error at multiusers accounts.
   0.1.1
   - Load cartodb layers from SQL Queries.
