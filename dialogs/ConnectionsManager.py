@@ -32,11 +32,12 @@ class CartoDBConnectionsManager(QDialog):
 
     def populateConnectionList(self):
         # Populate connections saved.
-        self.settings.beginGroup('/CartoDBPlugin/')
-        self.ui.connectionList.clear()
-        self.ui.connectionList.addItems(self.settings.childGroups())
-        self.settings.endGroup()
-        self.setConnectionListPosition()
+        if self.ui is not None:
+            self.settings.beginGroup('/CartoDBPlugin/')
+            self.ui.connectionList.clear()
+            self.ui.connectionList.addItems(self.settings.childGroups())
+            self.settings.endGroup()
+            self.setConnectionListPosition()
 
     def setConnectionListPosition(self):
         # Set the current index to the selected connection.

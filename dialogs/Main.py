@@ -37,17 +37,18 @@ import math
 
 # Create the dialog for CartoDBPlugin
 class CartoDBPluginDialog(CartoDBConnectionsManager):
-    def __init__(self):
+    def __init__(self, toolbar):
         CartoDBConnectionsManager.__init__(self)
+        self.toolbar = toolbar
         self.settings = QSettings()
         # Set up the user interface from Designer.
         self.ui = Ui_CartoDBPlugin()
         self.ui.setupUi(self)
-        self.populateConnectionList()
+        # self.populateConnectionList()
         self.ui.newConnectionBT.clicked.connect(self.openNewConnectionDialog)
         self.ui.editConnectionBT.clicked.connect(self.editConnectionDialog)
         self.ui.deleteConnectionBT.clicked.connect(self.deleteConnectionDialog)
-        self.ui.connectBT.clicked.connect(self.connect)
+        # self.ui.connectBT.clicked.connect(self.connect)
         self.ui.searchTX.textChanged.connect(self.filterTables)
         self.ui.tablesList.verticalScrollBar().valueChanged.connect(self.onScroll)
 
@@ -69,7 +70,7 @@ class CartoDBPluginDialog(CartoDBConnectionsManager):
 
     def connect(self):
         # Get tables from CartoDB.
-        self.currentUser = self.ui.connectionList.currentText()
+        self.currentUser = self.toolbar.connectionList.currentText()
         self.currentApiKey = self.settings.value('/CartoDBPlugin/%s/api' % self.currentUser)
         self.currentMultiuser = self.settings.value('/CartoDBPlugin/%s/multiuser' % self.currentUser, False)
 
@@ -224,3 +225,7 @@ class CartoDBPluginDialog(CartoDBConnectionsManager):
         if val >= maximum - 4 and not self.isLoadingTables and not self.noLoadTables:
             self.tablesPage = self.tablesPage + 1
             self.getTables(self.currentUser, self.currentApiKey, self.currentMultiuser)
+
+    def showEvent(self, event):
+        super(CartoDBPluginDialog, self).showEvent(event)
+        self.connect()

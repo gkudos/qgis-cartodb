@@ -31,6 +31,7 @@ from cartodb import CartoDBAPIKey, CartoDBException
 from QgisCartoDB.dialogs.Main import CartoDBPluginDialog
 from QgisCartoDB.dialogs.NewSQL import CartoDBNewSQLDialog
 from QgisCartoDB.layers import CartoDBLayer, CartoDBPluginLayer, CartoDBPluginLayerType
+from QgisCartoDB.toolbars import CartoDBToolbar
 
 import os.path
 import shutil
@@ -71,6 +72,9 @@ class CartoDBPlugin(QObject):
         QObject.connect(self._mainAction, SIGNAL("activated()"), self.run)
         QObject.connect(self._addSQLAction, SIGNAL("activated()"), self.addSQL)
 
+        self.toolbar = CartoDBToolbar()
+        self.toolbarAction = self.iface.addWebToolBarWidget(self.toolbar)
+
         self._cdbMenu.addAction(self._mainAction)
         self._cdbMenu.addAction(self._addSQLAction)
         self.iface.addWebToolBarIcon(self._mainAction)
@@ -91,6 +95,7 @@ class CartoDBPlugin(QObject):
         self.iface.removeWebToolBarIcon(self._mainAction)
         self.iface.removeWebToolBarIcon(self._addSQLAction)
         self.iface.webMenu().removeAction(self._cdbMenu.menuAction())
+        self.iface.removeWebToolBarIcon(self.toolbarAction)
         # self.datasource.Destroy()
 
         # Unregister plugin layer type
@@ -98,7 +103,7 @@ class CartoDBPlugin(QObject):
 
     def run(self):
         # Create and show the dialog
-        dlg = CartoDBPluginDialog()
+        dlg = CartoDBPluginDialog(self.toolbar)
         dlg.show()
 
         result = dlg.exec_()
