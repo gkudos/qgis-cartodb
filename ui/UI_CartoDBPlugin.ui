@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>547</width>
+    <width>538</width>
     <height>406</height>
    </rect>
   </property>
@@ -43,27 +43,6 @@
        </property>
        <property name="placeholderText">
         <string>Filter Tables</string>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QPushButton" name="newConnectionBT">
-       <property name="text">
-        <string>New</string>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QPushButton" name="editConnectionBT">
-       <property name="text">
-        <string>Edit</string>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QPushButton" name="deleteConnectionBT">
-       <property name="text">
-        <string>Delete</string>
        </property>
       </widget>
      </item>

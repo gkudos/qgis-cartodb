@@ -18,16 +18,17 @@ email                : michaelsalgado@gkudos.com, info@gkudos.com
  *                                                                         *
  ***************************************************************************/
 """
-from PyQt4.QtCore import QSettings, QUrl, QEventLoop, pyqtSlot, Qt, qDebug
+from PyQt4.QtCore import QSettings, QUrl, QEventLoop, pyqtSignal, pyqtSlot, Qt, qDebug
 from PyQt4.QtGui import QDialog, QMessageBox, QListWidgetItem, QIcon, QColor, QImage, QPixmap, QImageReader
 from PyQt4.QtNetwork import QNetworkAccessManager, QNetworkRequest, QNetworkReply
 
 from qgis.core import QgsMessageLog
 
 from QgisCartoDB.cartodb import CartoDBAPIKey, CartoDBException, CartoDBApi
-from QgisCartoDB.dialogs.ConnectionsManager import CartoDBConnectionsManager
+from QgisCartoDB.dialogs.ConnectionManager import CartoDBConnectionsManager
 from QgisCartoDB.dialogs.NewConnection import CartoDBNewConnectionDialog
 from QgisCartoDB.ui.UI_CartoDBPlugin import Ui_CartoDBPlugin
+from QgisCartoDB.utils import CartoDBPluginWorker
 
 import QgisCartoDB.resources
 
@@ -36,19 +37,14 @@ import math
 
 
 # Create the dialog for CartoDBPlugin
-class CartoDBPluginDialog(CartoDBConnectionsManager):
+class CartoDBPluginDialog(QDialog):
     def __init__(self, toolbar):
-        CartoDBConnectionsManager.__init__(self)
+        QDialog.__init__(self)
         self.toolbar = toolbar
         self.settings = QSettings()
         # Set up the user interface from Designer.
         self.ui = Ui_CartoDBPlugin()
         self.ui.setupUi(self)
-        # self.populateConnectionList()
-        self.ui.newConnectionBT.clicked.connect(self.openNewConnectionDialog)
-        self.ui.editConnectionBT.clicked.connect(self.editConnectionDialog)
-        self.ui.deleteConnectionBT.clicked.connect(self.deleteConnectionDialog)
-        # self.ui.connectBT.clicked.connect(self.connect)
         self.ui.searchTX.textChanged.connect(self.filterTables)
         self.ui.tablesList.verticalScrollBar().valueChanged.connect(self.onScroll)
 
@@ -68,46 +64,18 @@ class CartoDBPluginDialog(CartoDBConnectionsManager):
     def getTablesListSelectedItems(self):
         return self.ui.tablesList.selectedItems()
 
+    @pyqtSlot()
     def connect(self):
         # Get tables from CartoDB.
-        self.currentUser = self.toolbar.connectionList.currentText()
-        self.currentApiKey = self.settings.value('/CartoDBPlugin/%s/api' % self.currentUser)
-        self.currentMultiuser = self.settings.value('/CartoDBPlugin/%s/multiuser' % self.currentUser, False)
+        self.currentUser = self.toolbar.currentUser
+        self.currentApiKey = self.toolbar.currentApiKey
+        self.currentMultiuser = self.toolbar.currentMultiuser
 
         self.tablesPage = 1
         self.noLoadTables = False
         self.ui.searchTX.setText('')
         self.getTables(self.currentUser, self.currentApiKey, self.currentMultiuser)
         self.getUserData(self.currentUser, self.currentApiKey, self.currentMultiuser)
-
-        '''
-        try:
-            if not str(self.currentMultiuser) in ['true', '1', 'True']:
-                res = cl.sql("SELECT CDB_UserTables() order by 1")
-            else:
-                res = cl.sql(
-                    "SELECT string_agg(privilege_type, ', ') AS privileges, table_schema, table_name as cdb_usertables \
-                        FROM information_schema.role_table_grants tg \
-                        JOIN ( \
-                            SELECT DISTINCT u.usename \
-                            FROM information_schema.tables t \
-                            JOIN pg_catalog.pg_class c ON (t.table_name = c.relname) \
-                            JOIN pg_catalog.pg_user u ON (c.relowner = u.usesysid) \
-                            WHERE t.table_schema = '" + self.currentUser + "') u ON u.usename = tg.grantee \
-                    WHERE table_schema NOT IN ('pg_catalog', 'information_schema', 'cartodb', 'public', 'cdb_importer') \
-                    GROUP BY table_schema, table_name \
-                    ORDER BY table_schema, table_name")
-
-            self.tables = res['rows']
-            self.updateList(self.tables)
-            self.settings.setValue('/CartoDBPlugin/selected', self.currentUser)
-            self.ui.searchTX.setEnabled(True)
-        except CartoDBException as e:
-            QgsMessageLog.logMessage('Some error ocurred getting tables', 'CartoDB Plugin', QgsMessageLog.CRITICAL)
-            QMessageBox.information(self, self.tr('Error'), self.tr('Error getting tables'), QMessageBox.Ok)
-            self.ui.tablesList.clear()
-            self.ui.searchTX.setEnabled(False)
-        '''
 
     def filterTables(self):
         text = self.ui.searchTX.text()
@@ -134,11 +102,6 @@ class CartoDBPluginDialog(CartoDBConnectionsManager):
             item.setIcon(QIcon(":/plugins/qgis-cartodb/images/icons/layers.png"))
             items.append(item)
         self.setTablesListItems(items)
-
-    def setConnectionsFound(self, found):
-        self.ui.connectBT.setEnabled(found)
-        self.ui.deleteConnectionBT.setEnabled(found)
-        self.ui.editConnectionBT.setEnabled(found)
 
     def getUserData(self, cartodbUser, apiKey, multiuser=False):
         cartoDBApi = CartoDBApi(cartodbUser, apiKey, multiuser)
@@ -227,5 +190,8 @@ class CartoDBPluginDialog(CartoDBConnectionsManager):
             self.getTables(self.currentUser, self.currentApiKey, self.currentMultiuser)
 
     def showEvent(self, event):
-        super(CartoDBPluginDialog, self).showEvent(event)
-        self.connect()
+        # super(CartoDBPluginDialog, self).showEvent(event)
+        worker = CartoDBPluginWorker(self, 'connect')
+        worker.start()
+        # self.connect()
+        # QMetaObject.invokeMethod(self.controller, 'connectCB')

@@ -18,8 +18,13 @@ email                : michaelsalgado@gkudos.com, info@gkudos.com
  *                                                                         *
  ***************************************************************************/
 """
-from PyQt4.QtGui import QWidget, QHBoxLayout, QLayout, QComboBox, QSizePolicy
-from PyQt4.QtCore import Qt, QSize, QSettings
+from PyQt4.QtGui import QWidget, QHBoxLayout, QLayout, QComboBox, QSizePolicy, QLabel
+from PyQt4.QtGui import QImage, QPixmap, QImageReader, QCursor
+from PyQt4.QtCore import Qt, QSize, QSettings, QUrl, QEventLoop, pyqtSlot
+from PyQt4.QtNetwork import QNetworkAccessManager, QNetworkRequest, QNetworkReply
+
+from QgisCartoDB.cartodb import CartoDBApi
+from QgisCartoDB.utils import CartoDBPluginWorker
 
 
 class CartoDBToolbar(QWidget):
@@ -27,54 +32,90 @@ class CartoDBToolbar(QWidget):
         QWidget.__init__(self, parent, flags)
         self.settings = QSettings()
         self.setupUi()
-        self.populateConnectionList()
+        self.currentUser = self.settings.value('/CartoDBPlugin/selected')
+
+        if self.currentUser:
+            self.currentApiKey = self.settings.value('/CartoDBPlugin/%s/api' % self.currentUser)
+            self.currentMultiuser = self.settings.value('/CartoDBPlugin/%s/multiuser' % self.currentUser, False)
+        else:
+            self.currentApiKey = None
+            self.currentMultiuser = None
+
+        self.click = None
 
     def setupUi(self):
         self.connectLayout = QHBoxLayout(self)
         self.connectLayout.setSizeConstraint(QLayout.SetDefaultConstraint)
-        self.connectionList = QComboBox(self)
-        sizePolicy = QSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
-        sizePolicy.setHorizontalStretch(1)
+        self.avatarLB = QLabel(self)
+        sizePolicy = QSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+        sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.connectionList.sizePolicy().hasHeightForWidth())
-        self.connectionList.setSizePolicy(sizePolicy)
-        self.connectionList.setMaximumSize(QSize(16777215, 16777215))
-        self.connectLayout.addWidget(self.connectionList)
+        sizePolicy.setHeightForWidth(self.avatarLB.sizePolicy().hasHeightForWidth())
+        self.avatarLB.setSizePolicy(sizePolicy)
 
-    def populateConnectionList(self):
-        # Populate connections saved.
-        self.settings.beginGroup('/CartoDBPlugin/')
-        self.connectionList.clear()
-        self.connectionList.addItems(self.settings.childGroups())
-        self.settings.endGroup()
-        self.setConnectionListPosition()
+        self.nameLB = QLabel(self)
+        self.nameLB.setFocusPolicy(Qt.ClickFocus)
+        self.nameLB.setTextFormat(Qt.RichText)
 
-    def setConnectionListPosition(self):
-        # Set the current index to the selected connection.
-        toSelect = self.settings.value('/CartoDBPlugin/selected')
-        conCount = self.connectionList.count()
+        self.setCursor(QCursor(Qt.PointingHandCursor))
+        self.connectLayout.addWidget(self.avatarLB)
+        self.connectLayout.addWidget(self.nameLB)
 
-        # self.setConnectionsFound(conCount > 0)
+    def getUserData(self, cartodbUser, apiKey, multiuser=False):
+        cartoDBApi = CartoDBApi(cartodbUser, apiKey, multiuser)
+        cartoDBApi.fetchContent.connect(self.cbUserData)
+        cartoDBApi.getUserDetails()
 
-        exists = False
-        for i in range(conCount):
-            if self.connectionList.itemText(i) == toSelect:
-                self.connectionList.setCurrentIndex(i)
-                exists = True
-                break
+    @pyqtSlot(dict)
+    def cbUserData(self, data):
+        self.currentUserData = data
+        self.settings.setValue('/CartoDBPlugin/selected', self.currentUser)
+        manager = QNetworkAccessManager()
+        manager.finished.connect(self.returnAvatar)
 
-        # If we couldn't find the stored item, but there are some, default
-        # to the last item (this makes some sense when deleting items as it
-        # allows the user to repeatidly click on delete to remove a whole
-        # lot of items)
-        if not exists and conCount > 0:
-            # If toSelect is null, then the selected connection wasn't found
-            # by QSettings, which probably means that this is the first time
-            # the user has used CartoDBPlugin, so default to the first in the list
-            # of connetions. Otherwise default to the last.
-            if not toSelect:
-                currentIndex = 0
-            else:
-                currentIndex = conCount - 1
+        if 's3.amazonaws.com' in data['avatar_url']:
+            imageUrl = QUrl(data['avatar_url'])
+        else:
+            imageUrl = QUrl('http:' + data['avatar_url'])
 
-            self.connectionList.setCurrentIndex(currentIndex)
+        request = QNetworkRequest(imageUrl)
+        request.setRawHeader('User-Agent', 'QGIS 2.x')
+        reply = manager.get(request)
+        loop = QEventLoop()
+        reply.finished.connect(loop.exit)
+        loop.exec_()
+
+    def returnAvatar(self, reply):
+        imageReader = QImageReader(reply)
+        image = imageReader.read()
+
+        lbl = self.avatarLB
+        if reply.error() == QNetworkReply.NoError:
+            pixMap = QPixmap.fromImage(image).scaled(lbl.size(), Qt.KeepAspectRatio)
+            lbl.setPixmap(pixMap)
+            lbl.show()
+        else:
+            # TODO Put default image if not load from URL.
+            pass
+
+        self.nameLB.setText("<html><head/><body><p><span style=\" text-decoration: underline; color:#00557f;\">" + self.currentUser + "</span></p></body></html>")
+        # self.setUpUserData()
+
+    @pyqtSlot()
+    def connectCartoDB(self):
+        if self.currentUser:
+            self.getUserData(self.currentUser, self.currentApiKey, self.currentMultiuser)
+
+    def setUserCredentials(self, user, apiKey, multiuser=False):
+        self.currentUser = user
+        self.currentApiKey = apiKey
+        self.currentMultiuser = multiuser
+        worker = CartoDBPluginWorker(self, 'connectCartoDB')
+        worker.start()
+
+    def mousePressEvent(self, event):
+        if self.click is not None:
+            self.click()
+
+    def setClick(self, click):
+        self.click = click

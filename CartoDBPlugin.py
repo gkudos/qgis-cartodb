@@ -30,8 +30,10 @@ import resources
 from cartodb import CartoDBAPIKey, CartoDBException
 from QgisCartoDB.dialogs.Main import CartoDBPluginDialog
 from QgisCartoDB.dialogs.NewSQL import CartoDBNewSQLDialog
+from QgisCartoDB.dialogs.ConnectionManager import CartoDBConnectionsManager
 from QgisCartoDB.layers import CartoDBLayer, CartoDBPluginLayer, CartoDBPluginLayerType
 from QgisCartoDB.toolbars import CartoDBToolbar
+from QgisCartoDB.utils import CartoDBPluginWorker
 
 import os.path
 import shutil
@@ -69,11 +71,14 @@ class CartoDBPlugin(QObject):
         self._addSQLAction = QAction("Add SQL CartoDB Layer", self.iface.mainWindow())
         self._addSQLAction.setIcon(QIcon(":/plugins/qgis-cartodb/images/add_sql.png"))
 
+        self.toolbar = CartoDBToolbar()
+        self.toolbar.setClick(self.connectionManager)
+        self._toolbarAction = self.iface.addWebToolBarWidget(self.toolbar)
+        worker = CartoDBPluginWorker(self.toolbar, 'connectCartoDB')
+        worker.start()
+
         QObject.connect(self._mainAction, SIGNAL("activated()"), self.run)
         QObject.connect(self._addSQLAction, SIGNAL("activated()"), self.addSQL)
-
-        self.toolbar = CartoDBToolbar()
-        self.toolbarAction = self.iface.addWebToolBarWidget(self.toolbar)
 
         self._cdbMenu.addAction(self._mainAction)
         self._cdbMenu.addAction(self._addSQLAction)
@@ -95,11 +100,19 @@ class CartoDBPlugin(QObject):
         self.iface.removeWebToolBarIcon(self._mainAction)
         self.iface.removeWebToolBarIcon(self._addSQLAction)
         self.iface.webMenu().removeAction(self._cdbMenu.menuAction())
-        self.iface.removeWebToolBarIcon(self.toolbarAction)
+        self.iface.removeWebToolBarIcon(self._toolbarAction)
         # self.datasource.Destroy()
 
         # Unregister plugin layer type
         QgsPluginLayerRegistry.instance().removePluginLayerType(CartoDBPluginLayer.LAYER_TYPE)
+
+    def connectionManager(self):
+        dlg = CartoDBConnectionsManager()
+        dlg.show()
+
+        result = dlg.exec_()
+        if result == 1 and dlg.currentUser is not None and dlg.currentApiKey is not None:
+            self.toolbar.setUserCredentials(dlg.currentUser, dlg.currentApiKey, dlg.currentMultiuser)
 
     def run(self):
         # Create and show the dialog

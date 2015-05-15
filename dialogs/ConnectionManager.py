@@ -18,17 +18,46 @@ email                : michaelsalgado@gkudos.com, info@gkudos.com
  *                                                                         *
  ***************************************************************************/
 """
+from PyQt4.QtCore import QSettings
 from PyQt4.QtGui import QDialog, QMessageBox
 
 from qgis.core import QgsMessageLog
 
 from QgisCartoDB.dialogs.NewConnection import CartoDBNewConnectionDialog
+from QgisCartoDB.ui.ConnectionManager import Ui_ConnectionManager
 
 
 # Create the dialog for CartoDBPlugin
 class CartoDBConnectionsManager(QDialog):
     def __init__(self):
         QDialog.__init__(self)
+
+        self.settings = QSettings()
+
+        self.ui = Ui_ConnectionManager()
+        self.ui.setupUi(self)
+        self.populateConnectionList()
+        self.ui.newConnectionBT.clicked.connect(self.openNewConnectionDialog)
+        self.ui.editConnectionBT.clicked.connect(self.editConnectionDialog)
+        self.ui.deleteConnectionBT.clicked.connect(self.deleteConnectionDialog)
+        self.ui.connectBT.clicked.connect(self.connect)
+
+        self.currentUser = None
+        self.currentApiKey = None
+        self.currentMultiuser = None
+
+    def connect(self):
+        # Get tables from CartoDB.
+        self.currentUser = self.ui.connectionList.currentText()
+        self.currentApiKey = self.settings.value('/CartoDBPlugin/%s/api' % self.currentUser)
+        self.currentMultiuser = self.settings.value('/CartoDBPlugin/%s/multiuser' % self.currentUser, False)
+        QDialog.accept(self)
+
+    def setConnectionsFound(self, found):
+        self.ui.connectBT.setEnabled(found)
+        self.ui.deleteConnectionBT.setEnabled(found)
+        self.ui.editConnectionBT.setEnabled(found)
+        self.ui.editConnectionBT.setDefault(True)
 
     def populateConnectionList(self):
         # Populate connections saved.
