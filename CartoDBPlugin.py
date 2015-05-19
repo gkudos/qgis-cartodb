@@ -31,7 +31,7 @@ from cartodb import CartoDBAPIKey, CartoDBException
 from QgisCartoDB.dialogs.Main import CartoDBPluginDialog
 from QgisCartoDB.dialogs.NewSQL import CartoDBNewSQLDialog
 from QgisCartoDB.dialogs.ConnectionManager import CartoDBConnectionsManager
-from QgisCartoDB.layers import CartoDBLayer, CartoDBPluginLayer, CartoDBPluginLayerType
+from QgisCartoDB.layers import CartoDBLayer, CartoDBPluginLayer, CartoDBPluginLayerType, CartoDBLayerWorker
 from QgisCartoDB.toolbars import CartoDBToolbar
 from QgisCartoDB.utils import CartoDBPluginWorker
 
@@ -125,20 +125,26 @@ class CartoDBPlugin(QObject):
             selectedItems = dlg.getTablesListSelectedItems()
             countLayers = len(selectedItems)
             if countLayers > 0:
-                progressMessageBar, progress = self.addLoadingMsg(countLayers)
+                progressMessageBar, self.progress = self.addLoadingMsg(countLayers)
                 for i, table in enumerate(selectedItems):
-                    layer = CartoDBLayer(self.iface, table.text(), dlg.currentUser, dlg.currentApiKey)
+                    worker = CartoDBLayerWorker(self.iface, table.text(), dlg, i)
+                    worker.cartoDBLoaded.connect(self.addLayer)
+                    worker.loadLayer()
 
-                    if layer.readOnly:
-                        self.iface.messageBar().pushMessage("Warning", 'Layer ' + layer.layerName + ' is loaded in readonly mode',
-                                                            level=self.iface.messageBar().WARNING, duration=5)
-                    QgsMapLayerRegistry.instance().addMapLayer(layer)
-                    self.layers.append(layer)
-                    percent = i / float(countLayers) * 100
-                    self.iface.mainWindow().statusBar().showMessage("Processed {} %".format(int(percent)))
-                    progress.setValue(i + 1)
                 self.iface.mainWindow().statusBar().clearMessage()
                 self.iface.messageBar().popWidget(progressMessageBar)
+
+    def addLayer(self, layer, dlg, i):
+        selectedItems = dlg.getTablesListSelectedItems()
+        countLayers = len(selectedItems)
+        if layer.readOnly:
+            self.iface.messageBar().pushMessage("Warning", 'Layer ' + layer.layerName + ' is loaded in readonly mode',
+                                                level=self.iface.messageBar().WARNING, duration=5)
+        QgsMapLayerRegistry.instance().addMapLayer(layer)
+        self.layers.append(layer)
+        percent = i / float(countLayers) * 100
+        self.iface.mainWindow().statusBar().showMessage("Processed {} %".format(int(percent)))
+        self.progress.setValue(i + 1)
 
     def addSQL(self):
         # Create and show the dialog

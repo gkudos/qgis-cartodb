@@ -30,8 +30,39 @@ import os.path
 
 from urllib import urlopen
 
+from PyQt4.QtCore import pyqtSlot
+
+from qgis.core import *
+
 import QgisCartoDB.CartoDBPlugin
 from QgisCartoDB.cartodb import CartoDBAPIKey, CartoDBException
+from QgisCartoDB.utils import CartoDBPluginWorker
+
+
+class CartoDBLayerWorker(QObject):
+    cartoDBLoaded = pyqtSignal(QObject, QObject, int)
+
+    def __init__(self, iface, tableName, dlg, i, sql=None):
+        QObject.__init__(self)
+        self.iface = iface
+        self.tableName = tableName
+        self.dlg = dlg
+        self.i = i
+        self.sql = sql
+
+    def load(self):
+        worker = CartoDBPluginWorker(self, 'loadLayer')
+        worker.start()
+
+    @pyqtSlot()
+    def loadLayer(self):
+        layer = CartoDBLayer(self.iface, self.tableName, self.dlg.currentUser, self.dlg.currentApiKey, self.sql)
+        self.emitLoad(layer)
+
+    def emitLoad(self, layer):
+        # QgsMapLayerRegistry.instance().addMapLayer(layer)
+        self.cartoDBLoaded.emit(layer, self.dlg, self.i)
+
 
 class CartoDBLayer(QgsVectorLayer):
     LAYER_CNAME_PROPERTY = 'cartoName'
@@ -40,13 +71,17 @@ class CartoDBLayer(QgsVectorLayer):
 
     def __init__(self, iface, tableName, cartoName, apiKey, sql=None):
         # SQLite available?
-        layerType = 'ogr'
+        self.iface = iface
+        self.user = cartoName
+        self._apiKey = apiKey
+        self.layerType = 'ogr'
         readOnly = True
         driverName = "SQLite"
         sqLiteDrv = ogr.GetDriverByName(driverName)
-        databasePath = QgisCartoDB.CartoDBPlugin.PLUGIN_DIR + '/db/database.sqlite'
-        datasource = sqLiteDrv.Open(databasePath, True)
-        layerName = tableName
+        self.databasePath = QgisCartoDB.CartoDBPlugin.PLUGIN_DIR + '/db/database.sqlite'
+        self.datasource = sqLiteDrv.Open(self.databasePath, True)
+        self.layerName = tableName
+        self.cartoTable = tableName
         forceReadOnly = False
 
         if sql is None:
@@ -54,7 +89,16 @@ class CartoDBLayer(QgsVectorLayer):
         else:
             forceReadOnly = True
 
-        cartoUrl = 'http://{}.cartodb.com/api/v2/sql?format=GeoJSON&q={}&api_key={}'.format(cartoName, sql, apiKey)
+        self._loadData(sql, forceReadOnly)
+
+    def initConnections(self):
+        QgsMessageLog.logMessage('Init connections for: ' + self.layerName, 'CartoDB Plugin', QgsMessageLog.INFO)
+        self.editingStarted.connect(self._editingStarted)
+        self.attributeAdded[int].connect(self._attributeAdded)
+        self.beforeCommitChanges.connect(self._beforeCommitChanges)
+
+    def _loadData(self, sql, forceReadOnly):
+        cartoUrl = 'http://{}.cartodb.com/api/v2/sql?format=GeoJSON&q={}&api_key={}'.format(self.user, sql, self._apiKey)
         response = urlopen(cartoUrl)
         path = response.read()
         dsGeoJSON = ogr.Open(path)
@@ -84,25 +128,25 @@ class CartoDBLayer(QgsVectorLayer):
                 """
 
                 i = 1
-                tempLayerName = layerName
-                while datasource.GetLayerByName(str(tempLayerName)) is not None:
-                    tempLayerName = layerName + str(i)
+                tempLayerName = self.layerName
+                while self.datasource.GetLayerByName(str(tempLayerName)) is not None:
+                    tempLayerName = self.layerName + str(i)
                     i = i + 1
-                layerName = tempLayerName
-                newLyr = datasource.CopyLayer(jsonLayer, str(layerName), options=['FORMAT=SPATIALITE'])
+                self.layerName = tempLayerName
+                newLyr = self.datasource.CopyLayer(jsonLayer, str(self.layerName), options=['FORMAT=SPATIALITE'])
 
                 if newLyr is not None:
                     QgsMessageLog.logMessage('New Layer created', 'CartoDB Plugin', QgsMessageLog.INFO)
                     uri = QgsDataSourceURI()
-                    uri.setDatabase(databasePath)
-                    uri.setDataSource('', layerName, 'geometry')
+                    uri.setDatabase(self.databasePath)
+                    uri.setDataSource('', self.layerName, 'geometry')
                     QgsMessageLog.logMessage('New Connection: ' + uri.uri(), 'CartoDB Plugin', QgsMessageLog.INFO)
                     path = uri.uri()
-                    layerType = 'spatialite'
+                    self.layerType = 'spatialite'
                     readOnly = False
                 else:
                     QgsMessageLog.logMessage('Some error ocurred opening SQLite datasource', 'CartoDB Plugin', QgsMessageLog.WARNING)
-                datasource.Destroy()
+                self.datasource.Destroy()
             else:
                 QgsMessageLog.logMessage('Some error ocurred opening GeoJSON layer', 'CartoDB Plugin', QgsMessageLog.WARNING)
         else:
@@ -113,31 +157,18 @@ class CartoDBLayer(QgsVectorLayer):
         if readOnly:
             QgsMessageLog.logMessage('CartoDB Layer is readonly mode', 'CartoDB Plugin', QgsMessageLog.WARNING)
 
-        super(QgsVectorLayer, self).__init__(path, layerName, layerType)
-        self.databasePath = databasePath
-        self.layerType = layerType
+        super(QgsVectorLayer, self).__init__(path, self.layerName, self.layerType)
         self.readOnly = readOnly
-        self.layerName = layerName
-        self.cartoTable = tableName
-        self.user = cartoName
-        self._apiKey = apiKey
-        self.iface = iface
         self._deletedFeatures = []
 
         if not self.readOnly:
             self.initConnections()
             self._uneditableFields()
 
-        self.setCustomProperty(CartoDBLayer.LAYER_CNAME_PROPERTY, cartoName)
-        self.setCustomProperty(CartoDBLayer.LAYER_TNAME_PROPERTY, tableName)
+        self.setCustomProperty(CartoDBLayer.LAYER_CNAME_PROPERTY, self.user)
+        self.setCustomProperty(CartoDBLayer.LAYER_TNAME_PROPERTY, self.cartoTable)
         if forceReadOnly:
             self.setCustomProperty(CartoDBLayer.LAYER_SQL_PROPERTY, sql)
-
-    def initConnections(self):
-        QgsMessageLog.logMessage('Init connections for: ' + self.layerName, 'CartoDB Plugin', QgsMessageLog.INFO)
-        self.editingStarted.connect(self._editingStarted)
-        self.attributeAdded[int].connect(self._attributeAdded)
-        self.beforeCommitChanges.connect(self._beforeCommitChanges)
 
     def _uneditableFields(self):
         sql = "SELECT table_name, column_name, column_default, is_nullable, data_type, table_schema \

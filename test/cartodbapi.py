@@ -32,6 +32,13 @@ class SignalsObject(QObject):
         self.test.logger.debug("*******************************************************************************")
         self.test.assertTrue(True)
 
+    @pyqtSlot(dict)
+    def cb_show_table_data(self, data):
+        self.test.logger.debug("*******************************************************************************")
+        self.test.logger.debug("Get user table: " + json.dumps(data, sort_keys=True, indent=2, separators=(',', ': ')))
+        self.test.logger.debug("*******************************************************************************")
+        self.test.assertTrue(True)
+
 
 class UsesQApplication(unittest.TestCase):
     '''Helper class to provide QApplication instances'''
@@ -72,6 +79,7 @@ class CartoDBApiTest(UsesQApplication):
     def tearDown(self):
         super(CartoDBApiTest, self).tearDown()
 
+    @unittest.skip("testing skipping")
     def test_show_user_data(self):
         self.logger.debug("\n*******************************************************************************")
         self.logger.debug('\nTest get user details for: ' + cartodb_user)
@@ -80,6 +88,7 @@ class CartoDBApiTest(UsesQApplication):
         cartodbApi.fetchContent.connect(self.signalsObject.cb_show_user_data)
         cartodbApi.getUserDetails()
 
+    @unittest.skip("testing skipping")
     def test_show_user_tables(self):
         self.logger.debug("\n*******************************************************************************")
         self.logger.debug('\nTest get user tables for: ' + cartodb_user)
@@ -87,6 +96,14 @@ class CartoDBApiTest(UsesQApplication):
         cartodbApi = CartoDBApi(cartodb_user, api_key, is_multiuser)
         cartodbApi.fetchContent.connect(self.signalsObject.cb_show_user_tables)
         cartodbApi.getUserTables()
+
+    def test_get_table_data(self):
+        self.logger.debug("\n*******************************************************************************")
+        self.logger.debug('\nTest table data for: test_buffer_unicentro_mothers')
+        self.logger.debug("\n*******************************************************************************")
+        cartodbApi = CartoDBApi(cartodb_user, api_key, is_multiuser)
+        cartodbApi.fetchContent.connect(self.signalsObject.cb_show_table_data)
+        cartodbApi.getDataFromTable('SELECT * FROM test_buffer_unicentro_mothers LIMIT 10')
 
 
 if __name__ == '__main__':

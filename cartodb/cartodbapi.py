@@ -66,5 +66,16 @@ class CartoDBApi(QObject):
         reply.finished.connect(loop.exit)
         loop.exec_()
 
+    def getDataFromTable(self, sql):
+        apiUrl = 'http://{}.cartodb.com/api/v2/sql?format=GeoJSON&q={}&api_key={}'.format(self.cartodbUser, sql, self.apiKey)
+        url = QUrl(apiUrl)
+        request = self._getRequest(url)
+
+        reply = self.manager.get(request)
+        loop = QEventLoop()
+        reply.finished.connect(loop.exit)
+        loop.exec_()
+        pass
+
     def returnFetchContent(self, reply):
         self.fetchContent.emit(json.loads(str(reply.readAll())))
