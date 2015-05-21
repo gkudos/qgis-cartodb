@@ -129,7 +129,7 @@ class CartoDBPlugin(QObject):
                 for i, table in enumerate(selectedItems):
                     worker = CartoDBLayerWorker(self.iface, table.text(), dlg, i)
                     worker.cartoDBLoaded.connect(self.addLayer)
-                    worker.loadLayer()
+                    worker.load()
 
                 self.iface.mainWindow().statusBar().clearMessage()
                 self.iface.messageBar().popWidget(progressMessageBar)

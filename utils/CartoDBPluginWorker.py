@@ -18,18 +18,28 @@ email                : michaelsalgado@gkudos.com, info@gkudos.com
  *                                                                         *
  ***************************************************************************/
 """
-from PyQt4.QtCore import QThread, QMetaObject
+from PyQt4.QtCore import Qt, QObject, QThread, QMetaObject, Q_RETURN_ARG, pyqtSignal
+import traceback
 
 
 class CartoDBPluginWorker(QThread):
-    def __init__(self, object, method):
+    error = pyqtSignal(Exception, basestring)
+    finished = pyqtSignal()
+
+    def __init__(self, object=None, method=None, connection=Qt.AutoConnection):
         QThread.__init__(self)
         self.object = object
         self.method = method
+        self.connection = connection
 
     def __del__(self):
         self.wait()
 
     def run(self):
-        QMetaObject.invokeMethod(self.object, self.method)
-        return
+        try:
+            if self.object is not None and self.method is not None:
+                # TODO Get return value.
+                QMetaObject.invokeMethod(self.object, self.method, self.connection)
+        except Exception, e:
+            self.error.emit(e, traceback.format_exc())
+        self.finished.emit()

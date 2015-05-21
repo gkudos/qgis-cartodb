@@ -41,6 +41,7 @@ from QgisCartoDB.utils import CartoDBPluginWorker
 
 class CartoDBLayerWorker(QObject):
     cartoDBLoaded = pyqtSignal(QObject, QObject, int)
+    error = pyqtSignal(Exception, basestring)
 
     def __init__(self, iface, tableName, dlg, i, sql=None):
         QObject.__init__(self)
@@ -52,7 +53,11 @@ class CartoDBLayerWorker(QObject):
 
     def load(self):
         worker = CartoDBPluginWorker(self, 'loadLayer')
+        worker.error.connect(self.workerError)
+        loop = QEventLoop()
+        worker.finished.connect(loop.exit)
         worker.start()
+        loop.exec_()
 
     @pyqtSlot()
     def loadLayer(self):
@@ -62,6 +67,12 @@ class CartoDBLayerWorker(QObject):
     def emitLoad(self, layer):
         # QgsMapLayerRegistry.instance().addMapLayer(layer)
         self.cartoDBLoaded.emit(layer, self.dlg, self.i)
+
+    def workerFinished(self, ret):
+        QgsMessageLog.logMessage('Task finished:\n' + str(ret), 'CartoDB Plugin', QgsMessageLog.INFO)
+
+    def workerError(self, e, exception_string):
+        QgsMessageLog.logMessage('Worker thread raised an exception:\n'.format(exception_string), 'CartoDB Plugin', QgsMessageLog.CRITICAL)
 
 
 class CartoDBLayer(QgsVectorLayer):
