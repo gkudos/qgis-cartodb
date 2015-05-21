@@ -11,7 +11,7 @@ except ImportError:
 
 
 class CartoDBApi(QObject):
-    fetchContent = pyqtSignal(dict)
+    fetchContent = pyqtSignal(object)
 
     def __init__(self, cartodbUser, apiKey, multiuser=False, hostname='cartodb.com'):
         QObject.__init__(self)
@@ -19,11 +19,7 @@ class CartoDBApi(QObject):
         self.apiKey = apiKey
         self.cartodbUser = cartodbUser
         self.hostname = hostname
-
-        if multiuser:
-            self.apiUrl = "https://{}.{}/api/v1/".format(cartodbUser, hostname)
-        else:
-            self.apiUrl = "https://{}.{}/api/v1/".format(cartodbUser, hostname)
+        self.apiUrl = "https://{}.{}/api/v1/".format(cartodbUser, hostname)
 
         self.manager = QNetworkAccessManager()
         self.manager.finished.connect(self.returnFetchContent)
@@ -34,7 +30,8 @@ class CartoDBApi(QObject):
         request.setRawHeader('User-Agent', 'QGIS 2.x')
         return request
 
-    def getUserDetails(self):
+    def getUserDetails(self, returnDict=True):
+        self.returnDict = returnDict
         url = QUrl(self.apiUrl + "users/{}/?api_key={}".format(self.cartodbUser, self.apiKey))
         request = self._getRequest(url)
 
@@ -43,7 +40,8 @@ class CartoDBApi(QObject):
         reply.finished.connect(loop.exit)
         loop.exec_()
 
-    def getUserTables(self, page=1, per_page=20, shared='yes'):
+    def getUserTables(self, page=1, per_page=20, shared='yes', returnDict=True):
+        self.returnDict = returnDict
         payload = {
             'tag_name': '',
             'q': '',
@@ -66,8 +64,9 @@ class CartoDBApi(QObject):
         reply.finished.connect(loop.exit)
         loop.exec_()
 
-    def getDataFromTable(self, sql):
-        apiUrl = 'http://{}.cartodb.com/api/v2/sql?format=GeoJSON&q={}&api_key={}'.format(self.cartodbUser, sql, self.apiKey)
+    def getDataFromTable(self, sql, returnDict=True):
+        self.returnDict = returnDict
+        apiUrl = 'http://{}.cartodb.com/api/v2/sql?api_key={}&format=GeoJSON&q={}'.format(self.cartodbUser, self.apiKey, sql)
         url = QUrl(apiUrl)
         request = self._getRequest(url)
 
@@ -75,7 +74,9 @@ class CartoDBApi(QObject):
         loop = QEventLoop()
         reply.finished.connect(loop.exit)
         loop.exec_()
-        pass
 
     def returnFetchContent(self, reply):
-        self.fetchContent.emit(json.loads(str(reply.readAll())))
+        if self.returnDict:
+            self.fetchContent.emit(json.loads(str(reply.readAll())))
+        else:
+            self.fetchContent.emit(str(reply.readAll()))

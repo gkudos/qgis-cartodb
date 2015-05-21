@@ -24,22 +24,21 @@ import traceback
 
 class CartoDBPluginWorker(QThread):
     error = pyqtSignal(Exception, basestring)
-    finished = pyqtSignal()
+    finished = pyqtSignal(object)
 
     def __init__(self, object=None, method=None, connection=Qt.AutoConnection):
-        QThread.__init__(self)
+        QThread.__init__(self, object)
         self.object = object
         self.method = method
         self.connection = connection
 
-    def __del__(self):
-        self.wait()
-
     def run(self):
+        ret = None
         try:
             if self.object is not None and self.method is not None:
                 # TODO Get return value.
                 QMetaObject.invokeMethod(self.object, self.method, self.connection)
         except Exception, e:
             self.error.emit(e, traceback.format_exc())
-        self.finished.emit()
+        self.finished.emit(ret)
+        # self.terminate()

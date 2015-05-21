@@ -128,13 +128,29 @@ class CartoDBPlugin(QObject):
                 progressMessageBar, self.progress = self.addLoadingMsg(countLayers)
                 for i, table in enumerate(selectedItems):
                     worker = CartoDBLayerWorker(self.iface, table.text(), dlg, i)
-                    worker.cartoDBLoaded.connect(self.addLayer)
+                    worker.finished.connect(self.addLayer)
+                    self.worker = worker
                     worker.load()
+                    # worker.loadLayer()
+                    '''
+                    thread = QThread(self)
+                    worker.moveToThread(thread)
+                    thread.started.connect(worker.loadLayer)
+                    thread.start()
+                    self.thread = thread
+                    '''
 
                 self.iface.mainWindow().statusBar().clearMessage()
                 self.iface.messageBar().popWidget(progressMessageBar)
 
     def addLayer(self, layer, dlg, i):
+        self.worker.deleteLater()
+        '''
+        self.thread.quit()
+        self.thread.wait()
+        self.thead.deleteLater()
+        '''
+
         selectedItems = dlg.getTablesListSelectedItems()
         countLayers = len(selectedItems)
         if layer.readOnly:

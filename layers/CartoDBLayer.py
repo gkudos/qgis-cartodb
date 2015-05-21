@@ -35,44 +35,8 @@ from PyQt4.QtCore import pyqtSlot
 from qgis.core import *
 
 import QgisCartoDB.CartoDBPlugin
-from QgisCartoDB.cartodb import CartoDBAPIKey, CartoDBException
+from QgisCartoDB.cartodb import CartoDBAPIKey, CartoDBException, CartoDBApi
 from QgisCartoDB.utils import CartoDBPluginWorker
-
-
-class CartoDBLayerWorker(QObject):
-    cartoDBLoaded = pyqtSignal(QObject, QObject, int)
-    error = pyqtSignal(Exception, basestring)
-
-    def __init__(self, iface, tableName, dlg, i, sql=None):
-        QObject.__init__(self)
-        self.iface = iface
-        self.tableName = tableName
-        self.dlg = dlg
-        self.i = i
-        self.sql = sql
-
-    def load(self):
-        worker = CartoDBPluginWorker(self, 'loadLayer')
-        worker.error.connect(self.workerError)
-        loop = QEventLoop()
-        worker.finished.connect(loop.exit)
-        worker.start()
-        loop.exec_()
-
-    @pyqtSlot()
-    def loadLayer(self):
-        layer = CartoDBLayer(self.iface, self.tableName, self.dlg.currentUser, self.dlg.currentApiKey, self.sql)
-        self.emitLoad(layer)
-
-    def emitLoad(self, layer):
-        # QgsMapLayerRegistry.instance().addMapLayer(layer)
-        self.cartoDBLoaded.emit(layer, self.dlg, self.i)
-
-    def workerFinished(self, ret):
-        QgsMessageLog.logMessage('Task finished:\n' + str(ret), 'CartoDB Plugin', QgsMessageLog.INFO)
-
-    def workerError(self, e, exception_string):
-        QgsMessageLog.logMessage('Worker thread raised an exception:\n'.format(exception_string), 'CartoDB Plugin', QgsMessageLog.CRITICAL)
 
 
 class CartoDBLayer(QgsVectorLayer):
@@ -86,21 +50,25 @@ class CartoDBLayer(QgsVectorLayer):
         self.user = cartoName
         self._apiKey = apiKey
         self.layerType = 'ogr'
-        readOnly = True
         driverName = "SQLite"
         sqLiteDrv = ogr.GetDriverByName(driverName)
         self.databasePath = QgisCartoDB.CartoDBPlugin.PLUGIN_DIR + '/db/database.sqlite'
         self.datasource = sqLiteDrv.Open(self.databasePath, True)
         self.layerName = tableName
         self.cartoTable = tableName
-        forceReadOnly = False
+        self.forceReadOnly = False
 
         if sql is None:
             sql = 'SELECT * FROM ' + tableName
         else:
-            forceReadOnly = True
+            self.forceReadOnly = True
 
-        self._loadData(sql, forceReadOnly)
+        '''
+        cartoDBApi = CartoDBApi(self.user, self._apiKey)
+        cartoDBApi.fetchContent.connect(self._loadData)
+        cartoDBApi.getDataFromTable(sql, False)
+        '''
+        self._loadData(sql)
 
     def initConnections(self):
         QgsMessageLog.logMessage('Init connections for: ' + self.layerName, 'CartoDB Plugin', QgsMessageLog.INFO)
@@ -108,7 +76,8 @@ class CartoDBLayer(QgsVectorLayer):
         self.attributeAdded[int].connect(self._attributeAdded)
         self.beforeCommitChanges.connect(self._beforeCommitChanges)
 
-    def _loadData(self, sql, forceReadOnly):
+    def _loadData(self, sql):
+        readOnly = True
         cartoUrl = 'http://{}.cartodb.com/api/v2/sql?format=GeoJSON&q={}&api_key={}'.format(self.user, sql, self._apiKey)
         response = urlopen(cartoUrl)
         path = response.read()
@@ -163,7 +132,7 @@ class CartoDBLayer(QgsVectorLayer):
         else:
             QgsMessageLog.logMessage('Some error ocurred opening GeoJSON datasource', 'CartoDB Plugin', QgsMessageLog.WARNING)
 
-        if forceReadOnly:
+        if self.forceReadOnly:
             readOnly = True
         if readOnly:
             QgsMessageLog.logMessage('CartoDB Layer is readonly mode', 'CartoDB Plugin', QgsMessageLog.WARNING)
@@ -178,7 +147,8 @@ class CartoDBLayer(QgsVectorLayer):
 
         self.setCustomProperty(CartoDBLayer.LAYER_CNAME_PROPERTY, self.user)
         self.setCustomProperty(CartoDBLayer.LAYER_TNAME_PROPERTY, self.cartoTable)
-        if forceReadOnly:
+
+        if self.forceReadOnly:
             self.setCustomProperty(CartoDBLayer.LAYER_SQL_PROPERTY, sql)
 
     def _uneditableFields(self):
@@ -372,3 +342,40 @@ class CartoDBLayer(QgsVectorLayer):
         element.setAttribute("type", "plugin")
         element.setAttribute("name", CartoDBPluginLayer.LAYER_TYPE)
         return res
+
+
+class CartoDBLayerWorker(QObject):
+    finished = pyqtSignal(CartoDBLayer, QObject, int)
+    error = pyqtSignal(Exception, basestring)
+
+    def __init__(self, iface, tableName, dlg, i, sql=None):
+        QObject.__init__(self)
+        self.iface = iface
+        self.tableName = tableName
+        self.dlg = dlg
+        self.i = i
+        self.sql = sql
+
+    def load(self):
+        worker = CartoDBPluginWorker(self, 'loadLayer')
+        worker.error.connect(self.workerError)
+        self.loop = QEventLoop()
+        worker.finished.connect(self.workerFinished)
+        worker.start()
+        self.loop.exec_()
+
+    @pyqtSlot()
+    def loadLayer(self):
+        layer = CartoDBLayer(self.iface, self.tableName, self.dlg.currentUser, self.dlg.currentApiKey, self.sql)
+        self.emitLoad(layer)
+
+    def emitLoad(self, layer):
+        # QgsMapLayerRegistry.instance().addMapLayer(layer)
+        self.finished.emit(layer, self.dlg, self.i)
+
+    def workerFinished(self, ret):
+        QgsMessageLog.logMessage('Task finished:\n' + str(ret), 'CartoDB Plugin', QgsMessageLog.INFO)
+        self.loop.exit()
+
+    def workerError(self, e, exception_string):
+        QgsMessageLog.logMessage('Worker thread raised an exception:\n'.format(exception_string), 'CartoDB Plugin', QgsMessageLog.CRITICAL)

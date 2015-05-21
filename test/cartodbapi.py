@@ -99,11 +99,11 @@ class CartoDBApiTest(UsesQApplication):
 
     def test_get_table_data(self):
         self.logger.debug("\n*******************************************************************************")
-        self.logger.debug('\nTest table data for: test_buffer_unicentro_mothers')
+        self.logger.debug('\nTest table data for: world_borders')
         self.logger.debug("\n*******************************************************************************")
         cartodbApi = CartoDBApi(cartodb_user, api_key, is_multiuser)
         cartodbApi.fetchContent.connect(self.signalsObject.cb_show_table_data)
-        cartodbApi.getDataFromTable('SELECT * FROM test_buffer_unicentro_mothers LIMIT 10')
+        cartodbApi.getDataFromTable('SELECT * FROM world_borders LIMIT 10')
 
 
 if __name__ == '__main__':
