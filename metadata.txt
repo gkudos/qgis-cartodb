@@ -2,12 +2,14 @@
 name=QGISCartoDB
 description=CartoDB Plugin for QGis. It allows to view, create, edit or delete data from your CartoDB account using your favorite opensource desktop GIS: QGIS.
 category=Web
-version=0.1.2
+version=0.1.3
 qgisMinimumVersion=2.3
 icon=images/icon.png
 author=Kudos Ltda. and contributors
 email=michaelsalgado@gkudos.com
-changelog=0.1.2
+changelog=0.1.3
+  - Use threads for download data.
+  0.1.2
   - Filter tables by name.
   - Indicate READ_ONLY tables for multiuser accounts.
   - Add user information at main dialog.

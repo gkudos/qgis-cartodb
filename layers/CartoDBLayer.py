@@ -44,7 +44,7 @@ class CartoDBLayer(QgsVectorLayer):
     LAYER_TNAME_PROPERTY = 'tableName'
     LAYER_SQL_PROPERTY = 'cartoSQL'
 
-    def __init__(self, iface, tableName, cartoName, apiKey, sql=None):
+    def __init__(self, iface, tableName, cartoName, apiKey, sql=None, geoJSON=None):
         # SQLite available?
         self.iface = iface
         self.user = cartoName
@@ -68,7 +68,7 @@ class CartoDBLayer(QgsVectorLayer):
         cartoDBApi.fetchContent.connect(self._loadData)
         cartoDBApi.getDataFromTable(sql, False)
         '''
-        self._loadData(sql)
+        self._loadData(sql, geoJSON)
 
     def initConnections(self):
         QgsMessageLog.logMessage('Init connections for: ' + self.layerName, 'CartoDB Plugin', QgsMessageLog.INFO)
@@ -76,12 +76,17 @@ class CartoDBLayer(QgsVectorLayer):
         self.attributeAdded[int].connect(self._attributeAdded)
         self.beforeCommitChanges.connect(self._beforeCommitChanges)
 
-    def _loadData(self, sql):
+    def _loadData(self, sql, geoJSON=None):
         readOnly = True
-        cartoUrl = 'http://{}.cartodb.com/api/v2/sql?format=GeoJSON&q={}&api_key={}'.format(self.user, sql, self._apiKey)
-        response = urlopen(cartoUrl)
-        path = response.read()
-        dsGeoJSON = ogr.Open(path)
+        if geoJSON is None:
+            cartoUrl = 'http://{}.cartodb.com/api/v2/sql?format=GeoJSON&q={}&api_key={}'.format(self.user, sql, self._apiKey)
+            response = urlopen(cartoUrl)
+            geoJSON = response.read()
+        else:
+            QgsMessageLog.logMessage('Already GeoJSON', 'CartoDB Plugin', QgsMessageLog.INFO)
+
+        dsGeoJSON = ogr.Open(geoJSON)
+        path = None
         if dsGeoJSON is not None:
             jsonLayer = dsGeoJSON.GetLayerByName('OGRGeoJSON')
 
@@ -137,7 +142,10 @@ class CartoDBLayer(QgsVectorLayer):
         if readOnly:
             QgsMessageLog.logMessage('CartoDB Layer is readonly mode', 'CartoDB Plugin', QgsMessageLog.WARNING)
 
-        super(QgsVectorLayer, self).__init__(path, self.layerName, self.layerType)
+        if path is None:
+            super(QgsVectorLayer, self).__init__(geoJSON, self.layerName, self.layerType)
+        else:
+            super(QgsVectorLayer, self).__init__(path, self.layerName, self.layerType)
         self.readOnly = readOnly
         self._deletedFeatures = []
 
@@ -345,37 +353,50 @@ class CartoDBLayer(QgsVectorLayer):
 
 
 class CartoDBLayerWorker(QObject):
-    finished = pyqtSignal(CartoDBLayer, QObject, int)
+    finished = pyqtSignal(CartoDBLayer)
     error = pyqtSignal(Exception, basestring)
 
-    def __init__(self, iface, tableName, dlg, i, sql=None):
+    def __init__(self, iface, tableName, dlg, sql=None):
         QObject.__init__(self)
         self.iface = iface
         self.tableName = tableName
         self.dlg = dlg
-        self.i = i
         self.sql = sql
 
     def load(self):
         worker = CartoDBPluginWorker(self, 'loadLayer')
         worker.error.connect(self.workerError)
-        self.loop = QEventLoop()
+        # self.loop = QEventLoop()
         worker.finished.connect(self.workerFinished)
         worker.start()
-        self.loop.exec_()
+        # self.loop.exec_()
+
+    @pyqtSlot(str)
+    def _loadData(self, geoJSON):
+        '''
+        cartoUrl = 'http://{}.cartodb.com/api/v2/sql?format=GeoJSON&q={}&api_key={}'.format(self.dlg.currentUser, sql, self.dlg.currentApiKey)
+        response = urlopen(cartoUrl)
+        geoJSON = response.read()
+        return geoJSON
+        '''
+        layer = CartoDBLayer(self.iface, self.tableName, self.dlg.currentUser, self.dlg.currentApiKey, self.sql, geoJSON)
+        self.finished.emit(layer)
 
     @pyqtSlot()
     def loadLayer(self):
-        layer = CartoDBLayer(self.iface, self.tableName, self.dlg.currentUser, self.dlg.currentApiKey, self.sql)
-        self.emitLoad(layer)
+        if self.sql is None:
+            sql = 'SELECT * FROM ' + self.tableName
+        else:
+            sql = self.sql
 
-    def emitLoad(self, layer):
-        # QgsMapLayerRegistry.instance().addMapLayer(layer)
-        self.finished.emit(layer, self.dlg, self.i)
+        cartoDBApi = CartoDBApi(self.dlg.currentUser, self.dlg.currentApiKey)
+        cartoDBApi.fetchContent.connect(self._loadData)
+        cartoDBApi.getDataFromTable(sql, False)
+        # geoJSON = self._loadData()
 
     def workerFinished(self, ret):
         QgsMessageLog.logMessage('Task finished:\n' + str(ret), 'CartoDB Plugin', QgsMessageLog.INFO)
-        self.loop.exit()
+        # self.loop.exit()
 
     def workerError(self, e, exception_string):
         QgsMessageLog.logMessage('Worker thread raised an exception:\n'.format(exception_string), 'CartoDB Plugin', QgsMessageLog.CRITICAL)

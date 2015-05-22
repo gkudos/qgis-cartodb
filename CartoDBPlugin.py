@@ -62,6 +62,8 @@ class CartoDBPlugin(QObject):
             self.databasePath = CartoDBPlugin.PLUGIN_DIR + '/db/database.sqlite'
             shutil.copyfile(CartoDBPlugin.PLUGIN_DIR + '/db/init_database.sqlite', self.databasePath)
         self.layers = []
+        self.countLoadingLayers = 0
+        self.countLoadedLayers = 0
 
     def initGui(self):
         self._cdbMenu = QMenu("CartoDB plugin", self.iface.mainWindow())
@@ -124,43 +126,39 @@ class CartoDBPlugin(QObject):
         if result == 1 and dlg.currentUser is not None and dlg.currentApiKey is not None:
             selectedItems = dlg.getTablesListSelectedItems()
             countLayers = len(selectedItems)
+            self.countLoadingLayers = self.countLoadingLayers + countLayers
             if countLayers > 0:
-                progressMessageBar, self.progress = self.addLoadingMsg(countLayers)
+                self.progressMessageBar, self.progress = self.addLoadingMsg(self.countLoadingLayers)
+                self.iface.messageBar().pushWidget(self.progressMessageBar, self.iface.messageBar().INFO)
+                self.iface.mainWindow().statusBar().showMessage("Processed {} %".format(0))
                 for i, table in enumerate(selectedItems):
-                    worker = CartoDBLayerWorker(self.iface, table.text(), dlg, i)
+                    worker = CartoDBLayerWorker(self.iface, table.text(), dlg)
                     worker.finished.connect(self.addLayer)
                     self.worker = worker
                     worker.load()
-                    # worker.loadLayer()
-                    '''
-                    thread = QThread(self)
-                    worker.moveToThread(thread)
-                    thread.started.connect(worker.loadLayer)
-                    thread.start()
-                    self.thread = thread
-                    '''
 
-                self.iface.mainWindow().statusBar().clearMessage()
-                self.iface.messageBar().popWidget(progressMessageBar)
+    def addLayer(self, layer):
+        try:
+            self.worker.deleteLater()
+        except Exception, e:
+            pass
 
-    def addLayer(self, layer, dlg, i):
-        self.worker.deleteLater()
-        '''
-        self.thread.quit()
-        self.thread.wait()
-        self.thead.deleteLater()
-        '''
+        self.countLoadedLayers = self.countLoadedLayers + 1
 
-        selectedItems = dlg.getTablesListSelectedItems()
-        countLayers = len(selectedItems)
         if layer.readOnly:
             self.iface.messageBar().pushMessage("Warning", 'Layer ' + layer.layerName + ' is loaded in readonly mode',
                                                 level=self.iface.messageBar().WARNING, duration=5)
         QgsMapLayerRegistry.instance().addMapLayer(layer)
         self.layers.append(layer)
-        percent = i / float(countLayers) * 100
-        self.iface.mainWindow().statusBar().showMessage("Processed {} %".format(int(percent)))
-        self.progress.setValue(i + 1)
+        self.progressMessageBar.setText(str(self.countLoadedLayers) + '/' + str(self.countLoadingLayers))
+        percent = self.countLoadedLayers / float(self.countLoadingLayers) * 100
+        self.iface.mainWindow().statusBar().showMessage("Processed {}% - Loaded: {}".format(int(percent), layer.cartoTable))
+        self.progress.setValue(self.countLoadedLayers)
+        if self.countLoadedLayers == self.countLoadingLayers:
+            self.iface.mainWindow().statusBar().clearMessage()
+            self.iface.messageBar().popWidget(self.progressMessageBar)
+            self.countLoadedLayers = 0
+            self.countLoadingLayers = 0
 
     def addSQL(self):
         # Create and show the dialog
@@ -179,13 +177,12 @@ class CartoDBPlugin(QObject):
             self.iface.mainWindow().statusBar().clearMessage()
             self.iface.messageBar().popWidget(progressMessageBar)
 
-    def addLoadingMsg(self, countLayers):
-        progressMessageBar = self.iface.messageBar().createMessage("Loading layers...")
+    def addLoadingMsg(self, countLayers, barText='Loading datasets'):
+        progressMessageBar = self.iface.messageBar().createMessage(barText, '0/' + str(countLayers))
         progress = QProgressBar()
         progress.setMaximum(countLayers)
         progress.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
         progressMessageBar.layout().addWidget(progress)
-        self.iface.messageBar().pushWidget(progressMessageBar, self.iface.messageBar().INFO)
         return progressMessageBar, progress
 
     def createLayerCB(self, layer):
