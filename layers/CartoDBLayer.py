@@ -40,34 +40,32 @@ from QgisCartoDB.utils import CartoDBPluginWorker
 
 
 class CartoDBLayer(QgsVectorLayer):
-    LAYER_CNAME_PROPERTY = 'cartoName'
+    LAYER_CNAME_PROPERTY = 'user'
     LAYER_TNAME_PROPERTY = 'tableName'
     LAYER_SQL_PROPERTY = 'cartoSQL'
 
-    def __init__(self, iface, tableName, cartoName, apiKey, sql=None, geoJSON=None):
+    def __init__(self, iface, tableName, user, apiKey, owner=None, sql=None, geoJSON=None):
         # SQLite available?
         self.iface = iface
-        self.user = cartoName
+        self.user = user
         self._apiKey = apiKey
         self.layerType = 'ogr'
+        self.owner = owner
         driverName = "SQLite"
         sqLiteDrv = ogr.GetDriverByName(driverName)
         self.databasePath = QgisCartoDB.CartoDBPlugin.PLUGIN_DIR + '/db/database.sqlite'
         self.datasource = sqLiteDrv.Open(self.databasePath, True)
         self.layerName = tableName
+
         self.cartoTable = tableName
+
         self.forceReadOnly = False
 
         if sql is None:
-            sql = 'SELECT * FROM ' + tableName
+            sql = 'SELECT * FROM ' + ((owner + '.') if owner is not None else '') + self.cartoTable
         else:
             self.forceReadOnly = True
 
-        '''
-        cartoDBApi = CartoDBApi(self.user, self._apiKey)
-        cartoDBApi.fetchContent.connect(self._loadData)
-        cartoDBApi.getDataFromTable(sql, False)
-        '''
         self._loadData(sql, geoJSON)
 
     def initConnections(self):
@@ -160,9 +158,10 @@ class CartoDBLayer(QgsVectorLayer):
             self.setCustomProperty(CartoDBLayer.LAYER_SQL_PROPERTY, sql)
 
     def _uneditableFields(self):
+        schema = 'public' if self.owner is None else self.owner
         sql = "SELECT table_name, column_name, column_default, is_nullable, data_type, table_schema \
                 FROM information_schema.columns \
-                WHERE data_type != 'USER-DEFINED' AND table_schema = 'public' AND table_name = '" + self.cartoTable + "' \
+                WHERE data_type != 'USER-DEFINED' AND table_schema = '" + schema + "' AND table_name = '" + self.cartoTable + "' \
                 ORDER BY ordinal_position"
 
         cl = CartoDBAPIKey(self._apiKey, self.user)
@@ -214,10 +213,11 @@ class CartoDBLayer(QgsVectorLayer):
         self._deleteFeatures(editBuffer.deletedFeatureIds())
 
     def _updateAttributes(self, changedAttributeValues):
+        schema = '' if self.owner is None else (self.owner + '.')
         provider = self.dataProvider()
         for featureID, v in changedAttributeValues.iteritems():
             QgsMessageLog.logMessage('Update attributes for feature ID: ' + str(featureID), 'CartoDB Plugin', QgsMessageLog.INFO)
-            sql = "UPDATE " + self.cartoTable + " SET "
+            sql = "UPDATE " + schema + self.cartoTable + " SET "
             request = QgsFeatureRequest().setFilterFid(featureID)
             try:
                 feature = self.getFeatures(request).next()
@@ -252,11 +252,12 @@ class CartoDBLayer(QgsVectorLayer):
                                                     level=self.iface.messageBar().WARNING, duration=10)
 
     def _updateGeometries(self, changedGeometries):
+        schema = '' if self.owner is None else (self.owner + '.')
         for featureID, geom in changedGeometries.iteritems():
             QgsMessageLog.logMessage('Update geometry for feature ID: ' + str(featureID), 'CartoDB Plugin', QgsMessageLog.INFO)
             request = QgsFeatureRequest().setFilterFid(featureID)
             try:
-                sql = "UPDATE " + self.cartoTable + " SET the_geom = "
+                sql = "UPDATE " + schema + self.cartoTable + " SET the_geom = "
                 feature = self.getFeatures(request).next()
                 sql = sql + "ST_GeomFromText('" + geom.exportToWkt() + "', ST_SRID(the_geom)) WHERE cartodb_id = " + unicode(feature['cartodb_id'])
                 sql = sql.encode('utf-8')
@@ -273,10 +274,11 @@ class CartoDBLayer(QgsVectorLayer):
                                                     level=self.iface.messageBar().WARNING, duration=10)
 
     def _addFeatures(self, addedFeatures):
+        schema = '' if self.owner is None else (self.owner + '.')
         provider = self.dataProvider()
         for featureID, feature in addedFeatures.iteritems():
             QgsMessageLog.logMessage('Add feature with feature ID: ' + str(featureID), 'CartoDB Plugin', QgsMessageLog.INFO)
-            sql = "INSERT INTO " + self.cartoTable + " ("
+            sql = "INSERT INTO " + schema + self.cartoTable + " ("
             addComma = False
             for field in feature.fields():
                 if unicode(feature[field.name()]) == 'NULL' or feature[field.name()] is None:
@@ -306,13 +308,14 @@ class CartoDBLayer(QgsVectorLayer):
                 self.setFieldEditable(self.fieldNameIndex('cartodb_id'), False)
 
     def _deleteFeatures(self, deletedFeatureIds):
+        schema = '' if self.owner is None else (self.owner + '.')
         provider = self.dataProvider()
         for featureID in deletedFeatureIds:
             QgsMessageLog.logMessage('Delete feature with feature ID: ' + str(featureID), 'CartoDB Plugin', QgsMessageLog.INFO)
             request = QgsFeatureRequest().setFilterFid(featureID)
             try:
                 feature = provider.getFeatures(request).next()
-                sql = "DELETE FROM " + self.cartoTable + " WHERE cartodb_id = " + unicode(feature['cartodb_id'])
+                sql = "DELETE FROM " + schema + self.cartoTable + " WHERE cartodb_id = " + unicode(feature['cartodb_id'])
                 res = self._updateSQL(sql, 'Some error ocurred deleting feature')
                 if isinstance(res, dict) and res['total_rows'] == 1:
                     self.iface.messageBar().pushMessage('Info',
@@ -356,9 +359,10 @@ class CartoDBLayerWorker(QObject):
     finished = pyqtSignal(CartoDBLayer)
     error = pyqtSignal(Exception, basestring)
 
-    def __init__(self, iface, tableName, dlg, sql=None):
+    def __init__(self, iface, tableName, owner=None, dlg=None, sql=None):
         QObject.__init__(self)
         self.iface = iface
+        self.owner = owner
         self.tableName = tableName
         self.dlg = dlg
         self.sql = sql
@@ -379,13 +383,13 @@ class CartoDBLayerWorker(QObject):
         geoJSON = response.read()
         return geoJSON
         '''
-        layer = CartoDBLayer(self.iface, self.tableName, self.dlg.currentUser, self.dlg.currentApiKey, self.sql, geoJSON)
+        layer = CartoDBLayer(self.iface, self.tableName, self.dlg.currentUser, self.dlg.currentApiKey, self.owner, self.sql, geoJSON)
         self.finished.emit(layer)
 
     @pyqtSlot()
     def loadLayer(self):
         if self.sql is None:
-            sql = 'SELECT * FROM ' + self.tableName
+            sql = 'SELECT * FROM ' + ((self.owner + '.') if self.owner is not None else '') + self.tableName
         else:
             sql = self.sql
 

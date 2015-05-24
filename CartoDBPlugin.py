@@ -132,7 +132,8 @@ class CartoDBPlugin(QObject):
                 self.iface.messageBar().pushWidget(self.progressMessageBar, self.iface.messageBar().INFO)
                 self.iface.mainWindow().statusBar().showMessage("Processed {} %".format(0))
                 for i, table in enumerate(selectedItems):
-                    worker = CartoDBLayerWorker(self.iface, table.text(), dlg)
+                    widget = dlg.getItemWidget(table)
+                    worker = CartoDBLayerWorker(self.iface, widget.tableName, widget.tableOwner, dlg)
                     worker.finished.connect(self.addLayer)
                     self.worker = worker
                     worker.load()

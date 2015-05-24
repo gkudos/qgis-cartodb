@@ -59,6 +59,17 @@
     </widget>
    </item>
    <item>
+    <layout class="QHBoxLayout" name="optionsLayout">
+     <item>
+      <widget class="QCheckBox" name="extentCB">
+       <property name="text">
+        <string>Filter by current extent</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item>
     <layout class="QHBoxLayout" name="userDataLayout">
      <item>
       <widget class="QLabel" name="avatarLB">

@@ -29,6 +29,7 @@ from QgisCartoDB.dialogs.ConnectionManager import CartoDBConnectionsManager
 from QgisCartoDB.dialogs.NewConnection import CartoDBNewConnectionDialog
 from QgisCartoDB.ui.UI_CartoDBPlugin import Ui_CartoDBPlugin
 from QgisCartoDB.utils import CartoDBPluginWorker
+from QgisCartoDB.widgets import CartoDBDatasetsListItem
 
 import QgisCartoDB.resources
 
@@ -55,14 +56,11 @@ class CartoDBPluginDialog(QDialog):
         self.isLoadingTables = False
         self.noLoadTables = False
 
-    def setTablesListItems(self, tables):
-        self.ui.tablesList.clear()
-        for item in tables:
-            self.ui.tablesList.addItem(item)
-        return True
-
     def getTablesListSelectedItems(self):
         return self.ui.tablesList.selectedItems()
+
+    def getItemWidget(self, item):
+        return self.ui.tablesList.itemWidget(item)
 
     @pyqtSlot()
     def connect(self):
@@ -86,10 +84,16 @@ class CartoDBPluginDialog(QDialog):
         self.updateList(newVisualizations)
 
     def updateList(self, visualizations):
-        items = []
+        self.ui.tablesList.clear()
         for visualization in visualizations:
-            item = QListWidgetItem()
-            item.setText(visualization['name'])
+            item = QListWidgetItem(self.ui.tablesList)
+
+            owner = None
+            if visualization['permission']['owner']['username'] != self.currentUser:
+                owner = visualization['permission']['owner']['username']
+
+            widget = CartoDBDatasetsListItem(visualization['name'], owner, visualization['table']['size'], visualization['table']['row_count'])
+            # item.setText(visualization['name'])
             readonly = False
             if visualization['permission'] is not None and visualization['permission']['acl'] is not None:
                 for acl in visualization['permission']['acl']:
@@ -97,11 +101,11 @@ class CartoDBPluginDialog(QDialog):
                         readonly = True
                         break
             if readonly:
-                item.setTextColor(QColor('#999999'))
+                widget.setTextColor('#999999')
 
-            item.setIcon(QIcon(":/plugins/qgis-cartodb/images/icons/layers.png"))
-            items.append(item)
-        self.setTablesListItems(items)
+            item.setSizeHint(widget.sizeHint())
+            # item.setIcon(QIcon(":/plugins/qgis-cartodb/images/icons/layers.png"))
+            self.ui.tablesList.setItemWidget(item, widget)
 
     def getUserData(self, cartodbUser, apiKey, multiuser=False):
         cartoDBApi = CartoDBApi(cartodbUser, apiKey, multiuser)

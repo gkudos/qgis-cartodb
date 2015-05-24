@@ -88,7 +88,6 @@ class CartoDBApiTest(UsesQApplication):
         cartodbApi.fetchContent.connect(self.signalsObject.cb_show_user_data)
         cartodbApi.getUserDetails()
 
-    @unittest.skip("testing skipping")
     def test_show_user_tables(self):
         self.logger.debug("\n*******************************************************************************")
         self.logger.debug('\nTest get user tables for: ' + cartodb_user)
@@ -97,6 +96,7 @@ class CartoDBApiTest(UsesQApplication):
         cartodbApi.fetchContent.connect(self.signalsObject.cb_show_user_tables)
         cartodbApi.getUserTables()
 
+    @unittest.skip("testing skipping")
     def test_get_table_data(self):
         self.logger.debug("\n*******************************************************************************")
         self.logger.debug('\nTest table data for: world_borders')
