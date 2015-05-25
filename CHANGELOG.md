@@ -1,3 +1,16 @@
+<a name="0.1.3"></a>
+### 0.1.3 (2015-05-24)
+
+#### New Features
+
+* Filter tables by current extent.
+* Add more info for table list.
+* Use threads for download data.
+
+#### Fixes.
+
+* Fix error at multiusers accounts #15, again.
+
 <a name="0.1.2"></a>
 ### 0.1.2 (2015-05-07)
 

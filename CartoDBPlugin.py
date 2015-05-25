@@ -133,7 +133,7 @@ class CartoDBPlugin(QObject):
                 self.iface.mainWindow().statusBar().showMessage("Processed {} %".format(0))
                 for i, table in enumerate(selectedItems):
                     widget = dlg.getItemWidget(table)
-                    worker = CartoDBLayerWorker(self.iface, widget.tableName, widget.tableOwner, dlg)
+                    worker = CartoDBLayerWorker(self.iface, widget.tableName, widget.tableOwner, dlg, filterByExtent=dlg.filterByExtent())
                     worker.finished.connect(self.addLayer)
                     self.worker = worker
                     worker.load()
@@ -171,7 +171,7 @@ class CartoDBPlugin(QObject):
             sql = dlg.getQuery()
             progressMessageBar, progress = self.addLoadingMsg(1)
             QgsMessageLog.logMessage('SQL: ' + sql, 'CartoDB Plugin', QgsMessageLog.INFO)
-            layer = CartoDBLayer(self.iface, 'SQLQuery', dlg.currentUser, dlg.currentApiKey, sql)
+            layer = CartoDBLayer(self.iface, 'SQLQuery', dlg.currentUser, dlg.currentApiKey, sql=sql)
             QgsMapLayerRegistry.instance().addMapLayer(layer)
             self.layers.append(layer)
             progress.setValue(1)

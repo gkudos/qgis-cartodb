@@ -58,7 +58,7 @@ class CartoDBDatasetsListItem(QWidget):
     def setRows(self, rows):
         self.rows = rows
         if rows is not None:
-            self.ui.rowsTX.setText(str(rows))
+            self.ui.rowsTX.setText("{:,} rows".format(rows))
 
     def setTextColor(self, color):
         self.ui.tableNameTX.setStyleSheet('color: ' + color)

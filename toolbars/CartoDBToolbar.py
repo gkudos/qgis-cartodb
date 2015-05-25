@@ -56,6 +56,7 @@ class CartoDBToolbar(QWidget):
         self.nameLB = QLabel(self)
         self.nameLB.setFocusPolicy(Qt.ClickFocus)
         self.nameLB.setTextFormat(Qt.RichText)
+        self.nameLB.setText("<html><head/><body><p><span style=\" text-decoration: underline; color:#00557f;\">Add Connection</span></p></body></html>")
 
         self.setCursor(QCursor(Qt.PointingHandCursor))
         self.connectLayout.addWidget(self.avatarLB)

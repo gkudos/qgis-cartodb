@@ -44,7 +44,7 @@ class CartoDBLayer(QgsVectorLayer):
     LAYER_TNAME_PROPERTY = 'tableName'
     LAYER_SQL_PROPERTY = 'cartoSQL'
 
-    def __init__(self, iface, tableName, user, apiKey, owner=None, sql=None, geoJSON=None):
+    def __init__(self, iface, tableName, user, apiKey, owner=None, sql=None, geoJSON=None, filterByExtent=False):
         # SQLite available?
         self.iface = iface
         self.user = user
@@ -63,6 +63,9 @@ class CartoDBLayer(QgsVectorLayer):
 
         if sql is None:
             sql = 'SELECT * FROM ' + ((owner + '.') if owner is not None else '') + self.cartoTable
+            if filterByExtent:
+                extent = self.iface.mapCanvas().extent()
+                sql = sql + " WHERE ST_Intersects(ST_GeometryFromText('{}', 4326), the_geom)".format(extent.asWktPolygon())
         else:
             self.forceReadOnly = True
 
@@ -359,13 +362,14 @@ class CartoDBLayerWorker(QObject):
     finished = pyqtSignal(CartoDBLayer)
     error = pyqtSignal(Exception, basestring)
 
-    def __init__(self, iface, tableName, owner=None, dlg=None, sql=None):
+    def __init__(self, iface, tableName, owner=None, dlg=None, sql=None, filterByExtent=False):
         QObject.__init__(self)
         self.iface = iface
         self.owner = owner
         self.tableName = tableName
         self.dlg = dlg
         self.sql = sql
+        self.filterByExtent = filterByExtent
 
     def load(self):
         worker = CartoDBPluginWorker(self, 'loadLayer')
@@ -390,6 +394,9 @@ class CartoDBLayerWorker(QObject):
     def loadLayer(self):
         if self.sql is None:
             sql = 'SELECT * FROM ' + ((self.owner + '.') if self.owner is not None else '') + self.tableName
+            if self.filterByExtent:
+                extent = self.iface.mapCanvas().extent()
+                sql = sql + " WHERE ST_Intersects(ST_GeometryFromText('{}', 4326), the_geom)".format(extent.asWktPolygon())
         else:
             sql = self.sql
 

@@ -9,6 +9,8 @@ author=Kudos Ltda. and contributors
 email=michaelsalgado@gkudos.com
 changelog=0.1.3
   - Use threads for download data.
+  - Filter tables by current extent.
+  - Add more info for table list.
   0.1.2
   - Filter tables by name.
   - Indicate READ_ONLY tables for multiuser accounts.

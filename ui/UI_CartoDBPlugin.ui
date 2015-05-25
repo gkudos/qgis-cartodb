@@ -61,7 +61,7 @@
    <item>
     <layout class="QHBoxLayout" name="optionsLayout">
      <item>
-      <widget class="QCheckBox" name="extentCB">
+      <widget class="QCheckBox" name="extentCH">
        <property name="text">
         <string>Filter by current extent</string>
        </property>

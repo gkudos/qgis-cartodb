@@ -62,6 +62,9 @@ class CartoDBPluginDialog(QDialog):
     def getItemWidget(self, item):
         return self.ui.tablesList.itemWidget(item)
 
+    def filterByExtent(self):
+        return self.ui.extentCH.isChecked()
+
     @pyqtSlot()
     def connect(self):
         # Get tables from CartoDB.
