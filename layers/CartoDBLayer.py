@@ -290,7 +290,9 @@ class CartoDBLayer(QgsVectorLayer):
                     sql = sql + ", "
                 sql = sql + field.name()
                 addComma = True
-            sql = sql + ", the_geom) VALUES ("
+            if addComma:
+                sql = sql + ", "
+            sql = sql + "the_geom) VALUES ("
             addComma = False
             for field in feature.fields():
                 if unicode(feature[field.name()]) == 'NULL' or feature[field.name()] is None:
@@ -299,7 +301,9 @@ class CartoDBLayer(QgsVectorLayer):
                     sql = sql + ", "
                 sql = sql + "'" + unicode(feature[field.name()]) + "'"
                 addComma = True
-            sql = sql + ", ST_GeomFromText('" + feature.geometry().exportToWkt() + "', 4326)) RETURNING cartodb_id"
+            if addComma:
+                sql = sql + ", "
+            sql = sql + "ST_GeomFromText('" + feature.geometry().exportToWkt() + "', 4326)) RETURNING cartodb_id"
             sql = sql.encode('utf-8')
             res = self._updateSQL(sql, 'Some error ocurred inserting feature')
             if isinstance(res, dict) and res['total_rows'] == 1:
