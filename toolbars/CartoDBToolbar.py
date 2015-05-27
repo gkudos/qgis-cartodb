@@ -54,6 +54,8 @@ class CartoDBToolbar(QWidget):
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.avatarLB.sizePolicy().hasHeightForWidth())
         self.avatarLB.setSizePolicy(sizePolicy)
+        self.avatarLB.setFixedSize(24, 24)
+        self.avatarLB.hide()
 
         self.nameLB = QLabel(self)
         self.nameLB.setFocusPolicy(Qt.ClickFocus)
