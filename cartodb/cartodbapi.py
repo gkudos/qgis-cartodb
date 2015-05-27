@@ -37,6 +37,8 @@ class CartoDBApi(QObject):
 
         reply = self.manager.get(request)
         loop = QEventLoop()
+        reply.downloadProgress.connect(self.progress)
+        reply.error.connect(self.error)
         reply.finished.connect(loop.exit)
         loop.exec_()
 
@@ -61,6 +63,8 @@ class CartoDBApi(QObject):
 
         reply = self.manager.get(request)
         loop = QEventLoop()
+        reply.downloadProgress.connect(self.progress)
+        reply.error.connect(self.error)
         reply.finished.connect(loop.exit)
         loop.exec_()
 
@@ -72,11 +76,32 @@ class CartoDBApi(QObject):
 
         reply = self.manager.get(request)
         loop = QEventLoop()
+        reply.downloadProgress.connect(self.progress)
+        reply.error.connect(self.error)
         reply.finished.connect(loop.exit)
         loop.exec_()
 
+    def progress(self, breceived, btotal):
+        # TODO Manage progress
+        # qDebug('Rec: ' + str(breceived/1024/1024) + 'MB')
+        # qDebug('Tot: ' + str(btotal))
+        pass
+
     def returnFetchContent(self, reply):
+        response = str(reply.readAll())
+        # qDebug('Response:' + response)
+        # qDebug('Error: ' + str(reply.error()))
+        # qDebug('Status: ' + str(reply.rawHeader('Location')))
+
+        if reply.rawHeader('Location') == 'http://cartodb.com/noneuser.html':
+            response = '{"error": "User not found"}'
+        elif reply.error() == QNetworkReply.AuthenticationRequiredError:
+            response = '{"error": "Confirm user credentials"}'
+
         if self.returnDict:
-            self.fetchContent.emit(json.loads(str(reply.readAll())))
+            self.fetchContent.emit(json.loads(response))
         else:
-            self.fetchContent.emit(str(reply.readAll()))
+            self.fetchContent.emit(response)
+
+    def error(self, error):
+        qDebug('Error' + str(error))

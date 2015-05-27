@@ -18,7 +18,7 @@ email                : michaelsalgado@gkudos.com, info@gkudos.com
  *                                                                         *
  ***************************************************************************/
 """
-from PyQt4.QtCore import QSettings
+from PyQt4.QtCore import QSettings, pyqtSignal
 from PyQt4.QtGui import QDialog, QMessageBox
 
 from qgis.core import QgsMessageLog
@@ -29,6 +29,9 @@ from QgisCartoDB.ui.ConnectionManager import Ui_ConnectionManager
 
 # Create the dialog for CartoDBPlugin
 class CartoDBConnectionsManager(QDialog):
+    notfoundconnections = pyqtSignal()
+    deleteconnetion = pyqtSignal(str)
+
     def __init__(self):
         QDialog.__init__(self)
 
@@ -98,6 +101,9 @@ class CartoDBConnectionsManager(QDialog):
 
             self.ui.connectionList.setCurrentIndex(currentIndex)
 
+        if conCount == 0:
+            self.notfoundconnections.emit()
+
     def openNewConnectionDialog(self):
         # Open new connection dialog.
         dlg = CartoDBNewConnectionDialog()
@@ -141,3 +147,5 @@ class CartoDBConnectionsManager(QDialog):
             indexToDelete = self.ui.connectionList.currentIndex()
             self.ui.connectionList.removeItem(indexToDelete)
             self.setConnectionListPosition()
+            if self.ui.connectionList.count() > 0:
+                self.deleteconnetion.emit(currentText)

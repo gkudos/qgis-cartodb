@@ -75,9 +75,14 @@ class CartoDBPlugin(QObject):
 
         self.toolbar = CartoDBToolbar()
         self.toolbar.setClick(self.connectionManager)
+        self.toolbar.error.connect(self.toolbarError)
         self._toolbarAction = self.iface.addWebToolBarWidget(self.toolbar)
         worker = CartoDBPluginWorker(self.toolbar, 'connectCartoDB')
         worker.start()
+
+        if not self.toolbar.isCurrentUserValid():
+            self._mainAction.setEnabled(False)
+            self._addSQLAction.setEnabled(False)
 
         QObject.connect(self._mainAction, SIGNAL("activated()"), self.run)
         QObject.connect(self._addSQLAction, SIGNAL("activated()"), self.addSQL)
@@ -110,11 +115,27 @@ class CartoDBPlugin(QObject):
 
     def connectionManager(self):
         dlg = CartoDBConnectionsManager()
+        dlg.notfoundconnections.connect(self.connectionsNotFound)
+        dlg.deleteconnetion.connect(self.onDeleteUser)
         dlg.show()
 
         result = dlg.exec_()
         if result == 1 and dlg.currentUser is not None and dlg.currentApiKey is not None:
             self.toolbar.setUserCredentials(dlg.currentUser, dlg.currentApiKey, dlg.currentMultiuser)
+            self._mainAction.setEnabled(True)
+            self._addSQLAction.setEnabled(True)
+
+    def connectionsNotFound(self):
+        self.toolbarError("")
+        self.toolbar.reset()
+
+    def onDeleteUser(self, user):
+        if self.toolbar.currentUser == user:
+            self.toolbar.setConnectText()
+
+    def toolbarError(self, error):
+        self._mainAction.setEnabled(False)
+        self._addSQLAction.setEnabled(False)
 
     def run(self):
         # Create and show the dialog
