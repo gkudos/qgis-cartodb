@@ -19,7 +19,7 @@ email                : michaelsalgado@gkudos.com, info@gkudos.com
  ***************************************************************************/
 """
 from PyQt4.QtCore import QSettings, QUrl, QEventLoop, pyqtSignal, pyqtSlot, Qt, qDebug
-from PyQt4.QtGui import QDialog, QMessageBox, QListWidgetItem, QIcon, QColor, QImage, QPixmap, QImageReader
+from PyQt4.QtGui import QApplication, QDialog, QMessageBox, QListWidgetItem, QIcon, QColor, QImage, QPixmap, QImageReader
 from PyQt4.QtNetwork import QNetworkAccessManager, QNetworkRequest, QNetworkReply
 
 from qgis.core import QgsMessageLog
@@ -173,7 +173,9 @@ class CartoDBPluginDialog(QDialog):
         else:
             quota = "{:.2f}".format(quota) + ' MB'
 
-        self.ui.nameLB.setText(self.currentUserData['username'] + ', using ' + usedQuota + ' of ' + quota)
+        self.ui.nameLB.setText(
+            QApplication.translate('CartoDBPlugin', '{}, using {} of {}')
+                        .format(self.currentUserData['username'], usedQuota, quota))
 
     def returnAvatar(self, reply):
         imageReader = QImageReader(reply)

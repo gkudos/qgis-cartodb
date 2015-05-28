@@ -52,6 +52,17 @@ class CartoDBPlugin(QObject):
         # Save reference to the QGIS interface
         self.iface = iface
 
+        # initialize locale
+        locale = QSettings().value("locale/userLocale")[0:2]
+        localePath = os.path.join(CartoDBPlugin.PLUGIN_DIR, "i18n", "{}.qm".format(locale))
+
+        if os.path.exists(localePath):
+            self.translator = QTranslator()
+            self.translator.load(localePath)
+
+            if qVersion() > '4.3.3':
+                QCoreApplication.installTranslator(self.translator)
+
         # SQLite available?
         driverName = "SQLite"
         self.sqLiteDrv = ogr.GetDriverByName(driverName)
@@ -68,9 +79,9 @@ class CartoDBPlugin(QObject):
     def initGui(self):
         self._cdbMenu = QMenu("CartoDB plugin", self.iface.mainWindow())
         self._cdbMenu.setIcon(QIcon(":/plugins/qgis-cartodb/images/icon.png"))
-        self._mainAction = QAction("Add CartoDB Layer", self.iface.mainWindow())
+        self._mainAction = QAction(self.tr('Add CartoDB Layer'), self.iface.mainWindow())
         self._mainAction.setIcon(QIcon(":/plugins/qgis-cartodb/images/add.png"))
-        self._addSQLAction = QAction("Add SQL CartoDB Layer", self.iface.mainWindow())
+        self._addSQLAction = QAction(self.tr('Add SQL CartoDB Layer'), self.iface.mainWindow())
         self._addSQLAction.setIcon(QIcon(":/plugins/qgis-cartodb/images/add_sql.png"))
 
         self.toolbar = CartoDBToolbar()
@@ -151,7 +162,7 @@ class CartoDBPlugin(QObject):
             if countLayers > 0:
                 self.progressMessageBar, self.progress = self.addLoadingMsg(self.countLoadingLayers)
                 self.iface.messageBar().pushWidget(self.progressMessageBar, self.iface.messageBar().INFO)
-                self.iface.mainWindow().statusBar().showMessage("Processed {} %".format(0))
+                self.iface.mainWindow().statusBar().showMessage(self.tr('Processed {} %').format(0))
                 for i, table in enumerate(selectedItems):
                     widget = dlg.getItemWidget(table)
                     worker = CartoDBLayerWorker(self.iface, widget.tableName, widget.tableOwner, dlg, filterByExtent=dlg.filterByExtent())
@@ -168,13 +179,14 @@ class CartoDBPlugin(QObject):
         self.countLoadedLayers = self.countLoadedLayers + 1
 
         if layer.readOnly:
-            self.iface.messageBar().pushMessage("Warning", 'Layer ' + layer.layerName + ' is loaded in readonly mode',
+            self.iface.messageBar().pushMessage(self.tr('Warning'),
+                                                self.tr('Layer {}  is loaded in readonly mode').format(layer.layerName),
                                                 level=self.iface.messageBar().WARNING, duration=5)
         QgsMapLayerRegistry.instance().addMapLayer(layer)
         self.layers.append(layer)
         self.progressMessageBar.setText(str(self.countLoadedLayers) + '/' + str(self.countLoadingLayers))
         percent = self.countLoadedLayers / float(self.countLoadingLayers) * 100
-        self.iface.mainWindow().statusBar().showMessage("Processed {}% - Loaded: {}".format(int(percent), layer.cartoTable))
+        self.iface.mainWindow().statusBar().showMessage(self.tr('Processed {}% - Loaded: {}').format(int(percent), layer.cartoTable))
         self.progress.setValue(self.countLoadedLayers)
         if self.countLoadedLayers == self.countLoadingLayers:
             self.iface.mainWindow().statusBar().clearMessage()
@@ -199,7 +211,8 @@ class CartoDBPlugin(QObject):
             self.iface.mainWindow().statusBar().clearMessage()
             self.iface.messageBar().popWidget(progressMessageBar)
 
-    def addLoadingMsg(self, countLayers, barText='Loading datasets'):
+    def addLoadingMsg(self, countLayers, barText='Downloading datasets'):
+        barText = self.tr(barText)
         progressMessageBar = self.iface.messageBar().createMessage(barText, '0/' + str(countLayers))
         progress = QProgressBar()
         progress.setMaximum(countLayers)

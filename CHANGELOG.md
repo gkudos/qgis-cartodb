@@ -1,4 +1,13 @@
 <a name="0.1.3"></a>
+### 0.1.4 (2015-05-27)
+
+#### Fixes
+
+* Fix avatar size
+* Fix insert feature when all fields are null.
+* Enable buttons only if there is at least one created connection.
+
+<a name="0.1.3"></a>
 ### 0.1.3 (2015-05-24)
 
 #### New Features

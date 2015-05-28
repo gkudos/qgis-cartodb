@@ -385,12 +385,6 @@ class CartoDBLayerWorker(QObject):
 
     @pyqtSlot(str)
     def _loadData(self, geoJSON):
-        '''
-        cartoUrl = 'http://{}.cartodb.com/api/v2/sql?format=GeoJSON&q={}&api_key={}'.format(self.dlg.currentUser, sql, self.dlg.currentApiKey)
-        response = urlopen(cartoUrl)
-        geoJSON = response.read()
-        return geoJSON
-        '''
         layer = CartoDBLayer(self.iface, self.tableName, self.dlg.currentUser, self.dlg.currentApiKey, self.owner, self.sql, geoJSON)
         self.finished.emit(layer)
 

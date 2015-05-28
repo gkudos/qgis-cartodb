@@ -1,7 +1,7 @@
 # Makefile for CartoDB Plugin plugin
 
 #Add iso code for any locales you want to support here (space separated)
-LOCALES = es
+LOCALES = en es
 
 PLUGINNAME = QgisCartoDB
 
