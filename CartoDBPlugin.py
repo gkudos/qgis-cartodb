@@ -5,7 +5,7 @@ A QGIS plugin
 
 ----------------------------------------------------------------------------
 begin                : 2014-09-08
-copyright            : (C) 2014 by Michael Salgado, Kudos Ltda.
+copyright            : (C) 2015 by Michael Salgado, Kudos Ltda.
 email                : michaelsalgado@gkudos.com, info@gkudos.com
  ***************************************************************************/
 
@@ -28,6 +28,7 @@ from osgeo import ogr
 import resources
 
 from cartodb import CartoDBAPIKey, CartoDBException
+from QgisCartoDB.dialogs import CartoDBPluginUpload
 from QgisCartoDB.dialogs.Main import CartoDBPluginDialog
 from QgisCartoDB.dialogs.NewSQL import CartoDBNewSQLDialog
 from QgisCartoDB.dialogs.ConnectionManager import CartoDBConnectionsManager
@@ -80,9 +81,11 @@ class CartoDBPlugin(QObject):
         self._cdbMenu = QMenu("CartoDB plugin", self.iface.mainWindow())
         self._cdbMenu.setIcon(QIcon(":/plugins/qgis-cartodb/images/icon.png"))
         self._mainAction = QAction(self.tr('Add CartoDB Layer'), self.iface.mainWindow())
-        self._mainAction.setIcon(QIcon(":/plugins/qgis-cartodb/images/add.png"))
+        self._mainAction.setIcon(QIcon(":/plugins/qgis-cartodb/images/icons/add.png"))
+        self._loadDataAction = QAction(self.tr('Upload layers to CartoDB'), self.iface.mainWindow())
+        self._loadDataAction.setIcon(QIcon(":/plugins/qgis-cartodb/images/icons/polygon.png"))
         self._addSQLAction = QAction(self.tr('Add SQL CartoDB Layer'), self.iface.mainWindow())
-        self._addSQLAction.setIcon(QIcon(":/plugins/qgis-cartodb/images/add_sql.png"))
+        self._addSQLAction.setIcon(QIcon(":/plugins/qgis-cartodb/images/icons/add_sql.png"))
 
         self.toolbar = CartoDBToolbar()
         self.toolbar.setClick(self.connectionManager)
@@ -94,13 +97,17 @@ class CartoDBPlugin(QObject):
         if not self.toolbar.isCurrentUserValid():
             self._mainAction.setEnabled(False)
             self._addSQLAction.setEnabled(False)
+            self._loadDataAction.setEnabled(False)
 
-        QObject.connect(self._mainAction, SIGNAL("activated()"), self.run)
-        QObject.connect(self._addSQLAction, SIGNAL("activated()"), self.addSQL)
+        self._mainAction.activated.connect(self.run)
+        self._loadDataAction.activated.connect(self.upload)
+        self._addSQLAction.activated.connect(self.addSQL)
 
         self._cdbMenu.addAction(self._mainAction)
+        self._cdbMenu.addAction(self._loadDataAction)
         self._cdbMenu.addAction(self._addSQLAction)
         self.iface.addWebToolBarIcon(self._mainAction)
+        self.iface.addWebToolBarIcon(self._loadDataAction)
         self.iface.addWebToolBarIcon(self._addSQLAction)
 
         # Create Web menu, if it doesn't exist yet
@@ -117,9 +124,9 @@ class CartoDBPlugin(QObject):
     def unload(self):
         self.iface.removeWebToolBarIcon(self._mainAction)
         self.iface.removeWebToolBarIcon(self._addSQLAction)
+        self.iface.removeWebToolBarIcon(self._loadDataAction)
         self.iface.webMenu().removeAction(self._cdbMenu.menuAction())
         self.iface.removeWebToolBarIcon(self._toolbarAction)
-        # self.datasource.Destroy()
 
         # Unregister plugin layer type
         QgsPluginLayerRegistry.instance().removePluginLayerType(CartoDBPluginLayer.LAYER_TYPE)
@@ -210,6 +217,12 @@ class CartoDBPlugin(QObject):
             progress.setValue(1)
             self.iface.mainWindow().statusBar().clearMessage()
             self.iface.messageBar().popWidget(progressMessageBar)
+
+    def upload(self):
+        dlg = CartoDBPluginUpload(self.toolbar)
+        dlg.show()
+
+        result = dlg.exec_()
 
     def addLoadingMsg(self, countLayers, barText='Downloading datasets'):
         barText = self.tr(barText)

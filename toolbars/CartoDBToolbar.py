@@ -5,7 +5,7 @@ A QGIS plugin
 
 ----------------------------------------------------------------------------
 begin                : 2014-09-08
-copyright            : (C) 2014 by Michael Salgado, Kudos Ltda.
+copyright            : (C) 2015 by Michael Salgado, Kudos Ltda.
 email                : michaelsalgado@gkudos.com, info@gkudos.com
  ***************************************************************************/
 
@@ -98,11 +98,11 @@ class CartoDBToolbar(QWidget):
 
     def returnAvatar(self, reply):
         imageReader = QImageReader(reply)
-        image = imageReader.read()
+        self.avatarImage = imageReader.read()
 
         lbl = self.avatarLB
         if reply.error() == QNetworkReply.NoError:
-            pixMap = QPixmap.fromImage(image).scaled(lbl.size(), Qt.KeepAspectRatio)
+            pixMap = QPixmap.fromImage(self.avatarImage).scaled(lbl.size(), Qt.KeepAspectRatio)
             lbl.setPixmap(pixMap)
             lbl.show()
         else:

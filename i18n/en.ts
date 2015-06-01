@@ -13,16 +13,20 @@
             <translation>Add SQL CartoDB Layer</translation>
         </message>
         <message>
+            <source>Upload layers to CartoDB</source>
+            <translation>Upload layers to CartoDB</translation>
+        </message>
+        <message>
+            <source>Create visualization</source>
+            <translation>Create visualization</translation>
+        </message>
+        <message>
             <source>CartoDB Layers</source>
             <translation>CartoDB Layers</translation>
         </message>
         <message>
             <source>Filter Tables</source>
             <translation>Filter Tables</translation>
-        </message>
-        <message>
-            <source>Filter by current extent</source>
-            <translation>Filter by current extent</translation>
         </message>
         <message>
             <source>Filter by current extent</source>
@@ -101,6 +105,13 @@
         <message>
             <source>Connect</source>
             <translation>Connect</translation>
+        </message>
+    </context>
+    <context>
+        <name>Upload</name>
+        <message>
+            <source>Upload layers to CartoDB</source>
+            <translation>Upload layers to CartoDB</translation>
         </message>
     </context>
 </TS>

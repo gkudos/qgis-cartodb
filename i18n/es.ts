@@ -13,6 +13,14 @@
             <translation>Agregar capa desde SQL</translation>
         </message>
         <message>
+            <source>Upload layers to CartoDB</source>
+            <translation>Subir capas a CartoDB</translation>
+        </message>
+        <message>
+            <source>Create visualization</source>
+            <translation>Crear visualización</translation>
+        </message>
+        <message>
             <source>CartoDB Layers</source>
             <translation>Tablas en CartoDB</translation>
         </message>
@@ -87,10 +95,6 @@
             <translation>Nuevo</translation>
         </message>
         <message>
-            <source>New</source>
-            <translation>New</translation>
-        </message>
-        <message>
             <source>Edit</source>
             <translation>Editar</translation>
         </message>
@@ -101,6 +105,13 @@
         <message>
             <source>Connect</source>
             <translation>Conectar</translation>
+        </message>
+    </context>
+    <context>
+        <name>Upload</name>
+        <message>
+            <source>Upload layers to CartoDB</source>
+            <translation>Subir capas a CartoDB</translation>
         </message>
     </context>
 </TS>

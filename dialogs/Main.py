@@ -5,7 +5,7 @@ A QGIS plugin
 
 ----------------------------------------------------------------------------
 begin                : 2014-09-08
-copyright            : (C) 2014 by Michael Salgado, Kudos Ltda.
+copyright            : (C) 2015 by Michael Salgado, Kudos Ltda.
 email                : michaelsalgado@gkudos.com, info@gkudos.com
  ***************************************************************************/
 
@@ -39,8 +39,8 @@ import math
 
 # Create the dialog for CartoDBPlugin
 class CartoDBPluginDialog(QDialog):
-    def __init__(self, toolbar):
-        QDialog.__init__(self)
+    def __init__(self, toolbar, parent=None):
+        QDialog.__init__(self, parent)
         self.toolbar = toolbar
         self.settings = QSettings()
         # Set up the user interface from Designer.
@@ -49,12 +49,15 @@ class CartoDBPluginDialog(QDialog):
         self.ui.searchTX.textChanged.connect(self.filterTables)
         self.ui.tablesList.verticalScrollBar().valueChanged.connect(self.onScroll)
 
-        self.currentUser = None
-        self.currentApiKey = None
-        self.currentMultiuser = None
+        self.currentUser = self.toolbar.currentUser
+        self.currentApiKey = self.toolbar.currentApiKey
+        self.currentMultiuser = self.toolbar.currentMultiuser
 
         self.isLoadingTables = False
         self.noLoadTables = False
+
+        worker = CartoDBPluginWorker(self, 'connectUser')
+        worker.start()
 
     def getTablesListSelectedItems(self):
         return self.ui.tablesList.selectedItems()
@@ -68,14 +71,13 @@ class CartoDBPluginDialog(QDialog):
     @pyqtSlot()
     def connect(self):
         # Get tables from CartoDB.
-        self.currentUser = self.toolbar.currentUser
-        self.currentApiKey = self.toolbar.currentApiKey
-        self.currentMultiuser = self.toolbar.currentMultiuser
-
         self.tablesPage = 1
         self.noLoadTables = False
         self.ui.searchTX.setText('')
         self.getTables(self.currentUser, self.currentApiKey, self.currentMultiuser)
+
+    @pyqtSlot()
+    def connectUser(self):
         self.getUserData(self.currentUser, self.currentApiKey, self.currentMultiuser)
 
     def filterTables(self):
@@ -111,27 +113,40 @@ class CartoDBPluginDialog(QDialog):
             self.ui.tablesList.setItemWidget(item, widget)
 
     def getUserData(self, cartodbUser, apiKey, multiuser=False):
-        cartoDBApi = CartoDBApi(cartodbUser, apiKey, multiuser)
-        cartoDBApi.fetchContent.connect(self.cbUserData)
-        cartoDBApi.getUserDetails()
+        if self.toolbar.avatarImage is not None:
+            pixMap = QPixmap.fromImage(self.toolbar.avatarImage).scaled(self.ui.avatarLB.size(), Qt.KeepAspectRatio)
+            self.ui.avatarLB.setPixmap(pixMap)
+            self.ui.avatarLB.show()
+
+        if self.toolbar.currentUserData is not None:
+            self.currentUserData = self.toolbar.currentUserData
+            self.setUpUserData()
+        else:
+            cartoDBApi = CartoDBApi(cartodbUser, apiKey, multiuser)
+            cartoDBApi.fetchContent.connect(self.cbUserData)
+            cartoDBApi.getUserDetails()
 
     @pyqtSlot(dict)
     def cbUserData(self, data):
         self.currentUserData = data
-        manager = QNetworkAccessManager()
-        manager.finished.connect(self.returnAvatar)
 
-        if 's3.amazonaws.com' in data['avatar_url']:
-            imageUrl = QUrl(data['avatar_url'])
-        else:
-            imageUrl = QUrl('http:' + data['avatar_url'])
+        if self.toolbar.avatarImage is None:
+            manager = QNetworkAccessManager()
+            manager.finished.connect(self.returnAvatar)
 
-        request = QNetworkRequest(imageUrl)
-        request.setRawHeader('User-Agent', 'QGIS 2.x')
-        reply = manager.get(request)
-        loop = QEventLoop()
-        reply.finished.connect(loop.exit)
-        loop.exec_()
+            if 's3.amazonaws.com' in data['avatar_url']:
+                imageUrl = QUrl(data['avatar_url'])
+            else:
+                imageUrl = QUrl('http:' + data['avatar_url'])
+
+            request = QNetworkRequest(imageUrl)
+            request.setRawHeader('User-Agent', 'QGIS 2.x')
+            reply = manager.get(request)
+            loop = QEventLoop()
+            reply.finished.connect(loop.exit)
+            loop.exec_()
+
+        self.setUpUserData()
 
     def getTables(self, cartodbUser, apiKey, multiuser=False):
         cartoDBApi = CartoDBApi(cartodbUser, apiKey, multiuser)
@@ -189,8 +204,6 @@ class CartoDBPluginDialog(QDialog):
         else:
             # TODO Put default image if not load from URL.
             pass
-
-        self.setUpUserData()
 
     def onScroll(self, val):
         maximum = self.ui.tablesList.verticalScrollBar().maximum()
