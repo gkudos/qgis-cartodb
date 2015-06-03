@@ -18,15 +18,19 @@ email                : michaelsalgado@gkudos.com, info@gkudos.com
  *                                                                         *
  ***************************************************************************/
 """
-from PyQt4.QtCore import QSettings, pyqtSlot, Qt
+from PyQt4.QtCore import Qt, QSettings, pyqtSlot, qDebug
 from PyQt4.QtGui import QApplication, QDialog, QPixmap, QListWidgetItem
 
 from qgis.core import QgsMapLayerRegistry, QgsMapLayer
 
+from QgisCartoDB.layers import CartoDBLayer
 from QgisCartoDB.ui.Upload import Ui_Upload
 from QgisCartoDB.utils import CartoDBPluginWorker
 
 import math
+import os
+import tempfile
+import zipfile
 
 
 class CartoDBPluginUpload(QDialog):
@@ -38,6 +42,9 @@ class CartoDBPluginUpload(QDialog):
         self.ui = Ui_Upload()
         self.ui.setupUi(self)
 
+        self.ui.uploadBT.clicked.connect(self.upload)
+        self.ui.cancelBT.clicked.connect(self.reject)
+
         self.currentUser = self.toolbar.currentUser
         self.currentApiKey = self.toolbar.currentApiKey
         self.currentMultiuser = self.toolbar.currentMultiuser
@@ -46,7 +53,7 @@ class CartoDBPluginUpload(QDialog):
 
         self.ui.layersList.clear()
         for id, ly in layers.iteritems():
-            if ly.type() == QgsMapLayer.VectorLayer:
+            if ly.type() == QgsMapLayer.VectorLayer and not isinstance(ly, CartoDBLayer):
                 item = QListWidgetItem(self.ui.layersList)
                 item.setText(ly.name())
 
@@ -87,3 +94,37 @@ class CartoDBPluginUpload(QDialog):
         self.ui.quotaLB.setText(
             QApplication.translate('CartoDBPlugin', 'Using {} of {}')
                         .format(usedQuota, quota))
+
+    def upload(self):
+        registry = QgsMapLayerRegistry.instance()
+        for layerItem in self.ui.layersList.selectedItems():
+            layer = registry.mapLayersByName(layerItem.text())[0]
+            qDebug('Layer: ' + str(layer.storageType()))
+            if layer.storageType() == 'ESRI Shapefile':
+                self.zipLayer(layer)
+
+    def zipLayer(self, layer):
+        filePath = layer.dataProvider().dataSourceUri()
+        if filePath.find('|') != -1:
+            filePath = filePath[0:filePath.find('|')]
+
+        dirName = os.path.dirname(filePath)
+        baseName = os.path.basename(filePath)
+        fileName = os.path.splitext(baseName)[0]
+        zipPath = os.path.join(tempfile.tempdir, layer.name() + '.zip')
+        zipFile = zipfile.ZipFile(zipPath, 'w')
+
+        if os.path.exists(os.path.join(dirName, fileName + '.shp')):
+            zipFile.write(os.path.join(dirName, fileName + '.shp'), fileName + '.shp', zipfile.ZIP_DEFLATED)
+        if os.path.exists(os.path.join(dirName, fileName + '.dbf')):
+            zipFile.write(os.path.join(dirName, fileName + '.dbf'), fileName + '.dbf', zipfile.ZIP_DEFLATED)
+        if os.path.exists(os.path.join(dirName, fileName + '.prj')):
+            zipFile.write(os.path.join(dirName, fileName + '.prj'), fileName + '.prj', zipfile.ZIP_DEFLATED)
+        if os.path.exists(os.path.join(dirName, fileName + '.shx')):
+            zipFile.write(os.path.join(dirName, fileName + '.shx'), fileName + '.shx', zipfile.ZIP_DEFLATED)
+        zipFile.close()
+        return zipPath
+
+    def reject(self):
+        # Back out of dialogue
+        QDialog.reject(self)
