@@ -18,14 +18,16 @@ email                : michaelsalgado@gkudos.com, info@gkudos.com
  *                                                                         *
  ***************************************************************************/
 """
-from PyQt4.QtCore import Qt, QSettings, pyqtSlot, qDebug
+from PyQt4.QtCore import Qt, QSettings, QFile, QFileInfo, pyqtSlot, qDebug
 from PyQt4.QtGui import QApplication, QDialog, QPixmap, QListWidgetItem
 
 from qgis.core import QgsMapLayerRegistry, QgsMapLayer
 
+from QgisCartoDB.cartodb import CartoDBApi
 from QgisCartoDB.layers import CartoDBLayer
 from QgisCartoDB.ui.Upload import Ui_Upload
 from QgisCartoDB.utils import CartoDBPluginWorker
+from QgisCartoDB.widgets import CartoDBLayerListItem
 
 import math
 import os
@@ -52,10 +54,15 @@ class CartoDBPluginUpload(QDialog):
         layers = QgsMapLayerRegistry.instance().mapLayers()
 
         self.ui.layersList.clear()
+        self.ui.uploadBar.setValue(0)
+        self.ui.uploadBar.hide()
+        self.ui.uploadingLB.hide()
         for id, ly in layers.iteritems():
             if ly.type() == QgsMapLayer.VectorLayer and not isinstance(ly, CartoDBLayer):
                 item = QListWidgetItem(self.ui.layersList)
-                item.setText(ly.name())
+                widget = CartoDBLayerListItem(ly.name(), ly, self.getSize(ly), ly.dataProvider().featureCount())
+                item.setSizeHint(widget.sizeHint())
+                self.ui.layersList.setItemWidget(item, widget)
 
         worker = CartoDBPluginWorker(self, 'connectUser')
         worker.start()
@@ -98,19 +105,57 @@ class CartoDBPluginUpload(QDialog):
     def upload(self):
         registry = QgsMapLayerRegistry.instance()
         for layerItem in self.ui.layersList.selectedItems():
-            layer = registry.mapLayersByName(layerItem.text())[0]
-            qDebug('Layer: ' + str(layer.storageType()))
-            if layer.storageType() == 'ESRI Shapefile':
-                self.zipLayer(layer)
+            widget = self.ui.layersList.itemWidget(layerItem)
+            qDebug('Layer: ' + str(widget.layer.storageType()))
+            if widget.layer.storageType() == 'ESRI Shapefile':
+                zipPath = self.zipLayer(widget.layer)
+                cartodbApi = CartoDBApi(self.currentUser, self.currentApiKey, self.currentMultiuser)
+                cartodbApi.fetchContent.connect(self.completeUpload)
+                cartodbApi.progress.connect(self.progressUpload)
+                self.ui.uploadBar.show()
+                self.ui.uploadBT.setEnabled(False)
+                self.ui.uploadingLB.setText('Uploading {}'.format(widget.layer.name()))
+                self.ui.uploadingLB.show()
+                cartodbApi.upload(zipPath)
+
+    def completeUpload(self, data):
+        self.ui.uploadBar.hide()
+        self.ui.uploadingLB.hide()
+        self.ui.uploadBT.setEnabled(True)
+
+    def progressUpload(self, current, total):
+        self.ui.uploadBar.setValue(math.ceil(float(current)/float(total)*100))
+
+    def getSize(self, layer):
+        filePath = layer.dataProvider().dataSourceUri()
+        if filePath.find('|') != -1:
+            filePath = filePath[0:filePath.find('|')]
+
+        file = QFile(filePath)
+        fileInfo = QFileInfo(file)
+
+        dirName = fileInfo.dir().absolutePath()
+        fileName = fileInfo.completeBaseName()
+
+        size = 0
+        if layer.storageType() == 'ESRI Shapefile':
+            for suffix in ['.shp', '.dbf', '.prj', '.shx']:
+                file = QFile(os.path.join(dirName, fileName + suffix))
+                fileInfo = QFileInfo(file)
+                size = size + fileInfo.size()
+
+        return size
 
     def zipLayer(self, layer):
         filePath = layer.dataProvider().dataSourceUri()
         if filePath.find('|') != -1:
             filePath = filePath[0:filePath.find('|')]
 
-        dirName = os.path.dirname(filePath)
-        baseName = os.path.basename(filePath)
-        fileName = os.path.splitext(baseName)[0]
+        file = QFile(filePath)
+        fileInfo = QFileInfo(file)
+
+        dirName = fileInfo.dir().absolutePath()
+        fileName = fileInfo.completeBaseName()
         zipPath = os.path.join(tempfile.tempdir, layer.name() + '.zip')
         zipFile = zipfile.ZipFile(zipPath, 'w')
 

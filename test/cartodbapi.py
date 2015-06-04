@@ -9,6 +9,7 @@ from PyQt4.QtGui import QApplication
 from cartodb.cartodbapi import CartoDBApi
 
 import json
+import os
 
 _instance = None
 
@@ -38,6 +39,16 @@ class SignalsObject(QObject):
         self.test.logger.debug("Get user table: " + json.dumps(data, sort_keys=True, indent=2, separators=(',', ': ')))
         self.test.logger.debug("*******************************************************************************")
         self.test.assertTrue(True)
+
+    @pyqtSlot(dict)
+    def cb_show_upload_result(self, data):
+        self.test.logger.debug("*******************************************************************************")
+        self.test.logger.debug("Upload result: " + json.dumps(data, sort_keys=True, indent=2, separators=(',', ': ')))
+        self.test.logger.debug("*******************************************************************************")
+        self.test.assertTrue(True)
+
+    def cb_progress(self, current, total):
+        self.test.logger.debug("Current: {:.2f} MB of {:.2f} MB".format(float(current)/1024/1024, float(total)/1024/1024))
 
 
 class UsesQApplication(unittest.TestCase):
@@ -88,6 +99,7 @@ class CartoDBApiTest(UsesQApplication):
         cartodbApi.fetchContent.connect(self.signalsObject.cb_show_user_data)
         cartodbApi.getUserDetails()
 
+    @unittest.skip("testing skipping")
     def test_show_user_tables(self):
         self.logger.debug("\n*******************************************************************************")
         self.logger.debug('\nTest get user tables for: ' + cartodb_user)
@@ -104,6 +116,18 @@ class CartoDBApiTest(UsesQApplication):
         cartodbApi = CartoDBApi(cartodb_user, api_key, is_multiuser)
         cartodbApi.fetchContent.connect(self.signalsObject.cb_show_table_data)
         cartodbApi.getDataFromTable('SELECT * FROM world_borders LIMIT 10')
+
+    def test_upload_file(self):
+        self.logger.debug("\n*******************************************************************************")
+        self.logger.debug('\nTest upload shape: constituencies.zip')
+        self.logger.debug("\n*******************************************************************************")
+        cartodbApi = CartoDBApi(cartodb_user, api_key, is_multiuser)
+        cartodbApi.fetchContent.connect(self.signalsObject.cb_show_upload_result)
+        cartodbApi.progress.connect(self.signalsObject.cb_progress)
+        path = os.path.dirname(os.path.abspath(__file__))
+        path = os.path.join(path, 'data')
+        path = os.path.join(path, 'constituencies.zip')
+        cartodbApi.upload(path)
 
 
 if __name__ == '__main__':

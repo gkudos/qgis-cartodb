@@ -1,6 +1,6 @@
-from PyQt4.QtCore import QObject, QUrl, qDebug, QEventLoop, pyqtSignal
+from PyQt4.QtCore import QObject, QUrl, qDebug, QEventLoop, QFile, QFileInfo, pyqtSignal
 
-from PyQt4.QtNetwork import QNetworkAccessManager, QNetworkRequest, QNetworkReply
+from PyQt4.QtNetwork import QNetworkAccessManager, QNetworkRequest, QNetworkReply, QHttpMultiPart, QHttpPart
 
 import urllib
 
@@ -12,6 +12,7 @@ except ImportError:
 
 class CartoDBApi(QObject):
     fetchContent = pyqtSignal(object)
+    progress = pyqtSignal(int, int)
 
     def __init__(self, cartodbUser, apiKey, multiuser=False, hostname='cartodb.com'):
         QObject.__init__(self)
@@ -30,6 +31,23 @@ class CartoDBApi(QObject):
         request.setRawHeader('User-Agent', 'QGIS 2.x')
         return request
 
+    def _createMultipart(self, data={}, files={}):
+        multiPart = QHttpMultiPart(QHttpMultiPart.FormDataType)
+        for key, value in data.items():
+            textPart = QHttpPart()
+            textPart.setHeader(QNetworkRequest.ContentDispositionHeader, "form-data; name=\"%s\"" % key)
+            textPart.setBody(value)
+            multiPart.append(textPart)
+
+        for key, file in files.items():
+            filePart = QHttpPart()
+            # filePart.setHeader(QNetworkRequest::ContentTypeHeader, ...);
+            fileName = QFileInfo(file.fileName()).fileName()
+            filePart.setHeader(QNetworkRequest.ContentDispositionHeader, "form-data; name=\"%s\"; filename=\"%s\"" % (key, fileName))
+            filePart.setBodyDevice(file)
+            multiPart.append(filePart)
+        return multiPart
+
     def getUserDetails(self, returnDict=True):
         self.returnDict = returnDict
         url = QUrl(self.apiUrl + "users/{}/?api_key={}".format(self.cartodbUser, self.apiKey))
@@ -37,7 +55,7 @@ class CartoDBApi(QObject):
 
         reply = self.manager.get(request)
         loop = QEventLoop()
-        reply.downloadProgress.connect(self.progress)
+        reply.downloadProgress.connect(self.progressCB)
         reply.error.connect(self.error)
         reply.finished.connect(loop.exit)
         loop.exec_()
@@ -63,7 +81,7 @@ class CartoDBApi(QObject):
 
         reply = self.manager.get(request)
         loop = QEventLoop()
-        reply.downloadProgress.connect(self.progress)
+        reply.downloadProgress.connect(self.progressCB)
         reply.error.connect(self.error)
         reply.finished.connect(loop.exit)
         loop.exec_()
@@ -76,16 +94,31 @@ class CartoDBApi(QObject):
 
         reply = self.manager.get(request)
         loop = QEventLoop()
-        reply.downloadProgress.connect(self.progress)
+        reply.downloadProgress.connect(self.progressCB)
         reply.error.connect(self.error)
         reply.finished.connect(loop.exit)
         loop.exec_()
 
-    def progress(self, breceived, btotal):
-        # TODO Manage progress
-        # qDebug('Rec: ' + str(breceived/1024/1024) + 'MB')
-        # qDebug('Tot: ' + str(btotal))
-        pass
+    def upload(self, filePath, returnDict=True):
+        self.returnDict = returnDict
+        file = QFile(filePath)
+        file.open(QFile.ReadOnly)
+        apiUrl = 'https://{}.cartodb.com/api/v1/imports/?api_key={}'.format(self.cartodbUser, self.apiKey)
+        url = QUrl(apiUrl)
+        files = {'file': file}
+        multipart = self._createMultipart(files=files)
+        request = QNetworkRequest(url)
+        request.setHeader(QNetworkRequest.ContentTypeHeader, 'multipart/form-data; boundary=%s' % multipart.boundary())
+        request.setRawHeader('User-Agent', 'QGIS 2.x')
+        reply = self.manager.post(request, multipart)
+        loop = QEventLoop()
+        reply.uploadProgress.connect(self.progressCB)
+        reply.error.connect(self.error)
+        reply.finished.connect(loop.exit)
+        loop.exec_()
+
+    def progressCB(self, breceived, btotal):
+        self.progress.emit(breceived, btotal)
 
     def returnFetchContent(self, reply):
         response = str(reply.readAll())

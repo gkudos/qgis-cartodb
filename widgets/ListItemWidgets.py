@@ -64,3 +64,9 @@ class CartoDBDatasetsListItem(QWidget):
         self.ui.tableNameTX.setStyleSheet('color: ' + color)
         self.ui.rowsTX.setStyleSheet('color: ' + color)
         self.ui.sizeTX.setStyleSheet('color: ' + color)
+
+
+class CartoDBLayerListItem(CartoDBDatasetsListItem):
+    def __init__(self, tableName=None, layer=None, size=None, rows=None):
+        CartoDBDatasetsListItem.__init__(self, tableName, None, size, rows)
+        self.layer = layer

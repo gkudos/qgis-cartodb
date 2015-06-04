@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>494</width>
-    <height>319</height>
+    <width>673</width>
+    <height>343</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -31,6 +31,12 @@
     <layout class="QHBoxLayout" name="horizontalLayout">
      <item>
       <widget class="QListWidget" name="layersList">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+         <horstretch>1</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
        <property name="selectionMode">
         <enum>QAbstractItemView::MultiSelection</enum>
        </property>
@@ -94,6 +100,20 @@
           </size>
          </property>
         </spacer>
+       </item>
+       <item>
+        <widget class="QProgressBar" name="uploadBar">
+         <property name="value">
+          <number>24</number>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLabel" name="uploadingLB">
+         <property name="text">
+          <string>Uploading...</string>
+         </property>
+        </widget>
        </item>
       </layout>
      </item>
