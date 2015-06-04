@@ -55,6 +55,7 @@ docs/_build/
 
 # Zip file
 *.zip
+!test/data/*.zip
 
 # UI Compiled files
 ui/*.py
