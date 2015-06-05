@@ -122,14 +122,14 @@
    <item>
     <widget class="QCheckBox" name="overideCH">
      <property name="text">
-      <string>Overide</string>
+      <string>Replace if exists</string>
      </property>
     </widget>
    </item>
    <item>
     <widget class="QCheckBox" name="convertCH">
      <property name="text">
-      <string>Convert to CartoDB Layer</string>
+      <string>Add CartoDB layer to project</string>
      </property>
     </widget>
    </item>

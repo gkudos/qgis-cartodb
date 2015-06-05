@@ -142,6 +142,7 @@ class CartoDBPlugin(QObject):
             self.toolbar.setUserCredentials(dlg.currentUser, dlg.currentApiKey, dlg.currentMultiuser)
             self._mainAction.setEnabled(True)
             self._addSQLAction.setEnabled(True)
+            self._loadDataAction.setEnabled(True)
 
     def connectionsNotFound(self):
         self.toolbarError("")
@@ -154,6 +155,7 @@ class CartoDBPlugin(QObject):
     def toolbarError(self, error):
         self._mainAction.setEnabled(False)
         self._addSQLAction.setEnabled(False)
+        self._loadDataAction.setEnabled(False)
 
     def run(self):
         # Create and show the dialog

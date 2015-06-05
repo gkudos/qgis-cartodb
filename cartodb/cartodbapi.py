@@ -103,7 +103,7 @@ class CartoDBApi(QObject):
         self.returnDict = returnDict
         file = QFile(filePath)
         file.open(QFile.ReadOnly)
-        apiUrl = 'https://{}.cartodb.com/api/v1/imports/?api_key={}'.format(self.cartodbUser, self.apiKey)
+        url = QUrl(self.apiUrl + "imports/?api_key={}".format(self.apiKey))
         url = QUrl(apiUrl)
         files = {'file': file}
         multipart = self._createMultipart(files=files)
@@ -113,6 +113,18 @@ class CartoDBApi(QObject):
         reply = self.manager.post(request, multipart)
         loop = QEventLoop()
         reply.uploadProgress.connect(self.progressCB)
+        reply.error.connect(self.error)
+        reply.finished.connect(loop.exit)
+        loop.exec_()
+
+    def checkUploadStatus(self, id, returnDict=True):
+        self.returnDict = returnDict
+        url = QUrl(self.apiUrl + "imports/{}/?api_key={}".format(id, self.apiKey))
+        request = self._getRequest(url)
+
+        reply = self.manager.get(request)
+        loop = QEventLoop()
+        reply.downloadProgress.connect(self.progressCB)
         reply.error.connect(self.error)
         reply.finished.connect(loop.exit)
         loop.exec_()

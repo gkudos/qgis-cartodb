@@ -113,5 +113,33 @@
             <source>Upload layers to CartoDB</source>
             <translation>Subir capas a CartoDB</translation>
         </message>
+        <message>
+            <source>Project Layers</source>
+            <translation>Capas del proyecto</translation>
+        </message>
+        <message>
+            <source>Replace if exists</source>
+            <translation>Reemplazar si existe en CartoDB</translation>
+        </message>
+        <message>
+            <source>Add CartoDB layer to project</source>
+            <translation>Agregar capa CartoDB al proyecto</translation>
+        </message>
+        <message>
+            <source>Cancel</source>
+            <translation>Cancelar</translation>
+        </message>
+        <message>
+            <source>Upload</source>
+            <translation>Subir</translation>
+        </message>
+        <message>
+            <source>Uploading {}</source>
+            <translation>Subiendo {}</translation>
+        </message>
+        <message>
+            <source>Using {} of {}</source>
+            <translation>Usando {} de {}</translation>
+        </message>
     </context>
 </TS>

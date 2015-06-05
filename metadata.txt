@@ -8,6 +8,8 @@ icon=images/icon.png
 author=Kudos Ltda. and contributors
 email=michaelsalgado@gkudos.com
 changelog=0.1.4
+  - Upload layers to CartoDB
+  - Add spanish translation
   - Fix avatar size
   - Fix insert feature when all fields are null.
   - Enable buttons only if there is at least one created connection.

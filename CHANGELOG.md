@@ -1,10 +1,18 @@
-<a name="0.1.3"></a>
-### 0.1.4 (2015-05-27)
+<a name="0.1.4"></a>
+### 0.1.4 (2015-06-05)
+
+#### New Features
+
+* Upload layers to CartoDB
+
+#### Translate
+
+* Add spanish translation
 
 #### Fixes
 
 * Fix avatar size
-* Fix insert feature when all fields are null.
+* Fix #21 Insert data without complete fields.
 * Enable buttons only if there is at least one created connection.
 
 <a name="0.1.3"></a>

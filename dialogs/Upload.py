@@ -19,7 +19,7 @@ email                : michaelsalgado@gkudos.com, info@gkudos.com
  ***************************************************************************/
 """
 from PyQt4.QtCore import Qt, QSettings, QFile, QFileInfo, pyqtSlot, qDebug
-from PyQt4.QtGui import QApplication, QDialog, QPixmap, QListWidgetItem
+from PyQt4.QtGui import QApplication, QDialog, QPixmap, QListWidgetItem, QLabel
 
 from qgis.core import QgsMapLayerRegistry, QgsMapLayer
 
@@ -52,6 +52,10 @@ class CartoDBPluginUpload(QDialog):
         self.currentMultiuser = self.toolbar.currentMultiuser
 
         layers = QgsMapLayerRegistry.instance().mapLayers()
+
+        # TODO Implement add to project
+        self.ui.convertCH.hide()
+        self.ui.overideCH.hide()
 
         self.ui.layersList.clear()
         self.ui.uploadBar.setValue(0)
@@ -114,7 +118,7 @@ class CartoDBPluginUpload(QDialog):
                 cartodbApi.progress.connect(self.progressUpload)
                 self.ui.uploadBar.show()
                 self.ui.uploadBT.setEnabled(False)
-                self.ui.uploadingLB.setText('Uploading {}'.format(widget.layer.name()))
+                self.ui.uploadingLB.setText(QApplication.translate('Uploading {}').format(widget.layer.name()))
                 self.ui.uploadingLB.show()
                 cartodbApi.upload(zipPath)
 
