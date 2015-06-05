@@ -41,6 +41,14 @@
             <translation>{}, using {} of {}</translation>
         </message>
         <message>
+            <source>Uploading {}</source>
+            <translation>Uploading {}</translation>
+        </message>
+        <message>
+            <source>Using {} of {}</source>
+            <translation>Using {} of {}</translation>
+        </message>
+        <message>
             <source>Warning</source>
             <translation>Warning</translation>
         </message>
@@ -132,14 +140,6 @@
         <message>
             <source>Upload</source>
             <translation>Upload</translation>
-        </message>
-        <message>
-            <source>Uploading {}</source>
-            <translation>Uploading {}</translation>
-        </message>
-        <message>
-            <source>Using {} of {}</source>
-            <translation>Using {} of {}</translation>
         </message>
     </context>
 </TS>

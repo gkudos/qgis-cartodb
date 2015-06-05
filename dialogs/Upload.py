@@ -118,7 +118,7 @@ class CartoDBPluginUpload(QDialog):
                 cartodbApi.progress.connect(self.progressUpload)
                 self.ui.uploadBar.show()
                 self.ui.uploadBT.setEnabled(False)
-                self.ui.uploadingLB.setText(QApplication.translate('Uploading {}').format(widget.layer.name()))
+                self.ui.uploadingLB.setText(QApplication.translate('CartoDBPlugin', 'Uploading {}').format(widget.layer.name()))
                 self.ui.uploadingLB.show()
                 cartodbApi.upload(zipPath)
 
