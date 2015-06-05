@@ -104,7 +104,6 @@ class CartoDBApi(QObject):
         file = QFile(filePath)
         file.open(QFile.ReadOnly)
         url = QUrl(self.apiUrl + "imports/?api_key={}".format(self.apiKey))
-        url = QUrl(apiUrl)
         files = {'file': file}
         multipart = self._createMultipart(files=files)
         request = QNetworkRequest(url)
