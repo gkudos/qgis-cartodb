@@ -160,6 +160,11 @@ class CartoDBPluginUpload(QDialog):
 
         dirName = fileInfo.dir().absolutePath()
         fileName = fileInfo.completeBaseName()
+
+        tempdir = tempfile.tempdir
+        if tempdir is None:
+            tempdir = tempfile.mkdtemp()
+
         zipPath = os.path.join(tempfile.tempdir, layer.name() + '.zip')
         zipFile = zipfile.ZipFile(zipPath, 'w')
 
