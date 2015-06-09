@@ -128,6 +128,9 @@
    </item>
    <item>
     <widget class="QCheckBox" name="convertCH">
+     <property name="enabled">
+      <bool>true</bool>
+     </property>
      <property name="text">
       <string>Add CartoDB layer to project</string>
      </property>

@@ -148,4 +148,4 @@ class CartoDBApi(QObject):
             self.fetchContent.emit(response)
 
     def error(self, error):
-        qDebug('Error' + str(error))
+        qDebug('Error: ' + str(error))
