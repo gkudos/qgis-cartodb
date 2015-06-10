@@ -28,9 +28,7 @@ from osgeo import ogr
 import resources
 
 from cartodb import CartoDBAPIKey, CartoDBException
-from QgisCartoDB.dialogs import CartoDBPluginUpload
-from QgisCartoDB.dialogs.Main import CartoDBPluginDialog
-from QgisCartoDB.dialogs.NewSQL import CartoDBNewSQLDialog
+from QgisCartoDB.dialogs import CartoDBPluginUpload, CartoDBPluginDialog, CartoDBNewSQLDialog, CartoDBPluginCreateViz
 from QgisCartoDB.dialogs.ConnectionManager import CartoDBConnectionsManager
 from QgisCartoDB.layers import CartoDBLayer, CartoDBPluginLayer, CartoDBPluginLayerType, CartoDBLayerWorker
 from QgisCartoDB.toolbars import CartoDBToolbar
@@ -84,6 +82,8 @@ class CartoDBPlugin(QObject):
         self._mainAction.setIcon(QIcon(":/plugins/qgis-cartodb/images/icons/add.png"))
         self._loadDataAction = QAction(self.tr('Upload layers to CartoDB'), self.iface.mainWindow())
         self._loadDataAction.setIcon(QIcon(":/plugins/qgis-cartodb/images/icons/polygon.png"))
+        self._createVizAction = QAction(self.tr('Create New Map'), self.iface.mainWindow())
+        self._createVizAction.setIcon(QIcon(":/plugins/qgis-cartodb/images/icons/rectangle.png"))
         self._addSQLAction = QAction(self.tr('Add SQL CartoDB Layer'), self.iface.mainWindow())
         self._addSQLAction.setIcon(QIcon(":/plugins/qgis-cartodb/images/icons/add_sql.png"))
 
@@ -96,18 +96,22 @@ class CartoDBPlugin(QObject):
 
         if not self.toolbar.isCurrentUserValid():
             self._mainAction.setEnabled(False)
-            self._addSQLAction.setEnabled(False)
             self._loadDataAction.setEnabled(False)
+            self._createVizAction.setEnabled(False)
+            self._addSQLAction.setEnabled(False)
 
         self._mainAction.activated.connect(self.run)
         self._loadDataAction.activated.connect(self.upload)
+        self._createVizAction.activated.connect(self.createNewMap)
         self._addSQLAction.activated.connect(self.addSQL)
 
         self._cdbMenu.addAction(self._mainAction)
         self._cdbMenu.addAction(self._loadDataAction)
+        self._cdbMenu.addAction(self._createVizAction)
         self._cdbMenu.addAction(self._addSQLAction)
         self.iface.addWebToolBarIcon(self._mainAction)
         self.iface.addWebToolBarIcon(self._loadDataAction)
+        self.iface.addWebToolBarIcon(self._createVizAction)
         self.iface.addWebToolBarIcon(self._addSQLAction)
 
         # Create Web menu, if it doesn't exist yet
@@ -123,8 +127,9 @@ class CartoDBPlugin(QObject):
 
     def unload(self):
         self.iface.removeWebToolBarIcon(self._mainAction)
-        self.iface.removeWebToolBarIcon(self._addSQLAction)
         self.iface.removeWebToolBarIcon(self._loadDataAction)
+        self.iface.removeWebToolBarIcon(self._createVizAction)
+        self.iface.removeWebToolBarIcon(self._addSQLAction)
         self.iface.webMenu().removeAction(self._cdbMenu.menuAction())
         self.iface.removeWebToolBarIcon(self._toolbarAction)
 
@@ -141,8 +146,9 @@ class CartoDBPlugin(QObject):
         if result == 1 and dlg.currentUser is not None and dlg.currentApiKey is not None:
             self.toolbar.setUserCredentials(dlg.currentUser, dlg.currentApiKey, dlg.currentMultiuser)
             self._mainAction.setEnabled(True)
-            self._addSQLAction.setEnabled(True)
             self._loadDataAction.setEnabled(True)
+            self._createVizAction.setEnabled(True)
+            self._addSQLAction.setEnabled(True)
 
     def connectionsNotFound(self):
         self.toolbarError("")
@@ -154,8 +160,9 @@ class CartoDBPlugin(QObject):
 
     def toolbarError(self, error):
         self._mainAction.setEnabled(False)
-        self._addSQLAction.setEnabled(False)
         self._loadDataAction.setEnabled(False)
+        self._createVizAction.setEnabled(False)
+        self._addSQLAction.setEnabled(False)
 
     def run(self):
         # Create and show the dialog
@@ -222,6 +229,12 @@ class CartoDBPlugin(QObject):
 
     def upload(self):
         dlg = CartoDBPluginUpload(self.toolbar)
+        dlg.show()
+
+        result = dlg.exec_()
+
+    def createNewMap(self):
+        dlg = CartoDBPluginCreateViz(self.toolbar)
         dlg.show()
 
         result = dlg.exec_()

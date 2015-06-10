@@ -24,3 +24,4 @@ from Main import *
 from NewConnection import *
 from NewSQL import *
 from Upload import *
+from CreateViz import *
