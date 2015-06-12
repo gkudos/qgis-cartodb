@@ -19,3 +19,4 @@ email                : michaelsalgado@gkudos.com, info@gkudos.com
  ***************************************************************************/
 """
 from ListItemWidgets import *
+from ListWidgets import *

@@ -66,6 +66,9 @@ class CartoDBDatasetsListItem(QWidget):
         self.ui.rowsTX.setStyleSheet('color: ' + color)
         self.ui.sizeTX.setStyleSheet('color: ' + color)
 
+    def clone(self):
+        return CartoDBDatasetsListItem(self.tableName, self.tableOwner, self.size, self.rows)
+
 
 class CartoDBLayerListItem(CartoDBDatasetsListItem):
     def __init__(self, tableName=None, layer=None, size=None, rows=None):
@@ -81,3 +84,6 @@ class CartoDBLayerListItem(CartoDBDatasetsListItem):
 
     def setStatus(self, status):
         self.ui.statusLB.setText(status)
+
+    def clone(self):
+        return CartoDBDatasetsListItem(self.tableName, self.layer, self.size, self.rows)
