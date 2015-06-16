@@ -222,12 +222,10 @@ class CartoDBApi(QObject):
             'parent_id': 'null',
             'children': []
         }
-        qDebug('URL: ' + self.apiUrl + "maps/{}/layers?api_key={}".format(mapId, self.apiKey))
         url = QUrl(self.apiUrl + "maps/{}/layers?api_key={}".format(mapId, self.apiKey))
         request = self._getRequest(url)
 
-        qDebug('Data:' + json.dumps(payload))
-        reply = self.manager.post(request, json.dumps(payload, sort_keys=True, indent=2, separators=(',', ': ')))
+        reply = self.manager.post(request, json.dumps(payload))
         loop = QEventLoop()
         reply.downloadProgress.connect(self.progressCB)
         reply.error.connect(self.error)
