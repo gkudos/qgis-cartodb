@@ -21,10 +21,13 @@ email                : michaelsalgado@gkudos.com, info@gkudos.com
 from PyQt4.QtCore import Qt, QVariant, qDebug
 from PyQt4.QtGui import QDrag, QListWidget
 
+from ListItemWidgets import CartoDBLayerListItem
+
 
 class CartoDBLayersListWidget(QListWidget):
-    def __init__(self, parent):
+    def __init__(self, parent, name=''):
         QListWidget.__init__(self, parent)
+        self.name = name
 
     def startDrag(self, supportedActions):
         drag = QDrag(self)
@@ -50,14 +53,22 @@ class CartoDBLayersListWidget(QListWidget):
     def dropEvent(self, event):
         if isinstance(event.source(), CartoDBLayersListWidget):
             event.setDropAction(Qt.MoveAction)
-            QListWidget.dropEvent(self, event)
-        '''
-        data = event.mimeData()
-        bstream = data.retrieveData("application/x-qabstractitemmodeldatalist", QVariant.ByteArray)
-        qDebug('Drop Event: ' + str(bstream))
-        event.setDropAction(Qt.MoveAction)
-        event.accept()
-        '''
+            # QListWidget.dropEvent(self, event)
+            for item in event.source().selectedItems():
+                itemWidget = event.source().itemWidget(item)
+                newItemWidget = CartoDBLayerListItem(itemWidget.tableName, itemWidget.layer, itemWidget.size, itemWidget.rows)
+                newItem = event.source().takeItem(event.source().row(item))
+                itemAt = self.itemAt(event.pos())
+
+                if itemAt is not None:
+                    self.insertItem(self.row(itemAt), newItem)
+                else:
+                    self.addItem(newItem)
+
+                self.setItemWidget(newItem, newItemWidget)
+                self.setItemSelected(newItem, True)
+                # event.accept()
+
     def dropMimeData(self, index, mimedata, action):
         super(CartoDBLayersListWidget, self).dropMimeData(index, mimedata, action)
         return True

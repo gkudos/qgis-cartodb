@@ -41,27 +41,34 @@ class CartoDBPluginCreateViz(CartoDBPluginUserDialog):
         self.ui = Ui_CreateViz()
         self.ui.setupUi(self)
 
-        self.ui.availableList = CartoDBLayersListWidget(self)
+        self.ui.availableList = CartoDBLayersListWidget(self, 'availableList')
+        # '''
         self.ui.availableList.setAcceptDrops(True)
         self.ui.availableList.viewport().setAcceptDrops(True)
         self.ui.availableList.setDragEnabled(True)
         self.ui.availableList.setDropIndicatorShown(True)
         self.ui.availableList.setDragDropMode(QAbstractItemView.DragDrop)
         self.ui.availableList.setDefaultDropAction(Qt.MoveAction)
+        # '''
         self.ui.availableList.setSelectionMode(QAbstractItemView.ExtendedSelection)
         self.ui.availableLayout.addWidget(self.ui.availableList)
 
-        self.ui.mapList = CartoDBLayersListWidget(self)
+        self.ui.mapList = CartoDBLayersListWidget(self, 'mapList')
+        # '''
         self.ui.mapList.setAcceptDrops(True)
         self.ui.mapList.viewport().setAcceptDrops(True)
         self.ui.mapList.setDragEnabled(True)
         self.ui.mapList.setDropIndicatorShown(True)
         self.ui.mapList.setDragDropMode(QAbstractItemView.DragDrop)
         self.ui.mapList.setDefaultDropAction(Qt.MoveAction)
+        # '''
         self.ui.mapList.setSelectionMode(QAbstractItemView.ExtendedSelection)
         self.ui.mapLayout.addWidget(self.ui.mapList)
 
-        self.ui.saveBT.clicked.connect(self.convert2cartoCSS)
+        self.ui.mapNameTX.textChanged.connect(self.validateButtons)
+        self.ui.mapList.itemSelectionChanged.connect(self.validateButtons)
+        self.ui.cancelBT.clicked.connect(self.reject)
+        self.ui.saveBT.clicked.connect(self.createViz)
 
         layers = QgsMapLayerRegistry.instance().mapLayers()
 
@@ -95,50 +102,53 @@ class CartoDBPluginCreateViz(CartoDBPluginUserDialog):
 
         return size
 
-    def convert2cartoCSS(self):
-        items = self.ui.availableList.selectedItems()
+    def createViz(self):
+        for i in range(self.ui.mapList.count()):
+            item = self.ui.mapList.item(i)
+            widget = self.ui.mapList.itemWidget(item)
+            layer = widget.layer
+            cartoCSS = self.convert2cartoCSS(layer)
+
+    def convert2cartoCSS(self, layer):
+        renderer = layer.rendererV2()
         cartoCSS = ''
-        for i, table in enumerate(items):
-            widget = self.ui.availableList.itemWidget(table)
+        qDebug('Type: + ' + renderer.type())
 
-            renderer = widget.layer.rendererV2()
-            cartoCSS = ''
-            qDebug('Type: + ' + renderer.type())
-
-            # CSS for single symbols
-            if renderer.type() == 'singleSymbol':
-                symbol = renderer.symbol()
-                cartoCSS = self.simplePolygon(widget.layer, symbol, '#' + widget.layer.name())
-            # CSS for categorized symbols
-            elif renderer.type() == 'categorizedSymbol':
-                qDebug('Categorized: ' + renderer.classAttribute())
-                for cat in renderer.categories():
-                    symbol = cat.symbol()
-                    qDebug("%s: %s" % (str(cat.value()), cat.label()))
-                    if cat.value() is not None and cat.value() != '':
-                        cartoCSS = cartoCSS + \
-                            self.simplePolygon(widget.layer, symbol, '#' + widget.layer.name() + '[' + renderer.classAttribute() + '=' + str(cat.value()) + ']')
-                    else:
-                        cartoCSS = self.simplePolygon(widget.layer, symbol, '#' + widget.layer.name()) + cartoCSS
-            # CSS for graduated symbols
-            elif renderer.type() == 'graduatedSymbol':
-                qDebug('Graduated')
-
-                def upperValue(ran):
-                    return ran.upperValue()
-
-                ranges = sorted(renderer.ranges(), key=upperValue, reverse=True)
-                for ran in ranges:
-                    symbol = ran.symbol()
-                    qDebug("%f - %f: %s" % (
-                        ran.lowerValue(),
-                        ran.upperValue(),
-                        ran.label()
-                    ))
+        # CSS for single symbols
+        if renderer.type() == 'singleSymbol':
+            symbol = renderer.symbol()
+            cartoCSS = self.simplePolygon(layer, symbol, '#' + layer.name())
+        # CSS for categorized symbols
+        elif renderer.type() == 'categorizedSymbol':
+            qDebug('Categorized: ' + renderer.classAttribute())
+            for cat in renderer.categories():
+                symbol = cat.symbol()
+                qDebug("%s: %s" % (str(cat.value()), cat.label()))
+                if cat.value() is not None and cat.value() != '':
                     cartoCSS = cartoCSS + \
-                        self.simplePolygon(widget.layer, symbol, '#' + widget.layer.name() + '[' + renderer.classAttribute() + '<=' + str(ran.upperValue()) + ']')
+                        self.simplePolygon(layer, symbol, '#' + layer.name() + '[' + renderer.classAttribute() + '=' + str(cat.value()) + ']')
+                else:
+                    cartoCSS = self.simplePolygon(layer, symbol, '#' + layer.name()) + cartoCSS
+        # CSS for graduated symbols
+        elif renderer.type() == 'graduatedSymbol':
+            qDebug('Graduated')
 
-            qDebug('CartoCSS: ' + cartoCSS)
+            def upperValue(ran):
+                return ran.upperValue()
+
+            ranges = sorted(renderer.ranges(), key=upperValue, reverse=True)
+            for ran in ranges:
+                symbol = ran.symbol()
+                qDebug("%f - %f: %s" % (
+                    ran.lowerValue(),
+                    ran.upperValue(),
+                    ran.label()
+                ))
+                cartoCSS = cartoCSS + \
+                    self.simplePolygon(widget.layer, symbol, '#' + widget.layer.name() + '[' + renderer.classAttribute() + '<=' + str(ran.upperValue()) + ']')
+
+        qDebug('CartoCSS: ' + cartoCSS)
+        return cartoCSS
 
     def simplePolygon(self, layer, symbol, styleName):
         cartoCSS = ''
@@ -157,3 +167,8 @@ class CartoDBPluginCreateViz(CartoDBPluginUserDialog):
             cartoCSS = Template(filein.read())
             cartoCSS = cartoCSS.substitute(d)
         return cartoCSS
+
+    def validateButtons(self):
+        enabled = self.ui.mapNameTX.text() != '' and self.ui.mapList.count() > 0
+
+        self.ui.saveBT.setEnabled(enabled)

@@ -1,13 +1,21 @@
+<a name="0.1.5"></a>
+### 0.1.5 (2015-06-16)
+
+#### New Features
+
+* Upload layers to CartoDB (More formats).
+* Create basic visualization.
+
 <a name="0.1.4"></a>
 ### 0.1.4 (2015-06-05)
 
 #### New Features
 
-* Upload layers to CartoDB
+* Upload layers to CartoDB.
 
 #### Translate
 
-* Add spanish translation
+* Add spanish translation.
 
 #### Fixes
 

@@ -15,11 +15,22 @@
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
-    <widget class="QLineEdit" name="nameTX">
-     <property name="placeholderText">
-      <string>Map Name</string>
-     </property>
-    </widget>
+    <layout class="QHBoxLayout" name="mapNameLayout">
+     <item>
+      <widget class="QLabel" name="mapNameLB">
+       <property name="text">
+        <string>Map Name:</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLineEdit" name="mapNameTX">
+       <property name="placeholderText">
+        <string>Map Name</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
    </item>
    <item>
     <layout class="QHBoxLayout" name="listsLayout">
@@ -181,6 +192,9 @@
      </item>
      <item>
       <widget class="QPushButton" name="saveBT">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
        <property name="text">
         <string>Save</string>
        </property>
