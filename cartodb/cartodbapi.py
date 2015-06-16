@@ -128,6 +128,112 @@ class CartoDBApi(QObject):
         reply.finished.connect(loop.exit)
         loop.exec_()
 
+    def createVizFromTable(self, table, name, description='', returnDict=True):
+        self.returnDict = returnDict
+        payload = {
+            'type': 'derived',
+            'name': name,
+            'title': name,
+            'description': description,
+            'tags': ['QGISCartoDB'],
+            "tables": [table]
+        }
+        url = QUrl(self.apiUrl + "viz/?api_key={}".format(self.apiKey))
+        request = self._getRequest(url)
+
+        reply = self.manager.post(request, json.dumps(payload))
+        loop = QEventLoop()
+        reply.downloadProgress.connect(self.progressCB)
+        reply.error.connect(self.error)
+        reply.finished.connect(loop.exit)
+        loop.exec_()
+
+    def addLayerToMap(self, mapId, table, cartoCSS, returnDict=True):
+        self.returnDict = returnDict
+        payload = {
+            'kind': "carto",
+            'options': {
+                'attribution': "CartoDB",
+                'type': "CartoDB",
+                'active': 'true',
+                'query': '',
+                'opacity': '0.99',
+                'interactivity': "cartodb_id",
+                'interaction': 'true',
+                'debug': 'false',
+                'tiler_domain': "cartodb.com",
+                'tiler_port': "443",
+                'tiler_protocol': "https",
+                'sql_api_domain': "cartodb.com",
+                'sql_api_port': '443',
+                'sql_api_protocol': "https",
+                'extra_params': {
+                    'cache_policy': "persist",
+                    'cache_buster': '1430778800940'
+                },
+                'cdn_url': "",
+                'maxZoom': '28',
+                'auto_bound': 'false',
+                'visible': 'true',
+                'sql_domain': "cartodb.com",
+                'sql_port': "443",
+                'sql_protocol': "https",
+                'tile_style_history': [""],
+                'style_version': "2.1.1",
+                'table_name': table,
+                'user_name': self.cartodbUser,
+                'tile_style': cartoCSS,
+
+                'wizard_properties': {
+                    'type': "polygon",
+                    'properties': {}
+                },
+
+                'legend': {
+                    'type': "none",
+                    'show_title': 'false',
+                    'title': "",
+                    'template': ""
+                },
+                'order': '2',
+                'parent_id': 'null',
+                'use_server_style': 'true',
+                'stat_tag': mapId,
+                'maps_api_template': 'https://{user}.cartodb.com:443',
+                'cartodb_logo': 'false',
+                'no_cdn': 'false',
+                'force_cors': 'true',
+                'tile_style_custom': 'false',
+                'query_wrapper': 'nil',
+                'query_generated': 'false'
+            },
+            'order': '1',
+            'infowindow': {
+                'fields': [],
+                'template_name': "table/views/infowindow_light",
+                'template': "",
+                'alternative_names': {},
+                'width': '226',
+                'maxHeight': '180'
+            },
+            'tooltip': {
+                'fields': []
+            },
+            'parent_id': 'null',
+            'children': []
+        }
+        qDebug('URL: ' + self.apiUrl + "maps/{}/layers?api_key={}".format(mapId, self.apiKey))
+        url = QUrl(self.apiUrl + "maps/{}/layers?api_key={}".format(mapId, self.apiKey))
+        request = self._getRequest(url)
+
+        qDebug('Data:' + json.dumps(payload))
+        reply = self.manager.post(request, json.dumps(payload, sort_keys=True, indent=2, separators=(',', ': ')))
+        loop = QEventLoop()
+        reply.downloadProgress.connect(self.progressCB)
+        reply.error.connect(self.error)
+        reply.finished.connect(loop.exit)
+        loop.exec_()
+
     def progressCB(self, breceived, btotal):
         self.progress.emit(breceived, btotal)
 

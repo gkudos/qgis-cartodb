@@ -23,9 +23,12 @@ from PyQt4.QtGui import QApplication, QAbstractItemView, QDialog, QListWidgetIte
 
 from qgis.core import QgsMapLayerRegistry, QgsMapLayer
 
+import QgisCartoDB.CartoDBPlugin
 from QgisCartoDB.dialogs.Basic import CartoDBPluginUserDialog
 from QgisCartoDB.ui.CreateViz import Ui_CreateViz
 from QgisCartoDB.widgets import CartoDBLayersListWidget, CartoDBLayerListItem
+
+from string import Template
 
 import os
 
@@ -94,11 +97,63 @@ class CartoDBPluginCreateViz(CartoDBPluginUserDialog):
 
     def convert2cartoCSS(self):
         items = self.ui.availableList.selectedItems()
+        cartoCSS = ''
         for i, table in enumerate(items):
             widget = self.ui.availableList.itemWidget(table)
+
             renderer = widget.layer.rendererV2()
+            cartoCSS = ''
             qDebug('Type: + ' + renderer.type())
-            symbol = renderer.symbol()
-            for i in xrange(symbol.symbolLayerCount()):
-                lyr = symbol.symbolLayer(i)
-                qDebug("%d: %s" % (i, lyr.layerType()))
+
+            # CSS for single symbols
+            if renderer.type() == 'singleSymbol':
+                symbol = renderer.symbol()
+                cartoCSS = self.simplePolygon(widget.layer, symbol, '#' + widget.layer.name())
+            # CSS for categorized symbols
+            elif renderer.type() == 'categorizedSymbol':
+                qDebug('Categorized: ' + renderer.classAttribute())
+                for cat in renderer.categories():
+                    symbol = cat.symbol()
+                    qDebug("%s: %s" % (str(cat.value()), cat.label()))
+                    if cat.value() is not None and cat.value() != '':
+                        cartoCSS = cartoCSS + \
+                            self.simplePolygon(widget.layer, symbol, '#' + widget.layer.name() + '[' + renderer.classAttribute() + '=' + str(cat.value()) + ']')
+                    else:
+                        cartoCSS = self.simplePolygon(widget.layer, symbol, '#' + widget.layer.name()) + cartoCSS
+            # CSS for graduated symbols
+            elif renderer.type() == 'graduatedSymbol':
+                qDebug('Graduated')
+
+                def upperValue(ran):
+                    return ran.upperValue()
+
+                ranges = sorted(renderer.ranges(), key=upperValue, reverse=True)
+                for ran in ranges:
+                    symbol = ran.symbol()
+                    qDebug("%f - %f: %s" % (
+                        ran.lowerValue(),
+                        ran.upperValue(),
+                        ran.label()
+                    ))
+                    cartoCSS = cartoCSS + \
+                        self.simplePolygon(widget.layer, symbol, '#' + widget.layer.name() + '[' + renderer.classAttribute() + '<=' + str(ran.upperValue()) + ']')
+
+            qDebug('CartoCSS: ' + cartoCSS)
+
+    def simplePolygon(self, layer, symbol, styleName):
+        cartoCSS = ''
+        layerOpacity = str((100 - layer.layerTransparency())/100)
+        if symbol.symbolLayerCount() > 0:
+            lyr = symbol.symbolLayer(0)
+            qDebug("%s :: %s" % (lyr.layerType(), str(lyr.properties())))
+            d = {
+                'layername': styleName,
+                'fillColor': lyr.fillColor().name(),
+                'opacity': layerOpacity,
+                'borderColor': lyr.outlineColor().name(),
+                'borderWidth': lyr.borderWidth()
+            }
+            filein = open(QgisCartoDB.CartoDBPlugin.PLUGIN_DIR + '/templates/simplepolygon.less')
+            cartoCSS = Template(filein.read())
+            cartoCSS = cartoCSS.substitute(d)
+        return cartoCSS
