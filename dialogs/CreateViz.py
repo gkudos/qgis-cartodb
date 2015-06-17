@@ -21,7 +21,7 @@ email                : michaelsalgado@gkudos.com, info@gkudos.com
 from PyQt4.QtCore import Qt, QFile, QFileInfo, pyqtSlot, qDebug
 from PyQt4.QtGui import QApplication, QAbstractItemView, QDialog, QListWidgetItem, QLabel, QPixmap
 
-from qgis.core import QgsMapLayerRegistry, QgsMapLayer
+from qgis.core import QGis, QgsMapLayerRegistry, QgsMapLayer
 
 import QgisCartoDB.CartoDBPlugin
 from QgisCartoDB.dialogs.Basic import CartoDBPluginUserDialog
@@ -112,7 +112,7 @@ class CartoDBPluginCreateViz(CartoDBPluginUserDialog):
     def convert2cartoCSS(self, layer):
         renderer = layer.rendererV2()
         cartoCSS = ''
-        qDebug('Type: + ' + renderer.type())
+        qDebug('Type: ' + renderer.type())
 
         # CSS for single symbols
         if renderer.type() == 'singleSymbol':
@@ -123,10 +123,11 @@ class CartoDBPluginCreateViz(CartoDBPluginUserDialog):
             qDebug('Categorized: ' + renderer.classAttribute())
             for cat in renderer.categories():
                 symbol = cat.symbol()
-                qDebug("%s: %s" % (str(cat.value()), cat.label()))
+                qDebug("%s: %s type: %s" % (str(cat.value()), cat.label(), str(cat.value().isdecimal())))
                 if cat.value() is not None and cat.value() != '':
+                    value = cat.value() if cat.value().isdecimal() else ('"' + cat.value() + '"')
                     cartoCSS = cartoCSS + \
-                        self.simplePolygon(layer, symbol, '#' + layer.name() + '[' + renderer.classAttribute() + '=' + str(cat.value()) + ']')
+                        self.simplePolygon(layer, symbol, '#' + layer.name() + '[' + renderer.classAttribute() + '=' + str(value) + ']')
                 else:
                     cartoCSS = self.simplePolygon(layer, symbol, '#' + layer.name()) + cartoCSS
         # CSS for graduated symbols
@@ -155,15 +156,38 @@ class CartoDBPluginCreateViz(CartoDBPluginUserDialog):
         layerOpacity = str((100 - layer.layerTransparency())/100)
         if symbol.symbolLayerCount() > 0:
             lyr = symbol.symbolLayer(0)
-            qDebug("%s :: %s" % (lyr.layerType(), str(lyr.properties())))
-            d = {
-                'layername': styleName,
-                'fillColor': lyr.fillColor().name(),
-                'opacity': layerOpacity,
-                'borderColor': lyr.outlineColor().name(),
-                'borderWidth': lyr.borderWidth()
-            }
-            filein = open(QgisCartoDB.CartoDBPlugin.PLUGIN_DIR + '/templates/simplepolygon.less')
+
+            qDebug('Map layer type: ' + str(layer.geometryType()))
+            qDebug("Symbol Type: %s" % (lyr.layerType()))
+            filein = None
+            if layer.geometryType() == QGis.Point:
+                d = {
+                    'layername': styleName,
+                    'fillColor': lyr.fillColor().name(),
+                    'width': lyr.size(),
+                    'opacity': layerOpacity,
+                    'borderColor': lyr.outlineColor().name(),
+                    'borderWidth': lyr.outlineWidth()
+                }
+                filein = open(QgisCartoDB.CartoDBPlugin.PLUGIN_DIR + '/templates/simplepoint.less')
+            elif layer.geometryType() == QGis.Line:
+                d = {
+                    'layername': styleName,
+                    'lineColor': lyr.color().name(),
+                    'lineWidth': lyr.width(),
+                    'opacity': layerOpacity
+                }
+                filein = open(QgisCartoDB.CartoDBPlugin.PLUGIN_DIR + '/templates/simpleline.less')
+            elif layer.geometryType() == QGis.Polygon:
+                d = {
+                    'layername': styleName,
+                    'fillColor': lyr.fillColor().name(),
+                    'opacity': layerOpacity,
+                    'borderColor': lyr.outlineColor().name(),
+                    'borderWidth': lyr.borderWidth()
+                }
+                filein = open(QgisCartoDB.CartoDBPlugin.PLUGIN_DIR + '/templates/simplepolygon.less')
+
             cartoCSS = Template(filein.read())
             cartoCSS = cartoCSS.substitute(d)
         return cartoCSS
