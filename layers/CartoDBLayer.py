@@ -346,6 +346,9 @@ class CartoDBLayer(QgsVectorLayer):
             self.iface.messageBar().pushMessage('Error!!', errorMsg, level=self.iface.messageBar().CRITICAL, duration=10)
             return e
 
+    def tableName(self):
+        return self.cartoTable
+
     def readXml(self, node):
         res = QgsVectorLayer.readXml(node)
         qDebug('ReadXML: ' + str(node))

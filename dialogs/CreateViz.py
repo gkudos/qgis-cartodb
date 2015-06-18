@@ -28,6 +28,7 @@ from qgis.gui import QgsMessageBar
 import QgisCartoDB.CartoDBPlugin
 from QgisCartoDB.cartodb import CartoDBApi
 from QgisCartoDB.dialogs.Basic import CartoDBPluginUserDialog
+from QgisCartoDB.layers import CartoDBLayer
 from QgisCartoDB.ui.CreateViz import Ui_CreateViz
 from QgisCartoDB.widgets import CartoDBLayersListWidget, CartoDBLayerListItem
 
@@ -78,7 +79,7 @@ class CartoDBPluginCreateViz(CartoDBPluginUserDialog):
 
         self.ui.availableList.clear()
         for id, ly in layers.iteritems():
-            if ly.type() == QgsMapLayer.VectorLayer:
+            if ly.type() == QgsMapLayer.VectorLayer and isinstance(ly, CartoDBLayer):
                 item = QListWidgetItem(self.ui.availableList)
                 widget = CartoDBLayerListItem(ly.name(), ly, self.getSize(ly), ly.dataProvider().featureCount())
                 item.setSizeHint(widget.sizeHint())
@@ -116,7 +117,7 @@ class CartoDBPluginCreateViz(CartoDBPluginUserDialog):
 
         cartoDBApi = CartoDBApi(self.currentUser, self.currentApiKey, self.currentMultiuser)
         cartoDBApi.fetchContent.connect(self.cbCreateViz)
-        cartoDBApi.createVizFromTable(layer.name(), self.ui.mapNameTX.text())
+        cartoDBApi.createVizFromTable(layer.tableName(), self.ui.mapNameTX.text())
 
     def cbCreateViz(self, data):
         self.currentViz = data
@@ -140,10 +141,10 @@ class CartoDBPluginCreateViz(CartoDBPluginUserDialog):
             item = self.ui.mapList.item(i)
             widget = self.ui.mapList.itemWidget(item)
             layer = widget.layer
-            qDebug('Agregando: ' + layer.name())
+            qDebug('Agregando: ' + layer.tableName())
             cartoCSS = self.convert2cartoCSS(layer)
             # cartoDBApi.fetchContent.connect(self.cbCreateViz)
-            cartoDBApi.addLayerToMap(self.currentViz['map_id'], layer.name(), cartoCSS)
+            cartoDBApi.addLayerToMap(self.currentViz['map_id'], layer.tableName(), cartoCSS)
 
     def showMessage(self, data):
         url = '{}/viz/{}/public_map'.format(self.currentUserData['base_url'], self.currentViz['id'])
@@ -174,7 +175,7 @@ class CartoDBPluginCreateViz(CartoDBPluginUserDialog):
         # CSS for single symbols
         if renderer.type() == 'singleSymbol':
             symbol = renderer.symbol()
-            cartoCSS = self.simplePolygon(layer, symbol, '#' + layer.name())
+            cartoCSS = self.simplePolygon(layer, symbol, '#' + layer.tableName())
         # CSS for categorized symbols
         elif renderer.type() == 'categorizedSymbol':
             # qDebug('Categorized: ' + renderer.classAttribute())
@@ -184,9 +185,9 @@ class CartoDBPluginCreateViz(CartoDBPluginUserDialog):
                 if cat.value() is not None and cat.value() != '':
                     value = cat.value() if cat.value().isdecimal() else ('"' + cat.value() + '"')
                     cartoCSS = cartoCSS + \
-                        self.simplePolygon(layer, symbol, '#' + layer.name() + '[' + renderer.classAttribute() + '=' + str(value) + ']')
+                        self.simplePolygon(layer, symbol, '#' + layer.tableName() + '[' + renderer.classAttribute() + '=' + str(value) + ']')
                 else:
-                    cartoCSS = self.simplePolygon(layer, symbol, '#' + layer.name()) + cartoCSS
+                    cartoCSS = self.simplePolygon(layer, symbol, '#' + layer.tableName()) + cartoCSS
         # CSS for graduated symbols
         elif renderer.type() == 'graduatedSymbol':
             # qDebug('Graduated')
@@ -202,14 +203,14 @@ class CartoDBPluginCreateViz(CartoDBPluginUserDialog):
                     ran.label()
                 ))
                 cartoCSS = cartoCSS + \
-                    self.simplePolygon(layer, symbol, '#' + layer.name() + '[' + renderer.classAttribute() + '<=' + str(ran.upperValue()) + ']')
+                    self.simplePolygon(layer, symbol, '#' + layer.tableName() + '[' + renderer.classAttribute() + '<=' + str(ran.upperValue()) + ']')
 
         # qDebug('CartoCSS: ' + cartoCSS)
         return cartoCSS
 
     def simplePolygon(self, layer, symbol, styleName):
         cartoCSS = ''
-        layerOpacity = str((100 - layer.layerTransparency())/100)
+        layerOpacity = str(float(100.0 - layer.layerTransparency()/100.0))
         if symbol.symbolLayerCount() > 0:
             lyr = symbol.symbolLayer(0)
 
