@@ -35,6 +35,7 @@ class CartoDBPluginUserDialog(QDialog):
         self.currentUser = self.toolbar.currentUser
         self.currentApiKey = self.toolbar.currentApiKey
         self.currentMultiuser = self.toolbar.currentMultiuser
+        self.currentUserData = self.toolbar.currentUserData
 
         worker = CartoDBPluginWorker(self, 'connectUser')
         worker.start()

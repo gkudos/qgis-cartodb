@@ -61,6 +61,13 @@ class SignalsObject(QObject):
         self.test.logger.debug("*******************************************************************************")
         self.test.assertTrue(data['id'] is not None)
 
+    @pyqtSlot(dict)
+    def cb_get_layers_map_result(self, data):
+        self.test.logger.debug("*******************************************************************************")
+        self.test.logger.debug("Get layers result: " + json.dumps(data, sort_keys=True, indent=2, separators=(',', ': ')))
+        self.test.logger.debug("*******************************************************************************")
+        self.test.assertTrue(True)
+
     def cb_progress(self, current, total):
         self.test.logger.debug("Current: {:.2f} MB of {:.2f} MB".format(float(current)/1024/1024, float(total)/1024/1024))
 
@@ -104,7 +111,6 @@ class CartoDBApiTest(UsesQApplication):
     def tearDown(self):
         super(CartoDBApiTest, self).tearDown()
 
-    @unittest.skip("testing skipping")
     def test_show_user_data(self):
         self.logger.debug("\n*******************************************************************************")
         self.logger.debug('\nTest get user details for: ' + cartodb_user)
@@ -151,18 +157,26 @@ class CartoDBApiTest(UsesQApplication):
         self.logger.debug("\n*******************************************************************************")
         cartodbApi = CartoDBApi(cartodb_user, api_key, is_multiuser)
         cartodbApi.fetchContent.connect(self.signalsObject.cb_show_create_viz_result)
-        cartodbApi.progress.connect(self.signalsObject.cb_progress)
         cartodbApi.createVizFromTable('test_ideca_manzanas', 'Test map from QGISCartoDB', 'Test map from Description')
 
+    @unittest.skip("testing skipping")
     def test_add_layer_to_map(self):
         self.logger.debug("\n*******************************************************************************")
         self.logger.debug('\nTest add layer to map. Layer: test_ideca_localidades')
         self.logger.debug("\n*******************************************************************************")
         cartodbApi = CartoDBApi(cartodb_user, api_key, is_multiuser)
         cartodbApi.fetchContent.connect(self.signalsObject.cb_add_layer_to_map_result)
-        cartodbApi.progress.connect(self.signalsObject.cb_progress)
         cartoCSS = '#test_ideca_localidades { polygon-fill: #7B00B4; polygon-opacity: 0.6; line-color: #0F3B82; line-width: 0.5; line-opacity: 1; }'
         cartodbApi.addLayerToMap('df48f415-2ed5-4aaa-ac73-ded9d64f5bd3', 'test_ideca_localidades', cartoCSS)
+
+    @unittest.skip("testing skipping")
+    def test_get_layers_map(self):
+        self.logger.debug("\n*******************************************************************************")
+        self.logger.debug('\nTest get layers in map: Test map from QGISCartoDB 3')
+        self.logger.debug("\n*******************************************************************************")
+        cartodbApi = CartoDBApi(cartodb_user, api_key, is_multiuser)
+        cartodbApi.fetchContent.connect(self.signalsObject.cb_get_layers_map_result)
+        cartodbApi.getLayersMap('df48f415-2ed5-4aaa-ac73-ded9d64f5bd3')
 
 
 if __name__ == '__main__':

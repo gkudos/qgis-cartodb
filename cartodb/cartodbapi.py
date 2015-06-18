@@ -232,6 +232,30 @@ class CartoDBApi(QObject):
         reply.finished.connect(loop.exit)
         loop.exec_()
 
+    def updateLayerInMap(self, mapId, layer, returnDict=True):
+        self.returnDict = returnDict
+        url = QUrl(self.apiUrl + "maps/{}/layers/{}?api_key={}".format(mapId, layer['id'], self.apiKey))
+        request = self._getRequest(url)
+
+        reply = self.manager.put(request, json.dumps(layer))
+        loop = QEventLoop()
+        reply.downloadProgress.connect(self.progressCB)
+        reply.error.connect(self.error)
+        reply.finished.connect(loop.exit)
+        loop.exec_()
+
+    def getLayersMap(self, mapId, returnDict=True):
+        self.returnDict = returnDict
+        url = QUrl(self.apiUrl + "maps/{}/layers?api_key={}".format(mapId, self.apiKey))
+        request = self._getRequest(url)
+
+        reply = self.manager.get(request)
+        loop = QEventLoop()
+        reply.downloadProgress.connect(self.progressCB)
+        reply.error.connect(self.error)
+        reply.finished.connect(loop.exit)
+        loop.exec_()
+
     def progressCB(self, breceived, btotal):
         self.progress.emit(breceived, btotal)
 
