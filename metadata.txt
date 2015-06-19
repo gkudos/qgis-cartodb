@@ -6,6 +6,20 @@ version=0.1.5
 qgisMinimumVersion=2.4
 icon=images/icon.png
 author=Kudos Ltda. and contributors
+about=Features:
+  - Manage CartoDB connections.
+  - Add CartoDB layers to QGis projects.
+  - Add features to CartoDB tables.
+  - Edit data and update CartoDB tables.
+  - Edit data and update geometries.
+  - Delete features.
+  - Upload tables
+  - Create maps
+  Dependencies:
+  - CartoDB
+  - oauth2
+  - simplejson
+  - certifi
 email=michaelsalgado@gkudos.com
 changelog=0.1.5
   - Upload more formats to CartoDB.
