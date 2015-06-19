@@ -18,11 +18,11 @@ email                : michaelsalgado@gkudos.com, info@gkudos.com
  *                                                                         *
  ***************************************************************************/
 """
-from PyQt4.QtCore import Qt, QFile, QFileInfo, pyqtSlot, qDebug
+from PyQt4.QtCore import Qt, QFile, QFileInfo, pyqtSlot, qDebug, QPyNullVariant
 from PyQt4.QtGui import QApplication, QAbstractItemView, QDialog, QListWidgetItem, QLabel, QPixmap, QPushButton, QSizePolicy
 from PyQt4.QtGui import QClipboard
 
-from qgis.core import QGis, QgsMapLayerRegistry, QgsMapLayer
+from qgis.core import QGis, QgsMapLayerRegistry, QgsMapLayer, QgsPalLayerSettings
 from qgis.gui import QgsMessageBar
 
 import QgisCartoDB.CartoDBPlugin
@@ -34,6 +34,7 @@ from QgisCartoDB.widgets import CartoDBLayersListWidget, CartoDBLayerListItem
 
 from string import Template
 
+import copy
 import os
 import webbrowser
 
@@ -134,6 +135,7 @@ class CartoDBPluginCreateViz(CartoDBPluginUserDialog):
         cartoDBApi = CartoDBApi(self.currentUser, self.currentApiKey, self.currentMultiuser)
         layer1 = data['layers'][1]
         layer1['options']['tile_style'] = cartoCSS
+        layer1["options"]["legend"] = None
         cartoDBApi.fetchContent.connect(self.showMessage)
         cartoDBApi.updateLayerInMap(self.currentViz['map_id'], layer1)
 
@@ -141,10 +143,16 @@ class CartoDBPluginCreateViz(CartoDBPluginUserDialog):
             item = self.ui.mapList.item(i)
             widget = self.ui.mapList.itemWidget(item)
             layer = widget.layer
-            qDebug('Agregando: ' + layer.tableName())
+            qDebug('Agregando: {} en pos: {}'.format(layer.tableName(), i))
             cartoCSS = self.convert2cartoCSS(layer)
             # cartoDBApi.fetchContent.connect(self.cbCreateViz)
-            cartoDBApi.addLayerToMap(self.currentViz['map_id'], layer.tableName(), cartoCSS)
+            newLayer = copy.deepcopy(layer1)
+            newLayer["options"]["table_name"] = layer.tableName()
+            newLayer["options"]["tile_style"] = cartoCSS
+            newLayer["options"]["order"] = i + 1
+            newLayer["order"] = i + 1
+            newLayer["id"] = None
+            cartoDBApi.addLayerToMap(self.currentViz['map_id'], newLayer)
 
     def showMessage(self, data):
         url = '{}/viz/{}/public_map'.format(self.currentUserData['base_url'], self.currentViz['id'])
@@ -172,6 +180,23 @@ class CartoDBPluginCreateViz(CartoDBPluginUserDialog):
     def convert2cartoCSS(self, layer):
         renderer = layer.rendererV2()
         cartoCSS = ''
+        labelCSS = ''
+
+        labelSettings = QgsPalLayerSettings()
+        labelSettings.readFromLayer(layer)
+        if labelSettings.enabled:
+            d = {
+                'layername': '#' + layer.tableName(),
+                'field': labelSettings.getLabelExpression().dump(),
+                # TODO Get font size
+                'size': 11,
+                'color': labelSettings.textColor.name()
+            }
+            filein = open(QgisCartoDB.CartoDBPlugin.PLUGIN_DIR + '/templates/labels.less')
+            labelCSS = Template(filein.read())
+            labelCSS = labelCSS.substitute(d)
+        # qDebug('Label CSS: ' + labelCSS)
+
         # CSS for single symbols
         if renderer.type() == 'singleSymbol':
             symbol = renderer.symbol()
@@ -181,8 +206,8 @@ class CartoDBPluginCreateViz(CartoDBPluginUserDialog):
             # qDebug('Categorized: ' + renderer.classAttribute())
             for cat in renderer.categories():
                 symbol = cat.symbol()
-                qDebug("%s: %s type: %s" % (str(cat.value()), cat.label(), str(cat.value().isdecimal())))
-                if cat.value() is not None and cat.value() != '':
+                # qDebug("%s: %s type: %s" % (str(cat.value()), cat.label(), str(cat.value())))
+                if cat.value() is not None and cat.value() != '' and not isinstance(cat.value(), QPyNullVariant):
                     value = cat.value() if cat.value().isdecimal() else ('"' + cat.value() + '"')
                     cartoCSS = cartoCSS + \
                         self.simplePolygon(layer, symbol, '#' + layer.tableName() + '[' + renderer.classAttribute() + '=' + str(value) + ']')
@@ -206,32 +231,33 @@ class CartoDBPluginCreateViz(CartoDBPluginUserDialog):
                     self.simplePolygon(layer, symbol, '#' + layer.tableName() + '[' + renderer.classAttribute() + '<=' + str(ran.upperValue()) + ']')
 
         # qDebug('CartoCSS: ' + cartoCSS)
-        return cartoCSS
+        return '/** Styles designed from QGISCartoDB Plugin */\n\n' + cartoCSS + '\n' + labelCSS
 
     def simplePolygon(self, layer, symbol, styleName):
         cartoCSS = ''
-        layerOpacity = str(float(100.0 - layer.layerTransparency()/100.0))
+        layerOpacity = str(float((100.0 - layer.layerTransparency())/100.0))
+
         if symbol.symbolLayerCount() > 0:
             lyr = symbol.symbolLayer(0)
 
-            qDebug('Map layer type: ' + str(layer.geometryType()))
-            qDebug("Symbol Type: %s" % (lyr.layerType()))
+            # qDebug("Symbol Type: %s" % (lyr.layerType()))
             filein = None
             if layer.geometryType() == QGis.Point:
                 d = {
                     'layername': styleName,
                     'fillColor': lyr.fillColor().name(),
-                    'width': lyr.size(),
+                    # 96 ppi = 3.7795275552 mm
+                    'width': round(3.7795275552 * lyr.size(), 0),
                     'opacity': layerOpacity,
                     'borderColor': lyr.outlineColor().name(),
-                    'borderWidth': lyr.outlineWidth()
+                    'borderWidth': round(3.7795275552 * lyr.outlineWidth(), 0)
                 }
                 filein = open(QgisCartoDB.CartoDBPlugin.PLUGIN_DIR + '/templates/simplepoint.less')
             elif layer.geometryType() == QGis.Line:
                 d = {
                     'layername': styleName,
                     'lineColor': lyr.color().name(),
-                    'lineWidth': lyr.width(),
+                    'lineWidth': round(3.7795275552 * lyr.width(), 0),
                     'opacity': layerOpacity
                 }
                 filein = open(QgisCartoDB.CartoDBPlugin.PLUGIN_DIR + '/templates/simpleline.less')
@@ -241,7 +267,7 @@ class CartoDBPluginCreateViz(CartoDBPluginUserDialog):
                     'fillColor': lyr.fillColor().name(),
                     'opacity': layerOpacity,
                     'borderColor': lyr.outlineColor().name(),
-                    'borderWidth': lyr.borderWidth()
+                    'borderWidth': round(3.7795275552 * lyr.borderWidth(), 0)
                 }
                 filein = open(QgisCartoDB.CartoDBPlugin.PLUGIN_DIR + '/templates/simplepolygon.less')
 

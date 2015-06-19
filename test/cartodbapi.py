@@ -24,7 +24,7 @@ class SignalsObject(QObject):
         self.test.logger.debug("*******************************************************************************")
         self.test.logger.debug("User data loaded: " + json.dumps(data, sort_keys=True, indent=2, separators=(',', ': ')))
         self.test.logger.debug("*******************************************************************************")
-        self.test.assertTrue(data['username'] == cartodb_user)
+        self.test.assertEqual(data['username'], cartodb_user)
 
     @pyqtSlot(dict)
     def cb_show_user_tables(self, data):
@@ -52,21 +52,22 @@ class SignalsObject(QObject):
         self.test.logger.debug("*******************************************************************************")
         self.test.logger.debug("Create viz result: " + json.dumps(data, sort_keys=True, indent=2, separators=(',', ': ')))
         self.test.logger.debug("*******************************************************************************")
-        self.test.assertTrue(data['map_id'] is not None and data['tags'][0] == 'QGISCartoDB')
+        self.test.assertIsNotNone(data['map_id'])
+        self.test.assertEqual(data['tags'][0], 'QGISCartoDB')
 
     @pyqtSlot(dict)
     def cb_add_layer_to_map_result(self, data):
         self.test.logger.debug("*******************************************************************************")
         self.test.logger.debug("Add layer to map result: " + json.dumps(data, sort_keys=True, indent=2, separators=(',', ': ')))
         self.test.logger.debug("*******************************************************************************")
-        self.test.assertTrue(data['id'] is not None)
+        self.test.assertIsNotNone(data['id'])
 
     @pyqtSlot(dict)
     def cb_get_layers_map_result(self, data):
         self.test.logger.debug("*******************************************************************************")
         self.test.logger.debug("Get layers result: " + json.dumps(data, sort_keys=True, indent=2, separators=(',', ': ')))
         self.test.logger.debug("*******************************************************************************")
-        self.test.assertTrue(True)
+        self.test.assertEqual(data["total_entries"], 3)
 
     def cb_progress(self, current, total):
         self.test.logger.debug("Current: {:.2f} MB of {:.2f} MB".format(float(current)/1024/1024, float(total)/1024/1024))
@@ -111,6 +112,7 @@ class CartoDBApiTest(UsesQApplication):
     def tearDown(self):
         super(CartoDBApiTest, self).tearDown()
 
+    @unittest.skip("testing skipping")
     def test_show_user_data(self):
         self.logger.debug("\n*******************************************************************************")
         self.logger.debug('\nTest get user details for: ' + cartodb_user)
@@ -169,7 +171,6 @@ class CartoDBApiTest(UsesQApplication):
         cartoCSS = '#test_ideca_localidades { polygon-fill: #7B00B4; polygon-opacity: 0.6; line-color: #0F3B82; line-width: 0.5; line-opacity: 1; }'
         cartodbApi.addLayerToMap('df48f415-2ed5-4aaa-ac73-ded9d64f5bd3', 'test_ideca_localidades', cartoCSS)
 
-    @unittest.skip("testing skipping")
     def test_get_layers_map(self):
         self.logger.debug("\n*******************************************************************************")
         self.logger.debug('\nTest get layers in map: Test map from QGISCartoDB 3')
