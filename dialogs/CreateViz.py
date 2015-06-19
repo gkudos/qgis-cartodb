@@ -208,7 +208,11 @@ class CartoDBPluginCreateViz(CartoDBPluginUserDialog):
                 symbol = cat.symbol()
                 # qDebug("%s: %s type: %s" % (str(cat.value()), cat.label(), str(cat.value())))
                 if cat.value() is not None and cat.value() != '' and not isinstance(cat.value(), QPyNullVariant):
-                    value = cat.value() if cat.value().isdecimal() else ('"' + cat.value() + '"')
+                    if isinstance(cat.value(), (int, float, long)) or (isinstance(cat.value(), str) and cat.value().isdecimal()):
+                        value = cat.value()
+                    else:
+                        value = '"' + str(cat.value()) + '"'
+
                     cartoCSS = cartoCSS + \
                         self.simplePolygon(layer, symbol, '#' + layer.tableName() + '[' + renderer.classAttribute() + '=' + str(value) + ']')
                 else:
