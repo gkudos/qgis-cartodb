@@ -4,7 +4,11 @@
 #### New Features
 
 * Upload layers to CartoDB (More formats).
-* Create basic visualization.
+* Create basic visualization. Support:
+  * Borders
+  * Fill
+  * Label
+
 
 <a name="0.1.4"></a>
 ### 0.1.4 (2015-06-05)

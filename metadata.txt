@@ -9,7 +9,7 @@ author=Kudos Ltda. and contributors
 email=michaelsalgado@gkudos.com
 changelog=0.1.5
   - Upload more formats to CartoDB.
-  - Create basic visualization.
+  - Create basic visualization (border, fill, labels)
   0.1.4
   - Upload layers to CartoDB
   - Add spanish translation
