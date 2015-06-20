@@ -41,6 +41,10 @@
             <translation>{}, usando {} de {}</translation>
         </message>
         <message>
+            <source>{}, using {} of {}, {} tables, {} shared</source>
+            <translation>{}, usando {} de {}, {} tablas, {} compartidas</translation>
+        </message>
+        <message>
             <source>Uploading {}</source>
             <translation>Subiendo {}</translation>
         </message>

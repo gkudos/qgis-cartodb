@@ -1,3 +1,15 @@
+<a name="0.1.6"></a>
+### 0.1.6 (2015-06-20)
+
+#### Enhancements
+
+* Remove scroll in user table list.
+* Ascending order in user table list.
+
+#### Fixes
+
+* Fix #23 Error conecting multiuser account
+
 <a name="0.1.5"></a>
 ### 0.1.5 (2015-06-16)
 

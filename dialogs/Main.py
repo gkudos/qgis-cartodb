@@ -35,6 +35,7 @@ import QgisCartoDB.resources
 
 import copy
 import math
+import json
 
 
 # Create the dialog for CartoDBPlugin
@@ -47,7 +48,7 @@ class CartoDBPluginDialog(QDialog):
         self.ui = Ui_CartoDBPlugin()
         self.ui.setupUi(self)
         self.ui.searchTX.textChanged.connect(self.filterTables)
-        self.ui.tablesList.verticalScrollBar().valueChanged.connect(self.onScroll)
+        # self.ui.tablesList.verticalScrollBar().valueChanged.connect(self.onScroll)
 
         self.currentUser = self.toolbar.currentUser
         self.currentApiKey = self.toolbar.currentApiKey
@@ -55,6 +56,8 @@ class CartoDBPluginDialog(QDialog):
 
         self.isLoadingTables = False
         self.noLoadTables = False
+        self.totalTables = None
+        self.totalShared = None
 
         worker = CartoDBPluginWorker(self, 'connectUser')
         worker.start()
@@ -100,9 +103,12 @@ class CartoDBPluginDialog(QDialog):
             widget = CartoDBDatasetsListItem(visualization['name'], owner, visualization['table']['size'], visualization['table']['row_count'])
             # item.setText(visualization['name'])
             readonly = False
-            if visualization['permission'] is not None and visualization['permission']['acl'] is not None:
+            # qDebug('Vis:' + json.dumps(visualization, sort_keys=True, indent=2, separators=(',', ': ')))
+            if visualization['permission'] is not None and visualization['permission']['owner']['username'] != self.currentUser and \
+               visualization['permission']['acl'] is not None:
                 for acl in visualization['permission']['acl']:
-                    if acl['type'] == 'user' and acl['entity']['username'] == self.currentUser and acl['access'] == 'r':
+                    if acl['type'] == 'user' and 'username' in acl['entity'] and acl['entity']['username'] == self.currentUser and \
+                       acl['access'] == 'r':
                         readonly = True
                         break
             if readonly:
@@ -152,7 +158,8 @@ class CartoDBPluginDialog(QDialog):
         cartoDBApi = CartoDBApi(cartodbUser, apiKey, multiuser)
         cartoDBApi.fetchContent.connect(self.cbTables)
         self.isLoadingTables = True
-        cartoDBApi.getUserTables(self.tablesPage)
+        # cartoDBApi.getUserTables(self.tablesPage)
+        cartoDBApi.getUserTables(1, 100000)
 
     @pyqtSlot(dict)
     def cbTables(self, data):
@@ -167,10 +174,13 @@ class CartoDBPluginDialog(QDialog):
         else:
             self.visualizations.extend(data['visualizations'])
 
+        self.visualizations.reverse()
+
         self.updateList(self.visualizations)
         self.settings.setValue('/CartoDBPlugin/selected', self.currentUser)
         self.ui.searchTX.setEnabled(True)
         self.isLoadingTables = False
+        self.setUpUserData()
 
     def setUpUserData(self):
         usedQuota = (float(self.currentUserData['quota_in_bytes']) - float(self.currentUserData['remaining_byte_quota']))/1024/1024
@@ -188,9 +198,14 @@ class CartoDBPluginDialog(QDialog):
         else:
             quota = "{:.2f}".format(quota) + ' MB'
 
-        self.ui.nameLB.setText(
-            QApplication.translate('CartoDBPlugin', '{}, using {} of {}')
-                        .format(self.currentUserData['username'], usedQuota, quota))
+        if self.totalTables is None or self.totalShared is None:
+            self.ui.nameLB.setText(
+                QApplication.translate('CartoDBPlugin', '{}, using {} of {}')
+                            .format(self.currentUserData['username'], usedQuota, quota))
+        else:
+            self.ui.nameLB.setText(
+                QApplication.translate('CartoDBPlugin', '{}, using {} of {}, {} tables, {} shared')
+                            .format(self.currentUserData['username'], usedQuota, quota, self.totalTables, self.totalShared))
 
     def returnAvatar(self, reply):
         imageReader = QImageReader(reply)
