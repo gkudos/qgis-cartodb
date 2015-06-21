@@ -110,7 +110,7 @@ class CartoDBPluginCreateViz(CartoDBPluginUserDialog):
 
     def createViz(self):
         self.ui.bar.clearWidgets()
-        self.ui.bar.pushMessage("Info", "Creating Map", level=QgsMessageBar.INFO)
+        self.ui.bar.pushMessage("Info", QApplication.translate('CartoDBPlugin', 'Creating Map'), level=QgsMessageBar.INFO)
 
         item = self.ui.mapList.item(0)
         widget = self.ui.mapList.itemWidget(item)
@@ -165,14 +165,15 @@ class CartoDBPluginCreateViz(CartoDBPluginUserDialog):
             QApplication.clipboard().setText(url)
 
         self.ui.bar.clearWidgets()
-        widget = self.ui.bar.createMessage('Map Created', '{} created'.format(self.currentViz['name']))
+        widget = self.ui.bar.createMessage(QApplication.translate('CartoDBPlugin', 'Map Created'),
+                                           QApplication.translate('CartoDBPlugin', '{} created').format(self.currentViz['name']))
         button = QPushButton(widget)
-        button.setText("Copy Link")
+        button.setText(QApplication.translate('CartoDBPlugin', 'Copy Link'))
         button.pressed.connect(copyURL)
         widget.layout().addWidget(button)
 
         button = QPushButton(widget)
-        button.setText("Open")
+        button.setText(QApplication.translate('CartoDBPlugin', 'Open'))
         button.pressed.connect(openVis)
         widget.layout().addWidget(button)
         self.ui.bar.pushWidget(widget, QgsMessageBar.INFO)
@@ -281,5 +282,4 @@ class CartoDBPluginCreateViz(CartoDBPluginUserDialog):
 
     def validateButtons(self):
         enabled = self.ui.mapNameTX.text() != '' and self.ui.mapList.count() > 0
-
         self.ui.saveBT.setEnabled(enabled)

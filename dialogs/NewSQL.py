@@ -20,7 +20,7 @@ email                : michaelsalgado@gkudos.com, info@gkudos.com
 """
 
 from PyQt4.QtCore import QSettings
-from PyQt4.QtGui import QDialog, QSizePolicy, QColor, QTreeWidgetItem, QIcon, QMessageBox
+from PyQt4.QtGui import QApplication, QDialog, QSizePolicy, QColor, QTreeWidgetItem, QIcon, QMessageBox
 from PyQt4.Qsci import QsciScintilla, QsciScintillaBase, QsciLexerSQL, QsciAPIs
 
 from qgis.core import QgsMessageLog
@@ -177,12 +177,12 @@ class CartoDBNewSQLDialog(CartoDBConnectionsManager):
             self.settings.setValue('/CartoDBPlugin/selected', self.currentUser)
         except CartoDBException as e:
             QgsMessageLog.logMessage('Some error ocurred getting tables: ' + str(e.args), 'CartoDB Plugin', QgsMessageLog.CRITICAL)
-            QMessageBox.information(self, self.tr('Error'), self.tr('Error getting tables'), QMessageBox.Ok)
+            QMessageBox.information(self, QApplication.translate('CartoDBPlugin', 'Error'), QApplication.translate('CartoDBPlugin', 'Error getting tables'), QMessageBox.Ok)
             self.ui.tablesTree.clear()
 
     def testQuery(self):
         self.ui.bar.clearWidgets()
-        self.ui.bar.pushMessage("Info", "Validating Query", level=QgsMessageBar.INFO)
+        self.ui.bar.pushMessage("Info", QApplication.translate('CartoDBPlugin', 'Validating Query'), level=QgsMessageBar.INFO)
         sql = self.ui.sqlEditor.text()
 
         if sql is None or sql == '':
@@ -198,7 +198,7 @@ class CartoDBNewSQLDialog(CartoDBConnectionsManager):
 
         self.ui.bar.clearWidgets()
         if 'error' not in result:
-            self.ui.bar.pushMessage("Info", "Query is valid", level=QgsMessageBar.INFO, duration=5)
+            self.ui.bar.pushMessage("Info", QApplication.translate('CartoDBPlugin', 'Query is valid'), level=QgsMessageBar.INFO, duration=5)
             self.setValidQuery(True)
         else:
             if 'hint' in result:

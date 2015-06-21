@@ -68,6 +68,62 @@
             <source>Downloading datasets</source>
             <translation>Descargando tablas</translation>
         </message>
+        <message>
+            <source>Save connection</source>
+            <translation>Guardar conexión</translation>
+        </message>
+        <message>
+            <source>Both User and Api Key must be provided</source>
+            <translation>El usuario y el api key deben ser completados</translation>
+        </message>
+        <message>
+            <source>Overwrite {}?</source>
+            <translation>Sobreescribir {}?</translation>
+        </message>
+        <message>
+            <source>Creating Map</source>
+            <translation>Creando Mapa</translation>
+        </message>
+        <message>
+            <source>Map Created</source>
+            <translation>Mapa Creado</translation>
+        </message>
+        <message>
+            <source>Copy Link</source>
+            <translation>Copiar Enlace</translation>
+        </message>
+        <message>
+            <source>Open</source>
+            <translation>Abrir</translation>
+        </message>
+        <message>
+            <source>Add CartoDB Connection</source>
+            <translation>Agregar una Nueva Conexión</translation>
+        </message>
+        <message>
+            <source>Remove connection {}?</source>
+            <translation>Eliminar conexión {}?</translation>
+        </message>
+        <message>
+            <source>Confirm delete</source>
+            <translation>Confirmar</translation>
+        </message>
+        <message>
+            <source>Error loading data from CartoDB</source>
+            <translation>Error cargando los datos de CartoDB</translation>
+        </message>
+        <message>
+            <source>Error getting tables</source>
+            <translation>Error obteniendo las tablas</translation>
+        </message>
+        <message>
+            <source>Validating Query</source>
+            <translation>Validando la Consulta</translation>
+        </message>
+        <message>
+            <source>Query is valid</source>
+            <translation>La consulta es inválida</translation>
+        </message>
     </context>
     <context>
         <name>NewConnection</name>
@@ -144,6 +200,76 @@
         <message>
             <source>Upload</source>
             <translation>Subir</translation>
+        </message>
+    </context>
+    <context>
+        <name>CreateViz</name>
+        <message>
+            <source>Create New Map</source>
+            <translation>Crear Mapa</translation>
+        </message>
+        <message>
+            <source>Map Name:</source>
+            <translation>Nombre:</translation>
+        </message>
+        <message>
+            <source>Map Name</source>
+            <translation>Nombre</translation>
+        </message>
+        <message>
+            <source>Available Layers</source>
+            <translation>Capas Disponibles</translation>
+        </message>
+        <message>
+            <source>Map Layers</source>
+            <translation>Capas en el Mapa</translation>
+        </message>
+        <message>
+            <source>Avatar</source>
+            <translation>Avatar</translation>
+        </message>
+        <message>
+            <source>Name</source>
+            <translation>Nombre</translation>
+        </message>
+        <message>
+            <source>SQL</source>
+            <translation>SQL</translation>
+        </message>
+        <message>
+            <source>Cancel</source>
+            <translation>Cancelar</translation>
+        </message>
+        <message>
+            <source>Create</source>
+            <translation>Crear</translation>
+        </message>
+    </context>
+    <context>
+        <name>NewSQL</name>
+        <message>
+            <source>Add CartoDB SQL Layer</source>
+            <translation>Agregar una Capa SQL</translation>
+        </message>
+        <message>
+            <source>SQL Query</source>
+            <translation>Consulta SQL</translation>
+        </message>
+        <message>
+            <source>Tables</source>
+            <translation>Tablas</translation>
+        </message>
+        <message>
+            <source>Cancel</source>
+            <translation>Cancelar</translation>
+        </message>
+        <message>
+            <source>Test Query</source>
+            <translation>Probar Consulta</translation>
+        </message>
+        <message>
+            <source>Add Layer</source>
+            <translation>Agregar Capa</translation>
         </message>
     </context>
 </TS>

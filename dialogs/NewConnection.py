@@ -19,7 +19,7 @@ email                : michaelsalgado@gkudos.com, info@gkudos.com
  ***************************************************************************/
  """
 
-from PyQt4.QtGui import QDialog, QMessageBox
+from PyQt4.QtGui import QApplication, QDialog, QMessageBox
 from PyQt4.QtCore import QSettings
 
 from QgisCartoDB.ui.NewConnection import Ui_NewConnection
@@ -40,8 +40,8 @@ class CartoDBNewConnectionDialog(QDialog):
         multiuser = self.ui.multiuserCH.isChecked()
 
         if any([user == '', apiKey == '']):
-            QMessageBox.warning(self, self.tr('Save connection'),
-                                self.tr('Both User and Api Key must be provided'))
+            QMessageBox.warning(self, QApplication.translate('CartoDBPlugin', 'Save connection'),
+                                QApplication.translate('CartoDBPlugin', 'Both User and Api Key must be provided'))
             return
 
         if user is not None:
@@ -52,7 +52,8 @@ class CartoDBNewConnectionDialog(QDialog):
             # warn if entry was renamed to an existing connection
             if all([self.user_orig != user,
                     self.settings.contains(keyapi)]):
-                res = QMessageBox.warning(self, self.tr('Save connection'), self.tr('Overwrite %s?' % user),
+                res = QMessageBox.warning(self, QApplication.translate('CartoDBPlugin', 'Save connection'),
+                                          QApplication.translate('CartoDBPlugin', 'Overwrite {}?').format(user),
                                           QMessageBox.Ok | QMessageBox.Cancel)
                 if res == QMessageBox.Cancel:
                     return

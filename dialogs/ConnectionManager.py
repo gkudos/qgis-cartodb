@@ -19,7 +19,7 @@ email                : michaelsalgado@gkudos.com, info@gkudos.com
  ***************************************************************************/
 """
 from PyQt4.QtCore import QSettings, pyqtSignal
-from PyQt4.QtGui import QDialog, QMessageBox
+from PyQt4.QtGui import QDialog, QMessageBox, QApplication
 
 from qgis.core import QgsMessageLog
 
@@ -107,7 +107,7 @@ class CartoDBConnectionsManager(QDialog):
     def openNewConnectionDialog(self):
         # Open new connection dialog.
         dlg = CartoDBNewConnectionDialog()
-        dlg.setWindowTitle(self.tr('Add CartoDB Connection'))
+        dlg.setWindowTitle(QApplication.translate('CartoDBPlugin', 'Add CartoDB Connection'))
         dlg.show()
 
         result = dlg.exec_()
@@ -124,7 +124,7 @@ class CartoDBConnectionsManager(QDialog):
         QgsMessageLog.logMessage('Multiuser:' + str(multiuser) + ' - ' + str(bool(multiuser)), 'CartoDB Plugin', QgsMessageLog.INFO)
 
         conEdit = CartoDBNewConnectionDialog(currentText)
-        conEdit.setWindowTitle(self.tr('Edit CartoDB Connection'))
+        conEdit.setWindowTitle(QApplication.translate('CartoDBPlugin', 'Edit CartoDB Connection'))
         conEdit.ui.userTX.setText(currentText)
         conEdit.ui.apiKeyTX.setText(apiKey)
         conEdit.ui.multiuserCH.setChecked(str(multiuser) in ['true', '1', 'True'])
@@ -138,9 +138,9 @@ class CartoDBConnectionsManager(QDialog):
         # Delete connection.
         currentText = self.ui.connectionList.currentText()
         key = '/CartoDBPlugin/%s' % currentText
-        msg = self.tr('Remove connection %s?' % currentText)
+        msg = QApplication.translate('CartoDBPlugin', 'Remove connection {}?').format(currentText)
 
-        result = QMessageBox.information(self, self.tr('Confirm delete'), msg, QMessageBox.Ok | QMessageBox.Cancel)
+        result = QMessageBox.information(self, QApplication.translate('CartoDBPlugin', 'Confirm delete'), msg, QMessageBox.Ok | QMessageBox.Cancel)
         if result == QMessageBox.Ok:
             # Remove connection from list
             self.settings.remove(key)

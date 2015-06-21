@@ -68,6 +68,62 @@
             <source>Downloading datasets</source>
             <translation>Downloading datasets</translation>
         </message>
+        <message>
+            <source>Save connection</source>
+            <translation>Save connection</translation>
+        </message>
+        <message>
+            <source>Both User and Api Key must be provided</source>
+            <translation>Both User and Api Key must be provided</translation>
+        </message>
+        <message>
+            <source>Overwrite {}?</source>
+            <translation>Overwrite {}?</translation>
+        </message>
+        <message>
+            <source>Creating Map</source>
+            <translation>Creating Map</translation>
+        </message>
+        <message>
+            <source>Map Created</source>
+            <translation>Map Created</translation>
+        </message>
+        <message>
+            <source>Copy Link</source>
+            <translation>Copy Link</translation>
+        </message>
+        <message>
+            <source>Open</source>
+            <translation>Open</translation>
+        </message>
+        <message>
+            <source>Add CartoDB Connection</source>
+            <translation>Add CartoDB Connection</translation>
+        </message>
+        <message>
+            <source>Remove connection {}?</source>
+            <translation>Remove connection {}?</translation>
+        </message>
+        <message>
+            <source>Confirm delete</source>
+            <translation>Confirm delete</translation>
+        </message>
+        <message>
+            <source>Error loading data from CartoDB</source>
+            <translation>Error loading data from CartoDB</translation>
+        </message>
+        <message>
+            <source>Error getting tables</source>
+            <translation>Error getting tables</translation>
+        </message>
+        <message>
+            <source>Validating Query</source>
+            <translation>Validating Query</translation>
+        </message>
+        <message>
+            <source>Query is valid</source>
+            <translation>Query is valid</translation>
+        </message>
     </context>
     <context>
         <name>NewConnection</name>
@@ -144,6 +200,80 @@
         <message>
             <source>Upload</source>
             <translation>Upload</translation>
+        </message>
+    </context>
+    <context>
+        <name>CreateViz</name>
+        <message>
+            <source>Create New Map</source>
+            <translation>Create New Map</translation>
+        </message>
+        <message>
+            <source>Map Name:</source>
+            <translation>Map Name:</translation>
+        </message>
+        <message>
+            <source>Map Name</source>
+            <translation>Map Name</translation>
+        </message>
+        <message>
+            <source>Available Layers</source>
+            <translation>Available Layers</translation>
+        </message>
+        <message>
+            <source>Map Layers</source>
+            <translation>Map Layers</translation>
+        </message>
+        <message>
+            <source>Avatar</source>
+            <translation>Avatar</translation>
+        </message>
+        <message>
+            <source>Name</source>
+            <translation>Name</translation>
+        </message>
+        <message>
+            <source>SQL</source>
+            <translation>SQL</translation>
+        </message>
+        <message>
+            <source>Cancel</source>
+            <translation>Cancel</translation>
+        </message>
+        <message>
+            <source>Create</source>
+            <translation>Create</translation>
+        </message>
+    </context>
+    <context>
+        <name>NewSQL</name>
+        <message>
+            <source>Add CartoDB SQL Layer</source>
+            <translation>Add CartoDB SQL Layer</translation>
+        </message>
+        <message>
+            <source>SQL Query</source>
+            <translation>SQL Query</translation>
+        </message>
+        <message>
+            <source>Load Tables</source>
+            <translation>Load Tables</translation>
+        </message>
+        <message>
+            <source>Tables</source>
+            <translation>Tables</translation>
+        </message>
+        <message>
+            <source>Cancel</source>
+            <translation>Cancel</translation>
+        </message>
+        <message>
+            <source>Test Query</source>
+            <translation>Test Query</translation>
+        </message>
+        <message>
+            <source>Add Layer</source>
+            <translation>Add Layer</translation>
         </message>
     </context>
 </TS>

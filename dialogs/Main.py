@@ -157,12 +157,16 @@ class CartoDBPluginDialog(QDialog):
     def getTables(self, cartodbUser, apiKey, multiuser=False):
         cartoDBApi = CartoDBApi(cartodbUser, apiKey, multiuser)
         cartoDBApi.fetchContent.connect(self.cbTables)
+        cartoDBApi.error.connect(self.error)
         self.isLoadingTables = True
         # cartoDBApi.getUserTables(self.tablesPage)
         cartoDBApi.getUserTables(1, 100000)
 
     @pyqtSlot(dict)
     def cbTables(self, data):
+        if 'error' in data:
+            return
+
         self.totalTables = data['total_user_entries']
         self.totalShared = data['total_shared']
 
@@ -232,3 +236,7 @@ class CartoDBPluginDialog(QDialog):
         worker.start()
         # self.connect()
         # QMetaObject.invokeMethod(self.controller, 'connectCB')
+
+    def error(self):
+        QMessageBox.warning(self, QApplication.translate('CartoDBPlugin', 'Error'),
+                            QApplication.translate('CartoDBPlugin', 'Error loading data from CartoDB'))

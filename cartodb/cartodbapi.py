@@ -13,6 +13,7 @@ except ImportError:
 class CartoDBApi(QObject):
     fetchContent = pyqtSignal(object)
     progress = pyqtSignal(int, int)
+    error = pyqtSignal(object)
 
     def __init__(self, cartodbUser, apiKey, multiuser=False, hostname='cartodb.com'):
         QObject.__init__(self)
@@ -56,7 +57,7 @@ class CartoDBApi(QObject):
         reply = self.manager.get(request)
         loop = QEventLoop()
         reply.downloadProgress.connect(self.progressCB)
-        reply.error.connect(self.error)
+        reply.error.connect(self._error)
         reply.finished.connect(loop.exit)
         loop.exec_()
 
@@ -82,7 +83,7 @@ class CartoDBApi(QObject):
         reply = self.manager.get(request)
         loop = QEventLoop()
         reply.downloadProgress.connect(self.progressCB)
-        reply.error.connect(self.error)
+        reply.error.connect(self._error)
         reply.finished.connect(loop.exit)
         loop.exec_()
 
@@ -95,7 +96,7 @@ class CartoDBApi(QObject):
         reply = self.manager.get(request)
         loop = QEventLoop()
         reply.downloadProgress.connect(self.progressCB)
-        reply.error.connect(self.error)
+        reply.error.connect(self._error)
         reply.finished.connect(loop.exit)
         loop.exec_()
 
@@ -112,7 +113,7 @@ class CartoDBApi(QObject):
         reply = self.manager.post(request, multipart)
         loop = QEventLoop()
         reply.uploadProgress.connect(self.progressCB)
-        reply.error.connect(self.error)
+        reply.error.connect(self._error)
         reply.finished.connect(loop.exit)
         loop.exec_()
 
@@ -124,7 +125,7 @@ class CartoDBApi(QObject):
         reply = self.manager.get(request)
         loop = QEventLoop()
         reply.downloadProgress.connect(self.progressCB)
-        reply.error.connect(self.error)
+        reply.error.connect(self._error)
         reply.finished.connect(loop.exit)
         loop.exec_()
 
@@ -144,7 +145,7 @@ class CartoDBApi(QObject):
         reply = self.manager.post(request, json.dumps(payload))
         loop = QEventLoop()
         reply.downloadProgress.connect(self.progressCB)
-        reply.error.connect(self.error)
+        reply.error.connect(self._error)
         reply.finished.connect(loop.exit)
         loop.exec_()
 
@@ -156,7 +157,7 @@ class CartoDBApi(QObject):
         reply = self.manager.post(request, json.dumps(layer))
         loop = QEventLoop()
         reply.downloadProgress.connect(self.progressCB)
-        reply.error.connect(self.error)
+        reply.error.connect(self._error)
         reply.finished.connect(loop.exit)
         loop.exec_()
 
@@ -168,7 +169,7 @@ class CartoDBApi(QObject):
         reply = self.manager.put(request, json.dumps(layer))
         loop = QEventLoop()
         reply.downloadProgress.connect(self.progressCB)
-        reply.error.connect(self.error)
+        reply.error.connect(self._error)
         reply.finished.connect(loop.exit)
         loop.exec_()
 
@@ -180,7 +181,7 @@ class CartoDBApi(QObject):
         reply = self.manager.get(request)
         loop = QEventLoop()
         reply.downloadProgress.connect(self.progressCB)
-        reply.error.connect(self.error)
+        reply.error.connect(self._error)
         reply.finished.connect(loop.exit)
         loop.exec_()
 
@@ -199,9 +200,15 @@ class CartoDBApi(QObject):
             response = '{"error": "Confirm user credentials"}'
 
         if self.returnDict:
-            self.fetchContent.emit(json.loads(response))
+            try:
+                self.fetchContent.emit(json.loads(response))
+            except ValueError as e:
+                qDebug('Error loading json. {}'.format(response))
+                response = '{"error": "Error loading JSON data"}'
+                self.fetchContent.emit(json.loads(response))
         else:
             self.fetchContent.emit(response)
 
-    def error(self, error):
+    def _error(self, error):
         qDebug('Error: ' + str(error))
+        self.error.emit(error)
