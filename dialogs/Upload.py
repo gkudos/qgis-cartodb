@@ -127,7 +127,7 @@ class CartoDBPluginUpload(CartoDBPluginUserDialog):
         if tempdir is None:
             tempdir = tempfile.mkdtemp()
 
-        zipPath = os.path.join(tempfile.tempdir, layer.name() + '.zip')
+        zipPath = os.path.join(tempdir, layer.name() + '.zip')
         zipFile = zipfile.ZipFile(zipPath, 'w')
 
         if layer.storageType() == 'ESRI Shapefile':

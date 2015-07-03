@@ -44,7 +44,7 @@ class CartoDBLayer(QgsVectorLayer):
     LAYER_TNAME_PROPERTY = 'tableName'
     LAYER_SQL_PROPERTY = 'cartoSQL'
 
-    def __init__(self, iface, tableName, user, apiKey, owner=None, sql=None, geoJSON=None, filterByExtent=False):
+    def __init__(self, iface, tableName, user, apiKey, owner=None, sql=None, geoJSON=None, filterByExtent=False, spatiaLite=None):
         # SQLite available?
         self.iface = iface
         self.user = user
@@ -69,7 +69,7 @@ class CartoDBLayer(QgsVectorLayer):
         else:
             self.forceReadOnly = True
 
-        self._loadData(sql, geoJSON)
+        self._loadData(sql, geoJSON, spatiaLite)
 
     def initConnections(self):
         QgsMessageLog.logMessage('Init connections for: ' + self.layerName, 'CartoDB Plugin', QgsMessageLog.INFO)
@@ -77,73 +77,80 @@ class CartoDBLayer(QgsVectorLayer):
         self.attributeAdded[int].connect(self._attributeAdded)
         self.beforeCommitChanges.connect(self._beforeCommitChanges)
 
-    def _loadData(self, sql, geoJSON=None):
+    def _loadData(self, sql, geoJSON=None, spatiaLite=None):
         readOnly = True
-        if geoJSON is None:
-            cartoUrl = 'http://{}.cartodb.com/api/v2/sql?format=GeoJSON&q={}&api_key={}'.format(self.user, sql, self._apiKey)
-            response = urlopen(cartoUrl)
-            geoJSON = response.read()
-        else:
-            QgsMessageLog.logMessage('Already GeoJSON', 'CartoDB Plugin', QgsMessageLog.INFO)
-
-        dsGeoJSON = ogr.Open(geoJSON)
-        path = None
-        if dsGeoJSON is not None:
-            jsonLayer = dsGeoJSON.GetLayerByName('OGRGeoJSON')
-
-            if jsonLayer is not None:
-                """ TODO Convert to numbers numeric fields when it's null.
-                layerDefinition = jsonLayer.GetLayerDefn()
-                QgsMessageLog.logMessage("Layer def: " + str(layerDefinition), 'CartoDB Plugin', QgsMessageLog.INFO)
-                for i in range(layerDefinition.GetFieldCount()):
-                    fieldName = layerDefinition.GetFieldDefn(i).GetName()
-                    fieldTypeCode = layerDefinition.GetFieldDefn(i).GetType()
-                    fieldType = layerDefinition.GetFieldDefn(i).GetFieldTypeName(fieldTypeCode)
-                    fieldWidth = layerDefinition.GetFieldDefn(i).GetWidth()
-                    GetPrecision = layerDefinition.GetFieldDefn(i).GetPrecision()
-                    if fieldName == 'number':
-                        layerDefinition.GetFieldDefn(i).SetType(2)
-                        jsonLayer.StartTransaction()
-                        jsonLayer.AlterFieldDefn(i, layerDefinition.GetFieldDefn(i), ogr.ALTER_TYPE_FLAG)
-                        jsonLayer.CommitTransaction()
-
-                    fieldTypeCode = layerDefinition.GetFieldDefn(i).GetType()
-                    fieldType = layerDefinition.GetFieldDefn(i).GetFieldTypeName(fieldTypeCode)
-
-                    QgsMessageLog.logMessage(fieldName + " - " + fieldType + " " + str(fieldWidth) + " " + str(GetPrecision) + " code: " + str(fieldTypeCode), 'CartoDB Plugin', QgsMessageLog.INFO)
-                """
-
-                i = 1
-                tempLayerName = self.layerName
-                while self.datasource.GetLayerByName(str(tempLayerName)) is not None:
-                    tempLayerName = self.layerName + str(i)
-                    i = i + 1
-                self.layerName = tempLayerName
-                newLyr = self.datasource.CopyLayer(jsonLayer, str(self.layerName), options=['FORMAT=SPATIALITE'])
-
-                if newLyr is not None:
-                    QgsMessageLog.logMessage('New Layer created', 'CartoDB Plugin', QgsMessageLog.INFO)
-                    uri = QgsDataSourceURI()
-                    uri.setDatabase(self.databasePath)
-                    uri.setDataSource('', self.layerName, 'geometry')
-                    QgsMessageLog.logMessage('New Connection: ' + uri.uri(), 'CartoDB Plugin', QgsMessageLog.INFO)
-                    path = uri.uri()
-                    self.layerType = 'spatialite'
-                    readOnly = False
-                else:
-                    QgsMessageLog.logMessage('Some error ocurred opening SQLite datasource', 'CartoDB Plugin', QgsMessageLog.WARNING)
-                self.datasource.Destroy()
+        if spatiaLite is None:
+            if geoJSON is None:
+                cartoUrl = 'http://{}.cartodb.com/api/v2/sql?format=GeoJSON&q={}&api_key={}'.format(self.user, sql, self._apiKey)
+                response = urlopen(cartoUrl)
+                geoJSON = response.read()
             else:
-                QgsMessageLog.logMessage('Some error ocurred opening GeoJSON layer', 'CartoDB Plugin', QgsMessageLog.WARNING)
+                QgsMessageLog.logMessage('Already GeoJSON', 'CartoDB Plugin', QgsMessageLog.INFO)
+
+            dsGeoJSON = ogr.Open(geoJSON)
+            path = None
+            if dsGeoJSON is not None:
+                jsonLayer = dsGeoJSON.GetLayerByName('OGRGeoJSON')
+
+                if jsonLayer is not None:
+                    """ TODO Convert to numbers numeric fields when it's null.
+                    layerDefinition = jsonLayer.GetLayerDefn()
+                    QgsMessageLog.logMessage("Layer def: " + str(layerDefinition), 'CartoDB Plugin', QgsMessageLog.INFO)
+                    for i in range(layerDefinition.GetFieldCount()):
+                        fieldName = layerDefinition.GetFieldDefn(i).GetName()
+                        fieldTypeCode = layerDefinition.GetFieldDefn(i).GetType()
+                        fieldType = layerDefinition.GetFieldDefn(i).GetFieldTypeName(fieldTypeCode)
+                        fieldWidth = layerDefinition.GetFieldDefn(i).GetWidth()
+                        GetPrecision = layerDefinition.GetFieldDefn(i).GetPrecision()
+                        if fieldName == 'number':
+                            layerDefinition.GetFieldDefn(i).SetType(2)
+                            jsonLayer.StartTransaction()
+                            jsonLayer.AlterFieldDefn(i, layerDefinition.GetFieldDefn(i), ogr.ALTER_TYPE_FLAG)
+                            jsonLayer.CommitTransaction()
+
+                        fieldTypeCode = layerDefinition.GetFieldDefn(i).GetType()
+                        fieldType = layerDefinition.GetFieldDefn(i).GetFieldTypeName(fieldTypeCode)
+
+                        QgsMessageLog.logMessage(fieldName + " - " + fieldType + " " + str(fieldWidth) + " " + str(GetPrecision) + " code: " + str(fieldTypeCode), 'CartoDB Plugin', QgsMessageLog.INFO)
+                    """
+
+                    i = 1
+                    tempLayerName = self.layerName
+                    while self.datasource.GetLayerByName(str(tempLayerName)) is not None:
+                        tempLayerName = self.layerName + str(i)
+                        i = i + 1
+                    self.layerName = tempLayerName
+                    newLyr = self.datasource.CopyLayer(jsonLayer, str(self.layerName), options=['FORMAT=SPATIALITE'])
+
+                    if newLyr is not None:
+                        QgsMessageLog.logMessage('New Layer created', 'CartoDB Plugin', QgsMessageLog.INFO)
+                        uri = QgsDataSourceURI()
+                        uri.setDatabase(self.databasePath)
+                        uri.setDataSource('', self.layerName, 'geometry')
+                        QgsMessageLog.logMessage('New Connection: ' + uri.uri(), 'CartoDB Plugin', QgsMessageLog.INFO)
+                        path = uri.uri()
+                        self.layerType = 'spatialite'
+                        readOnly = False
+                    else:
+                        QgsMessageLog.logMessage('Some error ocurred opening SQLite datasource', 'CartoDB Plugin', QgsMessageLog.WARNING)
+                    self.datasource.Destroy()
+                else:
+                    QgsMessageLog.logMessage('Some error ocurred opening GeoJSON layer', 'CartoDB Plugin', QgsMessageLog.WARNING)
+            else:
+                QgsMessageLog.logMessage('Some error ocurred opening GeoJSON datasource', 'CartoDB Plugin', QgsMessageLog.WARNING)
         else:
-            QgsMessageLog.logMessage('Some error ocurred opening GeoJSON datasource', 'CartoDB Plugin', QgsMessageLog.WARNING)
+            QgsMessageLog.logMessage('New Layer created', 'CartoDB Plugin', QgsMessageLog.INFO)
+            QgsMessageLog.logMessage('New Connection: ' + spatiaLite, 'CartoDB Plugin', QgsMessageLog.INFO)
+            path = spatiaLite
+            self.layerType = 'ogr'
+            readOnly = False
 
         if self.forceReadOnly:
             readOnly = True
         if readOnly:
             QgsMessageLog.logMessage('CartoDB Layer is readonly mode', 'CartoDB Plugin', QgsMessageLog.WARNING)
 
-        if path is None:
+        if path is None and geoJSON is not None:
             super(QgsVectorLayer, self).__init__(geoJSON, self.layerName, self.layerType)
         else:
             super(QgsVectorLayer, self).__init__(path, self.layerName, self.layerType)
@@ -387,8 +394,8 @@ class CartoDBLayerWorker(QObject):
         # self.loop.exec_()
 
     @pyqtSlot(str)
-    def _loadData(self, geoJSON):
-        layer = CartoDBLayer(self.iface, self.tableName, self.dlg.currentUser, self.dlg.currentApiKey, self.owner, self.sql, geoJSON)
+    def _loadData(self, spatiaLite):
+        layer = CartoDBLayer(self.iface, self.tableName, self.dlg.currentUser, self.dlg.currentApiKey, self.owner, self.sql, spatiaLite=spatiaLite)
         self.finished.emit(layer)
 
     @pyqtSlot()
@@ -403,7 +410,8 @@ class CartoDBLayerWorker(QObject):
 
         cartoDBApi = CartoDBApi(self.dlg.currentUser, self.dlg.currentApiKey)
         cartoDBApi.fetchContent.connect(self._loadData)
-        cartoDBApi.getDataFromTable(sql, False)
+        cartoDBApi.download(sql)
+        # cartoDBApi.getDataFromTable(sql, False)
         # geoJSON = self._loadData()
 
     def workerFinished(self, ret):

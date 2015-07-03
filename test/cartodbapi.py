@@ -40,6 +40,13 @@ class SignalsObject(QObject):
         self.test.logger.debug("*******************************************************************************")
         self.test.assertTrue(True)
 
+    @pyqtSlot(str)
+    def cb_download_file(self, filePath):
+        self.test.logger.debug("*******************************************************************************")
+        self.test.logger.debug("Download user table: " + filePath)
+        self.test.logger.debug("*******************************************************************************")
+        self.test.assertTrue(os.path.isfile(filePath))
+
     @pyqtSlot(dict)
     def cb_show_upload_result(self, data):
         self.test.logger.debug("*******************************************************************************")
@@ -121,6 +128,7 @@ class CartoDBApiTest(UsesQApplication):
         cartodbApi.fetchContent.connect(self.signalsObject.cb_show_user_data)
         cartodbApi.getUserDetails()
 
+    @unittest.skip("testing skipping")
     def test_show_user_tables(self):
         self.logger.debug("\n*******************************************************************************")
         self.logger.debug('\nTest get user tables for: ' + cartodb_user)
@@ -137,6 +145,14 @@ class CartoDBApiTest(UsesQApplication):
         cartodbApi = CartoDBApi(cartodb_user, api_key, is_multiuser)
         cartodbApi.fetchContent.connect(self.signalsObject.cb_show_table_data)
         cartodbApi.getDataFromTable('SELECT * FROM world_borders LIMIT 10')
+
+    def test_download_file(self):
+        self.logger.debug("\n*******************************************************************************")
+        self.logger.debug('\nTest download table data for: world_borders')
+        self.logger.debug("\n*******************************************************************************")
+        cartodbApi = CartoDBApi(cartodb_user, api_key, is_multiuser)
+        cartodbApi.fetchContent.connect(self.signalsObject.cb_download_file)
+        cartodbApi.download('SELECT * FROM world_borders LIMIT 10')
 
     @unittest.skip("testing skipping")
     def test_upload_file(self):
@@ -178,7 +194,6 @@ class CartoDBApiTest(UsesQApplication):
         cartodbApi = CartoDBApi(cartodb_user, api_key, is_multiuser)
         cartodbApi.fetchContent.connect(self.signalsObject.cb_get_layers_map_result)
         cartodbApi.getLayersMap('df48f415-2ed5-4aaa-ac73-ded9d64f5bd3')
-
 
 if __name__ == '__main__':
     # http://cgoldberg.github.io/python-unittest-tutorial/

@@ -1,7 +1,8 @@
-from PyQt4.QtCore import QObject, QUrl, qDebug, QEventLoop, QFile, QFileInfo, pyqtSignal
+from PyQt4.QtCore import QObject, QUrl, qDebug, QEventLoop, QFile, QFileInfo, QIODevice, pyqtSignal
 
 from PyQt4.QtNetwork import QNetworkAccessManager, QNetworkRequest, QNetworkReply, QHttpMultiPart, QHttpPart
 
+import tempfile
 import urllib
 
 try:
@@ -94,6 +95,36 @@ class CartoDBApi(QObject):
         request = self._getRequest(url)
 
         reply = self.manager.get(request)
+        loop = QEventLoop()
+        reply.downloadProgress.connect(self.progressCB)
+        reply.error.connect(self._error)
+        reply.finished.connect(loop.exit)
+        loop.exec_()
+
+    def download(self, sql):
+        apiUrl = 'http://{}.cartodb.com/api/v2/sql?api_key={}&format=spatialite&q={}'.format(self.cartodbUser, self.apiKey, sql)
+        url = QUrl(apiUrl)
+        request = self._getRequest(url)
+
+        def finished(reply):
+            tempdir = tempfile.tempdir
+            if tempdir is None:
+                tempdir = tempfile.mkdtemp()
+
+            tf = tempfile.NamedTemporaryFile(delete=False)
+            sqlite = QFile(tf.name)
+            tf.close()
+            if(sqlite.open(QIODevice.WriteOnly)):
+                sqlite.write(reply.readAll())
+                sqlite.close()
+                self.fetchContent.emit(tf.name)
+            else:
+                self.error.emit('Error saving downloaded file')
+
+        manager = QNetworkAccessManager()
+        manager.finished.connect(finished)
+
+        reply = manager.get(request)
         loop = QEventLoop()
         reply.downloadProgress.connect(self.progressCB)
         reply.error.connect(self._error)
