@@ -26,7 +26,8 @@ email=michaelsalgado@gkudos.com
 changelog=0.1.6
   - Remove scroll in user table list.
   - Ascending order in user table list.
-  - Fix Error connecting multiuser account
+  - Fix Error connecting multiuser account.
+  - Download datasets in spatialite format.
   0.1.5
   - Upload more formats to CartoDB.
   - Create basic visualization (border, fill, labels)

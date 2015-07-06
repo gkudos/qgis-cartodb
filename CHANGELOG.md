@@ -5,6 +5,7 @@
 
 * Remove scroll in user table list.
 * Ascending order in user table list.
+* Download datasets in spatialite format.
 
 #### Fixes
 
