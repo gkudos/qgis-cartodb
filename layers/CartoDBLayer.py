@@ -388,10 +388,10 @@ class CartoDBLayerWorker(QObject):
     def load(self):
         worker = CartoDBPluginWorker(self, 'loadLayer')
         worker.error.connect(self.workerError)
-        # self.loop = QEventLoop()
+        self.loop = QEventLoop()
         worker.finished.connect(self.workerFinished)
         worker.start()
-        # self.loop.exec_()
+        self.loop.exec_()
 
     @pyqtSlot(str)
     def _loadData(self, spatiaLite):
@@ -416,7 +416,7 @@ class CartoDBLayerWorker(QObject):
 
     def workerFinished(self, ret):
         QgsMessageLog.logMessage('Task finished:\n' + str(ret), 'CartoDB Plugin', QgsMessageLog.INFO)
-        # self.loop.exit()
+        self.loop.exit()
 
     def workerError(self, e, exception_string):
         QgsMessageLog.logMessage('Worker thread raised an exception:\n'.format(exception_string), 'CartoDB Plugin', QgsMessageLog.CRITICAL)
