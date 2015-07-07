@@ -44,7 +44,7 @@ class CartoDBLayer(QgsVectorLayer):
     LAYER_TNAME_PROPERTY = 'tableName'
     LAYER_SQL_PROPERTY = 'cartoSQL'
 
-    def __init__(self, iface, tableName, user, apiKey, owner=None, sql=None, geoJSON=None, filterByExtent=False, spatiaLite=None):
+    def __init__(self, iface, tableName, user, apiKey, owner=None, sql=None, geoJSON=None, filterByExtent=False, spatiaLite=None, readonly=False):
         # SQLite available?
         self.iface = iface
         self.user = user
@@ -56,10 +56,9 @@ class CartoDBLayer(QgsVectorLayer):
         self.databasePath = QgisCartoDB.CartoDBPlugin.PLUGIN_DIR + '/db/database.sqlite'
         self.datasource = sqLiteDrv.Open(self.databasePath, True)
         self.layerName = tableName
-
         self.cartoTable = tableName
 
-        self.forceReadOnly = False
+        self.forceReadOnly = False or readonly
 
         if sql is None:
             sql = 'SELECT * FROM ' + ((owner + '.') if owner is not None else '') + self.cartoTable
@@ -78,7 +77,7 @@ class CartoDBLayer(QgsVectorLayer):
         self.beforeCommitChanges.connect(self._beforeCommitChanges)
 
     def _loadData(self, sql, geoJSON=None, spatiaLite=None):
-        readOnly = True
+        readonly = True
         if spatiaLite is None:
             if geoJSON is None:
                 cartoUrl = 'http://{}.cartodb.com/api/v2/sql?format=GeoJSON&q={}&api_key={}'.format(self.user, sql, self._apiKey)
@@ -130,7 +129,7 @@ class CartoDBLayer(QgsVectorLayer):
                         QgsMessageLog.logMessage('New Connection: ' + uri.uri(), 'CartoDB Plugin', QgsMessageLog.INFO)
                         path = uri.uri()
                         self.layerType = 'spatialite'
-                        readOnly = False
+                        readonly = False
                     else:
                         QgsMessageLog.logMessage('Some error ocurred opening SQLite datasource', 'CartoDB Plugin', QgsMessageLog.WARNING)
                     self.datasource.Destroy()
@@ -143,28 +142,30 @@ class CartoDBLayer(QgsVectorLayer):
             QgsMessageLog.logMessage('New Connection: ' + spatiaLite, 'CartoDB Plugin', QgsMessageLog.INFO)
             path = spatiaLite
             self.layerType = 'ogr'
-            readOnly = False
+            readonly = False
 
         if self.forceReadOnly:
-            readOnly = True
-        if readOnly:
+            readonly = True
+        if readonly:
             QgsMessageLog.logMessage('CartoDB Layer is readonly mode', 'CartoDB Plugin', QgsMessageLog.WARNING)
 
         if path is None and geoJSON is not None:
             super(QgsVectorLayer, self).__init__(geoJSON, self.layerName, self.layerType)
         else:
             super(QgsVectorLayer, self).__init__(path, self.layerName, self.layerType)
-        self.readOnly = readOnly
+        self.readonly = readonly
         self._deletedFeatures = []
 
-        if not self.readOnly:
+        if not self.readonly:
             self.initConnections()
             self._uneditableFields()
+
+        self.setReadOnly(self.readonly)
 
         self.setCustomProperty(CartoDBLayer.LAYER_CNAME_PROPERTY, self.user)
         self.setCustomProperty(CartoDBLayer.LAYER_TNAME_PROPERTY, self.cartoTable)
 
-        if self.forceReadOnly:
+        if self.forceReadOnly and sql is not None:
             self.setCustomProperty(CartoDBLayer.LAYER_SQL_PROPERTY, sql)
 
     def _uneditableFields(self):
@@ -376,11 +377,12 @@ class CartoDBLayerWorker(QObject):
     finished = pyqtSignal(CartoDBLayer)
     error = pyqtSignal(Exception, basestring)
 
-    def __init__(self, iface, tableName, owner=None, dlg=None, sql=None, filterByExtent=False):
+    def __init__(self, iface, tableName, owner=None, dlg=None, sql=None, filterByExtent=False, readonly=False):
         QObject.__init__(self)
         self.iface = iface
         self.owner = owner
         self.tableName = tableName
+        self.readonly = readonly
         self.dlg = dlg
         self.sql = sql
         self.filterByExtent = filterByExtent
@@ -395,13 +397,14 @@ class CartoDBLayerWorker(QObject):
 
     @pyqtSlot(str)
     def _loadData(self, spatiaLite):
-        layer = CartoDBLayer(self.iface, self.tableName, self.dlg.currentUser, self.dlg.currentApiKey, self.owner, self.sql, spatiaLite=spatiaLite)
+        layer = CartoDBLayer(self.iface, self.tableName, self.dlg.currentUser, self.dlg.currentApiKey,
+                             self.owner, self.sql, spatiaLite=spatiaLite, readonly=self.readonly)
         self.finished.emit(layer)
 
     @pyqtSlot()
     def loadLayer(self):
         if self.sql is None:
-            sql = 'SELECT * FROM ' + ((self.owner + '.') if self.owner is not None else '') + self.tableName
+            sql = 'SELECT * FROM ' + ((self.owner + '.') if self.owner != self.dlg.currentUser else '') + self.tableName
             if self.filterByExtent:
                 extent = self.iface.mapCanvas().extent()
                 sql = sql + " WHERE ST_Intersects(ST_GeometryFromText('{}', 4326), the_geom)".format(extent.asWktPolygon())

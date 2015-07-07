@@ -1,3 +1,12 @@
+<a name="0.1.7"></a>
+### 0.1.7 (2015-07-10)
+
+#### Fixes
+
+* Fix #19 Do not allow to edit read-only layers
+* Show owner in shared layers, issue #18
+
+
 <a name="0.1.6"></a>
 ### 0.1.6 (2015-06-20)
 
@@ -21,7 +30,6 @@
   * Borders
   * Fill
   * Label
-
 
 <a name="0.1.4"></a>
 ### 0.1.4 (2015-06-05)

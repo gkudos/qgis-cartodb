@@ -97,20 +97,23 @@ class CartoDBPluginDialog(QDialog):
             item = QListWidgetItem(self.ui.tablesList)
 
             owner = None
-            if visualization['permission']['owner']['username'] != self.currentUser:
-                owner = visualization['permission']['owner']['username']
+            owner = visualization['permission']['owner']['username']
 
-            widget = CartoDBDatasetsListItem(visualization['name'], owner, visualization['table']['size'], visualization['table']['row_count'])
+            widget = CartoDBDatasetsListItem(
+                visualization['name'], owner, visualization['table']['size'], visualization['table']['row_count'],
+                shared=(owner != self.currentUser))
             # item.setText(visualization['name'])
             readonly = False
             # qDebug('Vis:' + json.dumps(visualization, sort_keys=True, indent=2, separators=(',', ': ')))
-            if visualization['permission'] is not None and visualization['permission']['owner']['username'] != self.currentUser and \
+            if visualization['permission'] is not None and owner != self.currentUser and \
                visualization['permission']['acl'] is not None:
                 for acl in visualization['permission']['acl']:
                     if acl['type'] == 'user' and 'username' in acl['entity'] and acl['entity']['username'] == self.currentUser and \
                        acl['access'] == 'r':
                         readonly = True
                         break
+
+            widget.readonly = readonly
             if readonly:
                 widget.setTextColor('#999999')
 

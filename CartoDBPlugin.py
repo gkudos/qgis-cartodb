@@ -181,7 +181,8 @@ class CartoDBPlugin(QObject):
                 self.iface.mainWindow().statusBar().showMessage(self.tr('Processed {} %').format(0))
                 for i, table in enumerate(selectedItems):
                     widget = dlg.getItemWidget(table)
-                    worker = CartoDBLayerWorker(self.iface, widget.tableName, widget.tableOwner, dlg, filterByExtent=dlg.filterByExtent())
+                    worker = CartoDBLayerWorker(self.iface, widget.tableName, widget.tableOwner, dlg,
+                                                filterByExtent=dlg.filterByExtent(), readonly=widget.readonly)
                     worker.finished.connect(self.addLayer)
                     self.worker = worker
                     worker.load()
@@ -194,7 +195,7 @@ class CartoDBPlugin(QObject):
 
         self.countLoadedLayers = self.countLoadedLayers + 1
 
-        if layer.readOnly:
+        if layer.readonly:
             self.iface.messageBar().pushMessage(self.tr('Warning'),
                                                 self.tr('Layer {}  is loaded in readonly mode').format(layer.layerName),
                                                 level=self.iface.messageBar().WARNING, duration=5)

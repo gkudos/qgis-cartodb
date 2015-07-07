@@ -26,19 +26,26 @@ from QgisCartoDB.ui.ListItem import Ui_ListItem
 
 
 class CartoDBDatasetsListItem(QWidget):
-    def __init__(self, tableName=None, tableOwner=None, size=None, rows=None):
+    def __init__(self, tableName=None, tableOwner=None, size=None, rows=None, shared=False):
         QWidget.__init__(self)
         self.ui = Ui_ListItem()
         self.ui.setupUi(self)
-        self.setTableName(tableName)
+
+        self.shared = shared
+        self.readonly = False
         self.tableOwner = tableOwner
+
+        self.setTableName(tableName)
         self.setSize(size)
         self.setRows(rows)
 
     def setTableName(self, tableName):
         self.tableName = tableName
+        text = tableName
         if tableName is not None:
-            self.ui.tableNameTX.setText(tableName)
+            if self.shared:
+                text = text + ' ({})'.format(self.tableOwner)
+            self.ui.tableNameTX.setText(text)
 
     def setSize(self, size):
         self.size = size
