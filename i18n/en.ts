@@ -17,8 +17,8 @@
             <translation>Upload layers to CartoDB</translation>
         </message>
         <message>
-            <source>Create visualization</source>
-            <translation>Create visualization</translation>
+            <source>Create New Map</source>
+            <translation>Create New Map</translation>
         </message>
         <message>
             <source>CartoDB Layers</source>

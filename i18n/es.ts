@@ -17,8 +17,8 @@
             <translation>Subir capas a CartoDB</translation>
         </message>
         <message>
-            <source>Create visualization</source>
-            <translation>Crear visualización</translation>
+            <source>Create New Map</source>
+            <translation>Crear Nuevo Mapa</translation>
         </message>
         <message>
             <source>CartoDB Layers</source>

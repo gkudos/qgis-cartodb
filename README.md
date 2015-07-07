@@ -17,7 +17,7 @@ CartoDB Plugin for QGis.  It allows to view,  create, edit or delete data from  
 
 ## Supported Versions
 
-Minimum QGIS version:  2.3
+Minimum QGIS version:  2.4
 
 ## Install
 
@@ -34,7 +34,7 @@ Minimum QGIS version:  2.3
 * Rename folder to QgisCartoDB
 * Copy the plugin folder to $HOME/.qgis2/python/plugins/
 
-#### Cloning repo
+#### Cloning repo (for Linux/Mac users)
 
 * Open a terminal.
 * Execute:
@@ -50,11 +50,11 @@ Minimum QGIS version:  2.3
 
 ## Quick Use
 
-After enabled plugin, click on the icon: ![Icon](images/add.png?raw=true "Icon") or on the web menu item "CartoDB Plugin" => "Add CartoDB Layer"
+After enabled plugin, click on CartoDB username: ![Connections](images/open_connections.png?raw=true "Connections")
 
 This open dialog:
 
-![Dialog 1](images/dialog1.png?raw=true "Add CartoDB Layer 1")
+![Dialog 1](images/dialog1.png?raw=true "Connection Manager")
 
 #### Creating new connection
 
@@ -68,9 +68,12 @@ Add your CartoDB account. Your api key is in:
 
 Click on "Save" button.
 
-#### Adding CartoDB layer
 
-Select connection and click on "Connect" button.
+#### Adding layers
+
+Click on the icon: ![Icon](images/icons/add.png?raw=true "Icon") or on the web menu item "CartoDB Plugin" => "Add CartoDB Layer"
+
+This open dialog:
 
 ![Dialog 3](images/dialog3.png?raw=true "Adding layer")
 
@@ -103,7 +106,6 @@ python setup.py test
 
 ## Limitations
 
-* Create new tables.
 * Add new attributes.
 * Get visualizations or CartoCSS styles.
 
