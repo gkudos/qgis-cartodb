@@ -5,6 +5,7 @@
 
 * Fix #19 Do not allow to edit read-only layers
 * Show owner in shared layers, issue #18
+* Fix #26 Encoding error creating map
 
 
 <a name="0.1.6"></a>
