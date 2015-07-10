@@ -158,7 +158,6 @@ class CartoDBPluginCreateViz(CartoDBPluginUserDialog):
         url = '{}/viz/{}/public_map'.format(self.currentUserData['base_url'], self.currentViz['id'])
 
         def openVis():
-            qDebug('URL Viz: ' + url)
             webbrowser.open(url)
 
         def copyURL():
@@ -210,12 +209,15 @@ class CartoDBPluginCreateViz(CartoDBPluginUserDialog):
                 # qDebug("%s: %s type: %s" % (str(cat.value()), cat.label(), str(cat.value())))
                 if cat.value() is not None and cat.value() != '' and not isinstance(cat.value(), QPyNullVariant):
                     if isinstance(cat.value(), (int, float, long)) or (isinstance(cat.value(), str) and cat.value().isdecimal()):
-                        value = cat.value()
+                        value = unicode(cat.value())
                     else:
-                        value = '"' + str(cat.value()) + '"'
+                        value = unicode('"' + cat.value() + '"')
 
+                    value = str(value.encode('utf8', 'ignore'))
+                    # qDebug('Value {}'.format(value))
+                    styleName = '#{}[{}={}]'.format(layer.tableName(), renderer.classAttribute(), value).decode('utf8')
                     cartoCSS = cartoCSS + \
-                        self.simplePolygon(layer, symbol, '#' + layer.tableName() + '[' + renderer.classAttribute() + '=' + str(value) + ']')
+                        self.simplePolygon(layer, symbol, styleName)
                 else:
                     cartoCSS = self.simplePolygon(layer, symbol, '#' + layer.tableName()) + cartoCSS
         # CSS for graduated symbols
@@ -227,11 +229,13 @@ class CartoDBPluginCreateViz(CartoDBPluginUserDialog):
             ranges = sorted(renderer.ranges(), key=upperValue, reverse=True)
             for ran in ranges:
                 symbol = ran.symbol()
+                '''
                 qDebug("%f - %f: %s" % (
                     ran.lowerValue(),
                     ran.upperValue(),
                     ran.label()
                 ))
+                '''
                 cartoCSS = cartoCSS + \
                     self.simplePolygon(layer, symbol, '#' + layer.tableName() + '[' + renderer.classAttribute() + '<=' + str(ran.upperValue()) + ']')
 
@@ -277,7 +281,10 @@ class CartoDBPluginCreateViz(CartoDBPluginUserDialog):
                 filein = open(QgisCartoDB.CartoDBPlugin.PLUGIN_DIR + '/templates/simplepolygon.less')
 
             cartoCSS = Template(filein.read())
-            cartoCSS = cartoCSS.substitute(d)
+            cartoCSS = cartoCSS.substitute(d,
+                                input_encoding='utf-8',
+                                output_encoding='utf-8',
+                                encoding_errors='replace')
         return cartoCSS
 
     def validateButtons(self):
