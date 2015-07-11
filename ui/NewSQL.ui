@@ -35,50 +35,34 @@
         </widget>
        </item>
        <item>
-        <widget class="QComboBox" name="connectionList"/>
-       </item>
-       <item>
-        <layout class="QHBoxLayout" name="horizontalLayout" stretch="0,0,0,0,0">
+        <layout class="QHBoxLayout" name="horizontalLayout" stretch="0,0">
          <item>
-          <widget class="QPushButton" name="loadTableBT">
+          <widget class="QLabel" name="avatarLB">
            <property name="text">
-            <string>Load Tables</string>
+            <string>Avatar</string>
            </property>
           </widget>
          </item>
          <item>
-          <spacer name="horizontalSpacer">
-           <property name="orientation">
-            <enum>Qt::Horizontal</enum>
-           </property>
-           <property name="sizeHint" stdset="0">
-            <size>
-             <width>40</width>
-             <height>20</height>
-            </size>
-           </property>
-          </spacer>
-         </item>
-         <item>
-          <widget class="QPushButton" name="newConnectionBT">
-           <property name="text">
-            <string>New</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QPushButton" name="editConnectionBT">
-           <property name="text">
-            <string>Edit</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QPushButton" name="deleteConnectionBT">
-           <property name="text">
-            <string>Delete</string>
-           </property>
-          </widget>
+          <layout class="QVBoxLayout" name="verticalLayout_2">
+           <item>
+            <widget class="QLabel" name="nameLB">
+             <property name="text">
+              <string>Name</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QProgressBar" name="remainingBar">
+             <property name="value">
+              <number>0</number>
+             </property>
+             <property name="orientation">
+              <enum>Qt::Horizontal</enum>
+             </property>
+            </widget>
+           </item>
+          </layout>
          </item>
         </layout>
        </item>

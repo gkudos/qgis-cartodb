@@ -54,6 +54,7 @@ class CartoDBConnectionsManager(QDialog):
         self.currentUser = self.ui.connectionList.currentText()
         self.currentApiKey = self.settings.value('/CartoDBPlugin/%s/api' % self.currentUser)
         self.currentMultiuser = self.settings.value('/CartoDBPlugin/%s/multiuser' % self.currentUser, False)
+        self.settings.setValue('/CartoDBPlugin/selected', self.currentUser)
         QDialog.accept(self)
 
     def setConnectionsFound(self, found):

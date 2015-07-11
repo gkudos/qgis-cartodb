@@ -1,3 +1,10 @@
+<a name="0.1.8"></a>
+### 0.1.8 (2015-07-11)
+
+#### Enhancements
+
+* Remove connection controls in SQL Editor
+
 <a name="0.1.7"></a>
 ### 0.1.7 (2015-07-10)
 

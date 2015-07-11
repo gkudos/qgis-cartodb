@@ -19,7 +19,7 @@ email                : michaelsalgado@gkudos.com, info@gkudos.com
  ***************************************************************************/
 """
 
-from PyQt4.QtCore import QSettings
+from PyQt4.QtCore import pyqtSlot, qDebug
 from PyQt4.QtGui import QApplication, QDialog, QSizePolicy, QColor, QTreeWidgetItem, QIcon, QMessageBox
 from PyQt4.Qsci import QsciScintilla, QsciScintillaBase, QsciLexerSQL, QsciAPIs
 
@@ -27,9 +27,9 @@ from qgis.core import QgsMessageLog
 from qgis.gui import QgsMessageBar
 
 from QgisCartoDB.cartodb import CartoDBAPIKey, CartoDBException
+from QgisCartoDB.dialogs.UserData import CartoDBUserDataDialog
 from QgisCartoDB.ui.NewSQL import Ui_NewSQL
-from QgisCartoDB.dialogs.ConnectionsManager import CartoDBConnectionsManager
-from QgisCartoDB.dialogs.NewConnection import CartoDBNewConnectionDialog
+from QgisCartoDB.utils import CartoDBPluginWorker
 
 from urllib import urlopen
 
@@ -37,27 +37,24 @@ import json
 import QgisCartoDB.resources
 
 
-class CartoDBNewSQLDialog(CartoDBConnectionsManager):
-    def __init__(self):
-        CartoDBConnectionsManager.__init__(self)
-        self.settings = QSettings()
+class CartoDBNewSQLDialog(CartoDBUserDataDialog):
+    def __init__(self, toolbar, parent=None):
+        CartoDBUserDataDialog.__init__(self, toolbar, parent)
+
         self.ui = Ui_NewSQL()
         self.ui.setupUi(self)
         self._initEditor()
-        self.populateConnectionList()
 
         self.ui.bar = QgsMessageBar()
         self.ui.bar.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         self.ui.verticalLayout.insertWidget(0, self.ui.bar)
 
-        self.ui.newConnectionBT.clicked.connect(self.openNewConnectionDialog)
-        self.ui.editConnectionBT.clicked.connect(self.editConnectionDialog)
-        self.ui.deleteConnectionBT.clicked.connect(self.deleteConnectionDialog)
-        self.ui.loadTableBT.clicked.connect(self.findTables)
         self.ui.testBT.clicked.connect(self.testQuery)
 
         self.ui.cancelBT.clicked.connect(self.reject)
         self.ui.addLayerBT.clicked.connect(self.accept)
+
+        self.initUserConnection()
 
     def _initEditor(self):
         self.ui.sqlEditor = QsciScintilla(self)
@@ -109,12 +106,8 @@ class CartoDBNewSQLDialog(CartoDBConnectionsManager):
     def getTablesListSelectedItems(self):
         return []   # self.ui.tablesTree.selectedItems()
 
+    @pyqtSlot()
     def findTables(self):
-        # Get tables from CartoDB.
-        self.currentUser = self.ui.connectionList.currentText()
-        self.currentApiKey = self.settings.value('/CartoDBPlugin/%s/api' % self.currentUser)
-        self.currentMultiuser = self.settings.value('/CartoDBPlugin/%s/multiuser' % self.currentUser, False)
-
         self.ui.testBT.setEnabled(True)
 
         cl = CartoDBAPIKey(self.currentApiKey, self.currentUser)
@@ -174,7 +167,6 @@ class CartoDBNewSQLDialog(CartoDBConnectionsManager):
                 elif table['column_type'] == 'timestamp with time zone':
                     tableItem.setIcon(0, QIcon(":/plugins/qgis-cartodb/images/icons/calendar.png"))
             self.setTablesListItems(tables)
-            self.settings.setValue('/CartoDBPlugin/selected', self.currentUser)
         except CartoDBException as e:
             QgsMessageLog.logMessage('Some error ocurred getting tables: ' + str(e.args), 'CartoDB Plugin', QgsMessageLog.CRITICAL)
             QMessageBox.information(self, QApplication.translate('CartoDBPlugin', 'Error'), QApplication.translate('CartoDBPlugin', 'Error getting tables'), QMessageBox.Ok)
@@ -207,13 +199,12 @@ class CartoDBNewSQLDialog(CartoDBConnectionsManager):
                 self.ui.bar.pushMessage("Error", error, level=QgsMessageBar.CRITICAL, duration=5)
             self.setValidQuery(False)
 
-    def setConnectionsFound(self, found):
-        self.ui.loadTableBT.setEnabled(found)
-        self.ui.deleteConnectionBT.setEnabled(found)
-        self.ui.editConnectionBT.setEnabled(found)
-
     def setValidQuery(self, valid=False):
         self.ui.addLayerBT.setEnabled(valid)
 
     def getQuery(self):
         return self.ui.sqlEditor.text()
+
+    def showEvent(self, event):
+        worker = CartoDBPluginWorker(self, 'findTables')
+        worker.start()

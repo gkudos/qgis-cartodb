@@ -213,7 +213,7 @@ class CartoDBPlugin(QObject):
 
     def addSQL(self):
         # Create and show the dialog
-        dlg = CartoDBNewSQLDialog()
+        dlg = CartoDBNewSQLDialog(self.toolbar)
         dlg.show()
 
         result = dlg.exec_()
