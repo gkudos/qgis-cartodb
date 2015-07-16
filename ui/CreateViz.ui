@@ -164,6 +164,13 @@
    <item>
     <layout class="QHBoxLayout" name="buttonsLayout">
      <item>
+      <widget class="QPushButton" name="cartoCssBT">
+       <property name="text">
+        <string>CartoCSS</string>
+       </property>
+      </widget>
+     </item>
+     <item>
       <widget class="QPushButton" name="sqlBT">
        <property name="text">
         <string>SQL</string>

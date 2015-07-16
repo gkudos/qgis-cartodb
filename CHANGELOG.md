@@ -4,6 +4,9 @@
 #### Enhancements
 
 * Remove connection controls in SQL Editor
+* Add composite mode in create maps.
+* Add dash style to lines in create maps.
+* Add join style to lines in create maps.
 
 <a name="0.1.7"></a>
 ### 0.1.7 (2015-07-10)

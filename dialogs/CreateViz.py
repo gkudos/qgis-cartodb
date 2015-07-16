@@ -20,7 +20,7 @@ email                : michaelsalgado@gkudos.com, info@gkudos.com
 """
 from PyQt4.QtCore import Qt, QFile, QFileInfo, pyqtSlot, qDebug, QPyNullVariant
 from PyQt4.QtGui import QApplication, QAbstractItemView, QDialog, QListWidgetItem, QLabel, QPixmap, QPushButton, QSizePolicy
-from PyQt4.QtGui import QClipboard
+from PyQt4.QtGui import QClipboard, QPainter
 
 from qgis.core import QGis, QgsMapLayerRegistry, QgsMapLayer, QgsPalLayerSettings
 from qgis.gui import QgsMessageBar
@@ -75,6 +75,11 @@ class CartoDBPluginCreateViz(CartoDBPluginUserDialog):
         self.ui.mapList.itemSelectionChanged.connect(self.validateButtons)
         self.ui.cancelBT.clicked.connect(self.reject)
         self.ui.saveBT.clicked.connect(self.createViz)
+        self.ui.cartoCssBT.clicked.connect(self.createCartoCss)
+
+        # TODO Implement functionality
+        self.ui.sqlBT.hide()
+        self.ui.cartoCssBT.hide()
 
         layers = QgsMapLayerRegistry.instance().mapLayers()
 
@@ -108,6 +113,15 @@ class CartoDBPluginCreateViz(CartoDBPluginUserDialog):
 
         return size
 
+    def createCartoCss(self):
+        item = self.ui.availableList.currentItem()
+
+        if item is not None:
+            widget = self.ui.availableList.itemWidget(item)
+            layer = widget.layer
+            cartoCSS = self.convert2CartoCSS(layer)
+            qDebug('CartoCSS: {}'.format(cartoCSS))
+
     def createViz(self):
         self.ui.bar.clearWidgets()
         self.ui.bar.pushMessage("Info", QApplication.translate('CartoDBPlugin', 'Creating Map'), level=QgsMessageBar.INFO)
@@ -131,7 +145,7 @@ class CartoDBPluginCreateViz(CartoDBPluginUserDialog):
         item = self.ui.mapList.item(0)
         widget = self.ui.mapList.itemWidget(item)
         layer = widget.layer
-        cartoCSS = self.convert2cartoCSS(layer)
+        cartoCSS = self.convert2CartoCSS(layer)
         cartoDBApi = CartoDBApi(self.currentUser, self.currentApiKey, self.currentMultiuser)
         layer1 = data['layers'][1]
         layer1['options']['tile_style'] = cartoCSS
@@ -144,7 +158,7 @@ class CartoDBPluginCreateViz(CartoDBPluginUserDialog):
             widget = self.ui.mapList.itemWidget(item)
             layer = widget.layer
             qDebug('Agregando: {} en pos: {}'.format(layer.tableName(), i))
-            cartoCSS = self.convert2cartoCSS(layer)
+            cartoCSS = self.convert2CartoCSS(layer)
             # cartoDBApi.fetchContent.connect(self.cbCreateViz)
             newLayer = copy.deepcopy(layer1)
             newLayer["options"]["table_name"] = layer.tableName()
@@ -177,7 +191,7 @@ class CartoDBPluginCreateViz(CartoDBPluginUserDialog):
         widget.layout().addWidget(button)
         self.ui.bar.pushWidget(widget, QgsMessageBar.INFO)
 
-    def convert2cartoCSS(self, layer):
+    def convert2CartoCSS(self, layer):
         renderer = layer.rendererV2()
         cartoCSS = ''
         labelCSS = ''
@@ -200,7 +214,7 @@ class CartoDBPluginCreateViz(CartoDBPluginUserDialog):
         # CSS for single symbols
         if renderer.type() == 'singleSymbol':
             symbol = renderer.symbol()
-            cartoCSS = self.simplePolygon(layer, symbol, '#' + layer.tableName())
+            cartoCSS = self.symbol2CartoCSS(layer, symbol, '#' + layer.tableName())
         # CSS for categorized symbols
         elif renderer.type() == 'categorizedSymbol':
             # qDebug('Categorized: ' + renderer.classAttribute())
@@ -217,9 +231,9 @@ class CartoDBPluginCreateViz(CartoDBPluginUserDialog):
                     # qDebug('Value {}'.format(value))
                     styleName = '#{}[{}={}]'.format(layer.tableName(), renderer.classAttribute(), value).decode('utf8')
                     cartoCSS = cartoCSS + \
-                        self.simplePolygon(layer, symbol, styleName)
+                        self.symbol2CartoCSS(layer, symbol, styleName)
                 else:
-                    cartoCSS = self.simplePolygon(layer, symbol, '#' + layer.tableName()) + cartoCSS
+                    cartoCSS = self.symbol2CartoCSS(layer, symbol, '#' + layer.tableName()) + cartoCSS
         # CSS for graduated symbols
         elif renderer.type() == 'graduatedSymbol':
             # qDebug('Graduated')
@@ -237,56 +251,129 @@ class CartoDBPluginCreateViz(CartoDBPluginUserDialog):
                 ))
                 '''
                 cartoCSS = cartoCSS + \
-                    self.simplePolygon(layer, symbol, '#' + layer.tableName() + '[' + renderer.classAttribute() + '<=' + str(ran.upperValue()) + ']')
+                    self.symbol2CartoCSS(layer, symbol, '#' + layer.tableName() + '[' + renderer.classAttribute() + '<=' + str(ran.upperValue()) + ']')
 
         # qDebug('CartoCSS: ' + cartoCSS)
         return '/** Styles designed from QGISCartoDB Plugin */\n\n' + cartoCSS + '\n' + labelCSS
 
-    def simplePolygon(self, layer, symbol, styleName):
+    def symbol2CartoCSS(self, layer, symbol, styleName):
         cartoCSS = ''
         layerOpacity = str(float((100.0 - layer.layerTransparency())/100.0))
 
+
+        blendMode = layer.featureBlendMode()
+        compositionMode = 'src-over'
+        if blendMode == QPainter.CompositionMode_Lighten:
+            compositionMode = 'lighten'
+        elif blendMode == QPainter.CompositionMode_Screen:
+            compositionMode = 'screen'
+        elif blendMode ==  QPainter.CompositionMode_ColorDodge:
+            compositionMode = 'color-dodge'
+        elif blendMode == QPainter.CompositionMode_Plus:
+            compositionMode = 'plus'
+        elif blendMode == QPainter.CompositionMode_Darken:
+            compositionMode = 'darken'
+        elif blendMode == QPainter.CompositionMode_Multiply:
+            compositionMode = 'multiply'
+        elif blendMode == QPainter.CompositionMode_ColorBurn:
+            compositionMode = 'color-burn'
+        elif blendMode == QPainter.CompositionMode_Overlay:
+            compositionMode = 'overlay'
+        elif blendMode == QPainter.CompositionMode_SoftLight:
+            compositionMode = 'soft-light'
+        elif blendMode == QPainter.CompositionMode_HardLight:
+            compositionMode = 'hard-light'
+        elif blendMode == QPainter.CompositionMode_Difference:
+            compositionMode = 'difference'
+        elif blendMode == QPainter.CompositionMode_Exclusion:
+            compositionMode = 'exclusion'
+
         if symbol.symbolLayerCount() > 0:
-            lyr = symbol.symbolLayer(0)
+            lyr = None
+            for i in range(0, symbol.symbolLayerCount()):
+                lyr = symbol.symbolLayer(i)
+                if lyr.layerType().startswith('Simple'):
+                    break
 
-            # qDebug("Symbol Type: %s" % (lyr.layerType()))
-            filein = None
-            if layer.geometryType() == QGis.Point:
-                d = {
-                    'layername': styleName,
-                    'fillColor': lyr.fillColor().name(),
-                    # 96 ppi = 3.7795275552 mm
-                    'width': round(3.7795275552 * lyr.size(), 0),
-                    'opacity': layerOpacity,
-                    'borderColor': lyr.outlineColor().name(),
-                    'borderWidth': round(3.7795275552 * lyr.outlineWidth(), 0)
-                }
-                filein = open(QgisCartoDB.CartoDBPlugin.PLUGIN_DIR + '/templates/simplepoint.less')
-            elif layer.geometryType() == QGis.Line:
-                d = {
-                    'layername': styleName,
-                    'lineColor': lyr.color().name(),
-                    'lineWidth': round(3.7795275552 * lyr.width(), 0),
-                    'opacity': layerOpacity
-                }
-                filein = open(QgisCartoDB.CartoDBPlugin.PLUGIN_DIR + '/templates/simpleline.less')
-            elif layer.geometryType() == QGis.Polygon:
-                d = {
-                    'layername': styleName,
-                    'fillColor': lyr.fillColor().name(),
-                    'opacity': layerOpacity,
-                    'borderColor': lyr.outlineColor().name(),
-                    'borderWidth': round(3.7795275552 * lyr.borderWidth(), 0)
-                }
-                filein = open(QgisCartoDB.CartoDBPlugin.PLUGIN_DIR + '/templates/simplepolygon.less')
+            # qDebug("Symbol Type: {}".format(lyr.layerType()))
+            # qDebug("Symbol Properties: {}".format(lyr.properties()))
 
-            cartoCSS = Template(filein.read())
-            cartoCSS = cartoCSS.substitute(d,
-                                input_encoding='utf-8',
-                                output_encoding='utf-8',
-                                encoding_errors='replace')
+            if lyr is not None and lyr.layerType().startswith('Simple'):
+                filein = None
+                if layer.geometryType() == QGis.Point:
+                    d = {
+                        'layername': styleName,
+                        'fillColor': lyr.fillColor().name(),
+                        # 96 ppi = 3.7795275552 mm
+                        'width': round(3.7795275552 * lyr.size(), 0),
+                        'opacity': layerOpacity,
+                        'borderColor': lyr.outlineColor().name(),
+                        'borderWidth': round(3.7795275552 * lyr.outlineWidth(), 0),
+                        'markerCompOp': compositionMode
+                    }
+                    filein = open(QgisCartoDB.CartoDBPlugin.PLUGIN_DIR + '/templates/simplepoint.less')
+                elif layer.geometryType() == QGis.Line:
+                    lineWidth = round(3.7795275552 * lyr.width(), 0)
+                    if lyr.penStyle() == Qt.NoPen:
+                        lineWidth = 0
+
+                    d = {
+                        'layername': styleName,
+                        'lineColor': lyr.color().name(),
+                        'lineWidth': lineWidth,
+                        'opacity': layerOpacity,
+                        'lineCompOp': compositionMode,
+                        'lineJoin': self._getLineJoin(lyr),
+                        'lineDasharray': self._getLineDasharray(lyr.penStyle(), lineWidth)
+                    }
+                    filein = open(QgisCartoDB.CartoDBPlugin.PLUGIN_DIR + '/templates/simpleline.less')
+                elif layer.geometryType() == QGis.Polygon:
+                    borderWidth = round(3.7795275552 * lyr.borderWidth(), 0)
+                    if lyr.borderStyle() == Qt.NoPen:
+                        borderWidth = 0
+
+                    d = {
+                        'layername': styleName,
+                        'fillColor': lyr.fillColor().name(),
+                        'opacity': layerOpacity,
+                        'borderColor': lyr.outlineColor().name(),
+                        'borderWidth': borderWidth,
+                        'polygonCompOp': compositionMode,
+                        'lineJoin': self._getLineJoin(lyr),
+                        'lineDasharray': self._getLineDasharray(lyr.borderStyle(), borderWidth)
+                    }
+                    filein = open(QgisCartoDB.CartoDBPlugin.PLUGIN_DIR + '/templates/simplepolygon.less')
+
+                cartoCSS = Template(filein.read())
+                cartoCSS = cartoCSS.substitute(d,
+                                    input_encoding='utf-8',
+                                    output_encoding='utf-8',
+                                    encoding_errors='replace')
+            else:
+                # TODO Manage symbols not supported.
+                qDebug('Symbol type: {} not supported'.format())
         return cartoCSS
 
     def validateButtons(self):
         enabled = self.ui.mapNameTX.text() != '' and self.ui.mapList.count() > 0
         self.ui.saveBT.setEnabled(enabled)
+
+    def _getLineJoin(self, lyr):
+        joinStyle = 'miter'
+        if lyr.penJoinStyle() == Qt.BevelJoin:
+            joinStyle = 'bevel'
+        elif lyr.penJoinStyle() == Qt.RoundJoin:
+            joinStyle = 'round'
+        return joinStyle
+
+    def _getLineDasharray(self, lineStyle, lineWidth):
+        lineDasharray = '0'
+        if lineStyle == Qt.DashLine:
+            lineDasharray = '5,5'
+        elif lineStyle == Qt.DotLine:
+            lineDasharray = '{},{}'.format(lineWidth, lineWidth*5)
+        elif lineStyle == Qt.DashDotLine:
+            lineDasharray = '{},{},{},{}'.format(lineWidth*10, lineWidth*10, lineWidth, lineWidth*10)
+        elif lineStyle == Qt.DashDotDotLine:
+            lineDasharray = '{},{},{},{},{},{}'.format(lineWidth*5, lineWidth*5, lineWidth, lineWidth*5, lineWidth, lineWidth*5)
+        return lineDasharray

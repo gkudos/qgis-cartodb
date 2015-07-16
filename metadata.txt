@@ -24,7 +24,10 @@ about=
   - certifi
 email=michaelsalgado@gkudos.com
 changelog=0.1.8
-  - Remove connection controls in SQL Editor
+  - Remove connection controls in SQL Editor.
+  - Add composite mode in create maps.
+  - Add dash style to lines in create maps.
+  - Add join style to lines in create maps.
   0.1.7
   - Do not allow to edit read-only layers.
   - Show owner in shared layers.
