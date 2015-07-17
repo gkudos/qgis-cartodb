@@ -260,7 +260,6 @@ class CartoDBPluginCreateViz(CartoDBPluginUserDialog):
         cartoCSS = ''
         layerOpacity = str(float((100.0 - layer.layerTransparency())/100.0))
 
-
         blendMode = layer.featureBlendMode()
         compositionMode = 'src-over'
         if blendMode == QPainter.CompositionMode_Lighten:
@@ -351,7 +350,7 @@ class CartoDBPluginCreateViz(CartoDBPluginUserDialog):
                                     encoding_errors='replace')
             else:
                 # TODO Manage symbols not supported.
-                qDebug('Symbol type: {} not supported'.format())
+                qDebug('Symbol type: {} not supported'.format(str(lyr)))
         return cartoCSS
 
     def validateButtons(self):
