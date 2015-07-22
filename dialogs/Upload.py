@@ -19,9 +19,10 @@ email                : michaelsalgado@gkudos.com, info@gkudos.com
  ***************************************************************************/
 """
 from PyQt4.QtCore import Qt, QSettings, QFile, QFileInfo, pyqtSlot, qDebug
-from PyQt4.QtGui import QApplication, QDialog, QPixmap, QListWidgetItem, QLabel
+from PyQt4.QtGui import QApplication, QDialog, QPixmap, QListWidgetItem, QLabel, QSizePolicy
 
 from qgis.core import QgsMapLayerRegistry, QgsMapLayer, QgsVectorFileWriter
+from qgis.gui import QgsMessageBar
 
 from QgisCartoDB.cartodb import CartoDBApi
 from QgisCartoDB.layers import CartoDBLayer
@@ -41,6 +42,10 @@ class CartoDBPluginUpload(CartoDBPluginUserDialog):
 
         self.ui = Ui_Upload()
         self.ui.setupUi(self)
+
+        self.ui.bar = QgsMessageBar()
+        self.ui.bar.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        self.ui.verticalLayout.insertWidget(0, self.ui.bar)
 
         self.ui.uploadBT.clicked.connect(self.upload)
         self.ui.cancelBT.clicked.connect(self.reject)
@@ -80,12 +85,16 @@ class CartoDBPluginUpload(CartoDBPluginUserDialog):
         self.ui.uploadBT.setEnabled(False)
         self.ui.uploadingLB.setText(QApplication.translate('CartoDBPlugin', 'Uploading {}').format(widget.layer.name()))
         self.ui.uploadingLB.show()
+        self.ui.bar.clearWidgets()
         cartodbApi.upload(zipPath)
 
     def completeUpload(self, data):
         self.ui.uploadBar.hide()
         self.ui.uploadingLB.hide()
         self.ui.uploadBT.setEnabled(True)
+        self.ui.bar.clearWidgets()
+        self.ui.bar.pushMessage(QApplication.translate('CartoDBPlugin', 'Upload Complete'),
+                                level=QgsMessageBar.INFO, duration=5)
 
     def progressUpload(self, current, total):
         self.ui.uploadBar.setValue(math.ceil(float(current)/float(total)*100))

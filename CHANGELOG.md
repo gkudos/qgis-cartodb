@@ -1,3 +1,13 @@
+<a name="0.1.9"></a>
+### 0.1.9 (2015-07-22)
+
+#### Enhancements
+
+* Default symbology for not supported symbols.
+* Add messages for not supported symbols.
+* Add uploaded message
+
+
 <a name="0.1.8"></a>
 ### 0.1.8 (2015-07-11)
 

@@ -146,6 +146,7 @@ class CartoDBApiTest(UsesQApplication):
         cartodbApi.fetchContent.connect(self.signalsObject.cb_show_table_data)
         cartodbApi.getDataFromTable('SELECT * FROM world_borders LIMIT 10')
 
+    @unittest.skip("testing skipping")
     def test_download_file(self):
         self.logger.debug("\n*******************************************************************************")
         self.logger.debug('\nTest download table data for: world_borders')
@@ -186,7 +187,6 @@ class CartoDBApiTest(UsesQApplication):
         cartoCSS = '#test_ideca_localidades { polygon-fill: #7B00B4; polygon-opacity: 0.6; line-color: #0F3B82; line-width: 0.5; line-opacity: 1; }'
         cartodbApi.addLayerToMap('df48f415-2ed5-4aaa-ac73-ded9d64f5bd3', 'test_ideca_localidades', cartoCSS)
 
-    @unittest.skip("testing skipping")
     def test_get_layers_map(self):
         self.logger.debug("\n*******************************************************************************")
         self.logger.debug('\nTest get layers in map: Test map from QGISCartoDB 3')

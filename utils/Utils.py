@@ -18,6 +18,17 @@ email                : michaelsalgado@gkudos.com, info@gkudos.com
  *                                                                         *
  ***************************************************************************/
 """
+import random
 
-from CartoDBPluginWorker import *
-from Utils import *
+
+def randomColor(mix=(255, 255, 255)):
+    red = random.randrange(0, 256)
+    blue = random.randrange(0, 256)
+    green = random.randrange(0, 256)
+
+    r, g, b = mix
+    red = (red + r)/2
+    green = (green + g)/2
+    blue = (blue + b)/2
+
+    return (red, blue, green)

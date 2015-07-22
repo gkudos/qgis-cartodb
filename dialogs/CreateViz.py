@@ -20,7 +20,7 @@ email                : michaelsalgado@gkudos.com, info@gkudos.com
 """
 from PyQt4.QtCore import Qt, QFile, QFileInfo, pyqtSlot, qDebug, QPyNullVariant
 from PyQt4.QtGui import QApplication, QAbstractItemView, QDialog, QListWidgetItem, QLabel, QPixmap, QPushButton, QSizePolicy
-from PyQt4.QtGui import QClipboard, QPainter
+from PyQt4.QtGui import QClipboard, QPainter, QColor
 
 from qgis.core import QGis, QgsMapLayerRegistry, QgsMapLayer, QgsPalLayerSettings
 from qgis.gui import QgsMessageBar
@@ -30,6 +30,7 @@ from QgisCartoDB.cartodb import CartoDBApi
 from QgisCartoDB.dialogs.Basic import CartoDBPluginUserDialog
 from QgisCartoDB.layers import CartoDBLayer
 from QgisCartoDB.ui.CreateViz import Ui_CreateViz
+from QgisCartoDB.utils import randomColor
 from QgisCartoDB.widgets import CartoDBLayersListWidget, CartoDBLayerListItem
 
 from string import Template
@@ -81,6 +82,8 @@ class CartoDBPluginCreateViz(CartoDBPluginUserDialog):
         self.ui.sqlBT.hide()
         self.ui.cartoCssBT.hide()
 
+        self.withWarnings = False
+
         layers = QgsMapLayerRegistry.instance().mapLayers()
 
         self.ui.availableList.clear()
@@ -125,6 +128,7 @@ class CartoDBPluginCreateViz(CartoDBPluginUserDialog):
     def createViz(self):
         self.ui.bar.clearWidgets()
         self.ui.bar.pushMessage("Info", QApplication.translate('CartoDBPlugin', 'Creating Map'), level=QgsMessageBar.INFO)
+        self.withWarnings = False
 
         item = self.ui.mapList.item(0)
         widget = self.ui.mapList.itemWidget(item)
@@ -177,9 +181,15 @@ class CartoDBPluginCreateViz(CartoDBPluginUserDialog):
         def copyURL():
             QApplication.clipboard().setText(url)
 
-        self.ui.bar.clearWidgets()
+
+        if not self.withWarnings:
+            self.ui.bar.clearWidgets()
+            msg = '{} created'
+        else:
+            msg = '{} created, but has warnings'
+
         widget = self.ui.bar.createMessage(QApplication.translate('CartoDBPlugin', 'Map Created'),
-                                           QApplication.translate('CartoDBPlugin', '{} created').format(self.currentViz['name']))
+                                           QApplication.translate('CartoDBPlugin', msg).format(self.currentViz['name']))
         button = QPushButton(widget)
         button.setText(QApplication.translate('CartoDBPlugin', 'Copy Link'))
         button.pressed.connect(copyURL)
@@ -189,7 +199,7 @@ class CartoDBPluginCreateViz(CartoDBPluginUserDialog):
         button.setText(QApplication.translate('CartoDBPlugin', 'Open'))
         button.pressed.connect(openVis)
         widget.layout().addWidget(button)
-        self.ui.bar.pushWidget(widget, QgsMessageBar.INFO)
+        self.ui.bar.pushWidget(widget, QgsMessageBar.INFO if not self.withWarnings else QgsMessageBar.WARNING, duration=10)
 
     def convert2CartoCSS(self, layer):
         renderer = layer.rendererV2()
@@ -343,14 +353,43 @@ class CartoDBPluginCreateViz(CartoDBPluginUserDialog):
                     }
                     filein = open(QgisCartoDB.CartoDBPlugin.PLUGIN_DIR + '/templates/simplepolygon.less')
 
-                cartoCSS = Template(filein.read())
-                cartoCSS = cartoCSS.substitute(d,
-                                    input_encoding='utf-8',
-                                    output_encoding='utf-8',
-                                    encoding_errors='replace')
             else:
-                # TODO Manage symbols not supported.
-                qDebug('Symbol type: {} not supported'.format(str(lyr)))
+                if not self.withWarnings:
+                    self.ui.bar.clearWidgets()
+
+                self.withWarnings = True
+                widget = self.ui.bar.createMessage(QApplication.translate('CartoDBPlugin', 'Symbology not supported'),
+                                                   QApplication.translate('CartoDBPlugin', '{} layer').format(layer.name()))
+                self.ui.bar.pushWidget(widget, QgsMessageBar.WARNING)
+
+                r, g, b = randomColor()
+                if layer.geometryType() == QGis.Point:
+                    d = {
+                        'layername': styleName,
+                        'fillColor': QColor(r, g, b, 255).name(),
+                        'markerCompOp': compositionMode
+                    }
+                    filein = open(QgisCartoDB.CartoDBPlugin.PLUGIN_DIR + '/templates/defaultpoint.less')
+                elif layer.geometryType() == QGis.Line:
+                    d = {
+                        'layername': styleName,
+                        'lineColor': QColor(r, g, b, 255).name(),
+                        'lineCompOp': compositionMode,
+                    }
+                    filein = open(QgisCartoDB.CartoDBPlugin.PLUGIN_DIR + '/templates/defaultline.less')
+                elif layer.geometryType() == QGis.Polygon:
+                    d = {
+                        'layername': styleName,
+                        'fillColor': QColor(r, g, b, 255).name(),
+                        'polygonCompOp': compositionMode,
+                    }
+                    filein = open(QgisCartoDB.CartoDBPlugin.PLUGIN_DIR + '/templates/defaultpolygon.less')
+
+        cartoCSS = Template(filein.read())
+        cartoCSS = cartoCSS.substitute(d,
+                            input_encoding='utf-8',
+                            output_encoding='utf-8',
+                            encoding_errors='replace')
         return cartoCSS
 
     def validateButtons(self):

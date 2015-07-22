@@ -89,6 +89,14 @@
             <translation>Mapa Creado</translation>
         </message>
         <message>
+            <source>{} created</source>
+            <translation>{} creado</translation>
+        </message>
+        <message>
+            <source>{} created, but has warnings</source>
+            <translation>{} creado, pero tiene algunos errores</translation>
+        </message>
+        <message>
             <source>Copy Link</source>
             <translation>Copiar Enlace</translation>
         </message>
