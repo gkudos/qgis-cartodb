@@ -115,13 +115,12 @@ class CartoDBNewSQLDialog(CartoDBUserDataDialog):
             if not str(self.currentMultiuser) in ['true', '1', 'True']:
                 sqlTables = "SELECT CDB_UserTables() table_name"
                 res = cl.sql(
-                    "SELECT *, CDB_ColumnType(table_name, column_name) column_type \
-                        FROM ( \
-                            SELECT *, CDB_ColumnNames(table_name) column_name \
-                                FROM (" + sqlTables + ") t1 \
-                        ) t2 \
-                        WHERE CDB_ColumnType(table_name, column_name) != 'USER-DEFINED' \
-                        ORDER BY table_name, column_name")
+                    "WITH usertables AS (" + sqlTables + ") \
+                        SELECT ut.table_name, c.column_name, c.data_type column_type \
+                          FROM usertables ut \
+                          JOIN information_schema.columns c ON c.table_name = ut.table_name \
+                        WHERE c.data_type != 'USER-DEFINED' \
+                        ORDER BY ut.table_name, c.column_name")
             else:
                 sqlTables = "SELECT string_agg(privilege_type, ', ') AS privileges, table_schema, table_name \
                                 FROM information_schema.role_table_grants tg \
@@ -208,3 +207,12 @@ class CartoDBNewSQLDialog(CartoDBUserDataDialog):
     def showEvent(self, event):
         worker = CartoDBPluginWorker(self, 'findTables')
         worker.start()
+
+'''
+WITH usertables AS (SELECT CDB_UserTables() table_name)
+SELECT ut.table_name, c.column_name, c.data_type column_type, ut.privileges
+  FROM usertables ut
+  JOIN information_schema.columns c ON c.table_name = ut.table_name
+WHERE c.data_type != 'USER-DEFINED'
+ORDER BY ut.table_name, c.column_name
+'''

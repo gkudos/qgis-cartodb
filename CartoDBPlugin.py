@@ -81,11 +81,11 @@ class CartoDBPlugin(QObject):
         self._mainAction = QAction(self.tr('Add CartoDB Layer'), self.iface.mainWindow())
         self._mainAction.setIcon(QIcon(":/plugins/qgis-cartodb/images/icons/add.png"))
         self._loadDataAction = QAction(self.tr('Upload layers to CartoDB'), self.iface.mainWindow())
-        self._loadDataAction.setIcon(QIcon(":/plugins/qgis-cartodb/images/icons/polygon.png"))
+        self._loadDataAction.setIcon(QIcon(":/plugins/qgis-cartodb/images/icons/upload.png"))
         self._createVizAction = QAction(self.tr('Create New Map'), self.iface.mainWindow())
-        self._createVizAction.setIcon(QIcon(":/plugins/qgis-cartodb/images/icons/rectangle.png"))
+        self._createVizAction.setIcon(QIcon(":/plugins/qgis-cartodb/images/icons/map.png"))
         self._addSQLAction = QAction(self.tr('Add SQL CartoDB Layer'), self.iface.mainWindow())
-        self._addSQLAction.setIcon(QIcon(":/plugins/qgis-cartodb/images/icons/add_sql.png"))
+        self._addSQLAction.setIcon(QIcon(":/plugins/qgis-cartodb/images/icons/sql.png"))
 
         self.toolbar = CartoDBToolbar()
         self.toolbar.setClick(self.connectionManager)
@@ -182,7 +182,8 @@ class CartoDBPlugin(QObject):
                 for i, table in enumerate(selectedItems):
                     widget = dlg.getItemWidget(table)
                     worker = CartoDBLayerWorker(self.iface, widget.tableName, widget.tableOwner, dlg,
-                                                filterByExtent=dlg.filterByExtent(), readonly=widget.readonly)
+                                                filterByExtent=dlg.filterByExtent(), readonly=widget.readonly,
+                                                multiuser=widget.multiuser)
                     worker.finished.connect(self.addLayer)
                     self.worker = worker
                     worker.load()

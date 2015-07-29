@@ -26,7 +26,10 @@ email=michaelsalgado@gkudos.com
 changelog=0.1.9
   - Default symbology for not supported symbols.
   - Add messages for not supported symbols.
-  - Add uploaded message
+  - Add uploaded message.
+  - Change icons.
+  - Fix error updating layer single user account.
+  - Fix error getting columns in SQL dialog.
   0.1.8
   - Remove connection controls in SQL Editor.
   - Add composite mode in create maps.

@@ -86,7 +86,7 @@ class CartoDBPluginDialog(CartoDBUserDataDialog):
 
             widget = CartoDBDatasetsListItem(
                 visualization['name'], owner, visualization['table']['size'], visualization['table']['row_count'],
-                shared=(owner != self.currentUser))
+                shared=(owner != self.currentUser), multiuser=self.currentMultiuser)
             # item.setText(visualization['name'])
             readonly = False
             # qDebug('Vis:' + json.dumps(visualization, sort_keys=True, indent=2, separators=(',', ': ')))

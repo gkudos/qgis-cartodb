@@ -39,6 +39,7 @@ class CartoDBToolbar(QWidget):
         if self.currentUser:
             self.currentApiKey = self.settings.value('/CartoDBPlugin/%s/api' % self.currentUser)
             self.currentMultiuser = self.settings.value('/CartoDBPlugin/%s/multiuser' % self.currentUser, False)
+            self.currentMultiuser = self.currentMultiuser in ['True', 'true', True]
         else:
             self.currentApiKey = None
             self.currentMultiuser = None

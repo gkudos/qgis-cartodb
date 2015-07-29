@@ -5,7 +5,13 @@
 
 * Default symbology for not supported symbols.
 * Add messages for not supported symbols.
-* Add uploaded message
+* Add uploaded message.
+* Change icons.
+
+#### Fixes
+
+* Fix #29 Error updating layer single user account.
+* Fix #27 Error getting columns in SQL dialog.
 
 
 <a name="0.1.8"></a>
@@ -13,7 +19,7 @@
 
 #### Enhancements
 
-* Remove connection controls in SQL Editor
+* Remove connection controls in SQL Editor.
 * Add composite mode in create maps.
 * Add dash style to lines in create maps.
 * Add join style to lines in create maps.
@@ -23,9 +29,9 @@
 
 #### Fixes
 
-* Fix #19 Do not allow to edit read-only layers
-* Show owner in shared layers, issue #18
-* Fix #26 Encoding error creating map
+* Fix #19 Do not allow to edit read-only layers.
+* Show owner in shared layers, issue #18.
+* Fix #26 Encoding error creating map.
 
 
 <a name="0.1.6"></a>
@@ -39,7 +45,7 @@
 
 #### Fixes
 
-* Fix #23 Error conecting multiuser account
+* Fix #23 Error conecting multiuser account.
 
 <a name="0.1.5"></a>
 ### 0.1.5 (2015-06-16)
@@ -48,9 +54,9 @@
 
 * Upload layers to CartoDB (More formats).
 * Create basic visualization. Support:
-  * Borders
-  * Fill
-  * Label
+  * Borders.
+  * Fill.
+  * Label.
 
 <a name="0.1.4"></a>
 ### 0.1.4 (2015-06-05)
@@ -65,7 +71,7 @@
 
 #### Fixes
 
-* Fix avatar size
+* Fix avatar size.
 * Fix #21 Insert data without complete fields.
 * Enable buttons only if there is at least one created connection.
 
@@ -101,6 +107,7 @@
 <a name="0.1.1"></a>
 ### 0.1.1 (2014-11-27)
 
+* Fix error when repeat layer name at spatialite database.
 #### New Features
 
 * Load cartodb layers from SQL Queries.
@@ -108,7 +115,6 @@
 #### Fixes.
 
 * New connection dialog is now a modal window.
-* Fix error when repeat layer name at spatialite database.
 
 <a name="0.1.0"></a>
 ### 0.1.0 (2014-09-23)
