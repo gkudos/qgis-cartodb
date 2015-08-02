@@ -187,6 +187,9 @@ class CartoDBPlugin(QObject):
                     worker.finished.connect(self.addLayer)
                     self.worker = worker
                     worker.load()
+        elif dlg.loadSQL:
+            self.addSQL()
+
 
     def addLayer(self, layer):
         try:
@@ -222,7 +225,7 @@ class CartoDBPlugin(QObject):
             sql = dlg.getQuery()
             progressMessageBar, progress = self.addLoadingMsg(1)
             QgsMessageLog.logMessage('SQL: ' + sql, 'CartoDB Plugin', QgsMessageLog.INFO)
-            layer = CartoDBLayer(self.iface, 'SQLQuery', dlg.currentUser, dlg.currentApiKey, sql=sql)
+            layer = CartoDBLayer(self.iface, 'SQLQuery', dlg.currentUser, dlg.currentApiKey, sql=sql, isSQL=True)
             QgsMapLayerRegistry.instance().addMapLayer(layer)
             self.layers.append(layer)
             progress.setValue(1)

@@ -97,6 +97,10 @@
             <translation>{} created, but has warnings</translation>
         </message>
         <message>
+            <source>All layers are SQL layers</source>
+            <translation>All layers are SQL layers</translation>
+        </message>
+        <message>
             <source>Copy Link</source>
             <translation>Copy Link</translation>
         </message>

@@ -150,14 +150,6 @@ class CartoDBPluginUpload(CartoDBPluginUserDialog):
             error = QgsVectorFileWriter.writeAsVectorFormat(layer, geoJsonName, "utf-8", None, "GeoJSON")
             if error == QgsVectorFileWriter.NoError:
                 zipFile.write(geoJsonName + '.geojson', layer.name() + '.geojson', zipfile.ZIP_DEFLATED)
-
-        '''
-        elif layer.storageType() == 'LIBKML':
-            kmlName = os.path.join(tempfile.tempdir, layer.name())
-            error = QgsVectorFileWriter.writeAsVectorFormat(layer, kmlName, "utf-8", None, "GeoJSON")
-            if error == QgsVectorFileWriter.NoError:
-                zipFile.write(kmlName + '.geojson', layer.name() + '.geojson', zipfile.ZIP_DEFLATED)
-        '''
         zipFile.close()
         return zipPath
 

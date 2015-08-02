@@ -45,13 +45,14 @@ class CartoDBLayer(QgsVectorLayer):
     LAYER_SQL_PROPERTY = 'cartoSQL'
 
     def __init__(self, iface, tableName, user, apiKey, owner=None, sql=None, geoJSON=None,
-                 filterByExtent=False, spatiaLite=None, readonly=False, multiuser=False):
+                 filterByExtent=False, spatiaLite=None, readonly=False, multiuser=False, isSQL=False):
         # SQLite available?
         self.iface = iface
         self.user = user
         self._apiKey = apiKey
         self.layerType = 'ogr'
         self.owner = owner
+        self.isSQL = isSQL
         self.multiuser = multiuser
         driverName = "SQLite"
         sqLiteDrv = ogr.GetDriverByName(driverName)
@@ -165,8 +166,9 @@ class CartoDBLayer(QgsVectorLayer):
         self.setReadOnly(self.readonly)
 
         self.setCustomProperty(CartoDBLayer.LAYER_CNAME_PROPERTY, self.user)
-        self.setCustomProperty(CartoDBLayer.LAYER_TNAME_PROPERTY, self.cartoTable)
+        self.setCustomProperty(CartoDBLayer.LAYER_TNAME_PROPERTY, self.fullTableName())
 
+        self.sql = sql
         if self.forceReadOnly and sql is not None:
             self.setCustomProperty(CartoDBLayer.LAYER_SQL_PROPERTY, sql)
 
@@ -365,6 +367,9 @@ class CartoDBLayer(QgsVectorLayer):
 
     def tableName(self):
         return self.cartoTable
+
+    def fullTableName(self):
+        return self._schema() + self.cartoTable
 
     def readXml(self, node):
         res = QgsVectorLayer.readXml(node)

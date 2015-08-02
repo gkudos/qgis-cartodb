@@ -66,3 +66,7 @@ resources.py
 
 # Config File for tests
 config.py
+
+# Jekyll
+.sass-cache
+_site

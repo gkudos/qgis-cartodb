@@ -1,3 +1,12 @@
+<a name="0.1.10"></a>
+### 0.1.10 (2015-07-31)
+
+#### Fixes
+
+* Fix #25 Error creating map from CartoDB.
+* Fix #5 Filter data by attribute or extent.
+* Fix problems with SQL layers in maps.
+
 <a name="0.1.9"></a>
 ### 0.1.9 (2015-07-22)
 

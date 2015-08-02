@@ -44,12 +44,14 @@ class CartoDBPluginDialog(CartoDBUserDataDialog):
         self.ui = Ui_CartoDBPlugin()
         self.ui.setupUi(self)
         self.ui.searchTX.textChanged.connect(self.filterTables)
+        self.ui.sqlBT.clicked.connect(self.onSQL)
         # self.ui.tablesList.verticalScrollBar().valueChanged.connect(self.onScroll)
 
         self.isLoadingTables = False
         self.noLoadTables = False
 
         self.initUserConnection()
+        self.loadSQL = False
 
     def getTablesListSelectedItems(self):
         return self.ui.tablesList.selectedItems()
@@ -59,6 +61,10 @@ class CartoDBPluginDialog(CartoDBUserDataDialog):
 
     def filterByExtent(self):
         return self.ui.extentCH.isChecked()
+
+    def onSQL(self):
+        self.loadSQL = True
+        self.reject()
 
     @pyqtSlot()
     def connect(self):

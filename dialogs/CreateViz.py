@@ -130,13 +130,24 @@ class CartoDBPluginCreateViz(CartoDBPluginUserDialog):
         self.ui.bar.pushMessage("Info", QApplication.translate('CartoDBPlugin', 'Creating Map'), level=QgsMessageBar.INFO)
         self.withWarnings = False
 
-        item = self.ui.mapList.item(0)
-        widget = self.ui.mapList.itemWidget(item)
-        layer = widget.layer
+        for i in range(0, self.ui.mapList.count()):
+            item = self.ui.mapList.item(i)
+            widget = self.ui.mapList.itemWidget(item)
+            layer = widget.layer
+            if not layer.isSQL:
+                break
+            else:
+                layer = None
 
-        cartoDBApi = CartoDBApi(self.currentUser, self.currentApiKey, self.currentMultiuser)
-        cartoDBApi.fetchContent.connect(self.cbCreateViz)
-        cartoDBApi.createVizFromTable(layer.tableName(), self.ui.mapNameTX.text())
+        if layer is not None:
+            cartoDBApi = CartoDBApi(self.currentUser, self.currentApiKey, self.currentMultiuser)
+            cartoDBApi.fetchContent.connect(self.cbCreateViz)
+            cartoDBApi.createVizFromTable(layer.fullTableName(), self.ui.mapNameTX.text())
+        else:
+            self.ui.bar.clearWidgets()
+            widget = self.ui.bar.createMessage(QApplication.translate('CartoDBPlugin', 'Error!!'),
+                                               QApplication.translate('CartoDBPlugin', 'All layers are SQL layers'))
+            self.ui.bar.pushWidget(widget, QgsMessageBar.CRITICAL)
 
     def cbCreateViz(self, data):
         self.currentViz = data
@@ -152,6 +163,11 @@ class CartoDBPluginCreateViz(CartoDBPluginUserDialog):
         cartoCSS = self.convert2CartoCSS(layer)
         cartoDBApi = CartoDBApi(self.currentUser, self.currentApiKey, self.currentMultiuser)
         layer1 = data['layers'][1]
+        if layer.isSQL:
+            layer1["options"]["query"] = layer.sql
+        else:
+            newLayer["options"]["query"] = ""
+            newLayer["options"]["table_name"] = layer.fullTableName()
         layer1['options']['tile_style'] = cartoCSS
         layer1["options"]["legend"] = None
         cartoDBApi.fetchContent.connect(self.showMessage)
@@ -165,11 +181,16 @@ class CartoDBPluginCreateViz(CartoDBPluginUserDialog):
             cartoCSS = self.convert2CartoCSS(layer)
             # cartoDBApi.fetchContent.connect(self.cbCreateViz)
             newLayer = copy.deepcopy(layer1)
-            newLayer["options"]["table_name"] = layer.tableName()
             newLayer["options"]["tile_style"] = cartoCSS
             newLayer["options"]["order"] = i + 1
+            newLayer["options"]["legend"] = None
             newLayer["order"] = i + 1
             newLayer["id"] = None
+            if layer.isSQL:
+                newLayer["options"]["query"] = layer.sql
+            else:
+                newLayer["options"]["query"] = ""
+                newLayer["options"]["table_name"] = layer.fullTableName()
             cartoDBApi.addLayerToMap(self.currentViz['map_id'], newLayer)
 
     def showMessage(self, data):

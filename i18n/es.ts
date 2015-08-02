@@ -97,6 +97,10 @@
             <translation>{} creado, pero tiene algunos errores</translation>
         </message>
         <message>
+            <source>All layers are SQL layers</source>
+            <translation>Todas las capas son capas SQL</translation>
+        </message>
+        <message>
             <source>Copy Link</source>
             <translation>Copiar Enlace</translation>
         </message>
@@ -130,7 +134,7 @@
         </message>
         <message>
             <source>Query is valid</source>
-            <translation>La consulta es inválida</translation>
+            <translation>La consulta es válida</translation>
         </message>
     </context>
     <context>
