@@ -166,8 +166,9 @@ class CartoDBPluginCreateViz(CartoDBPluginUserDialog):
         if layer.isSQL:
             layer1["options"]["query"] = layer.sql
         else:
-            newLayer["options"]["query"] = ""
-            newLayer["options"]["table_name"] = layer.fullTableName()
+            layer1["options"]["query"] = ""
+            qDebug('Layer {}'.format(layer.fullTableName()))
+            layer1["options"]["table_name"] = layer.fullTableName()
         layer1['options']['tile_style'] = cartoCSS
         layer1["options"]["legend"] = None
         cartoDBApi.fetchContent.connect(self.showMessage)
@@ -189,6 +190,7 @@ class CartoDBPluginCreateViz(CartoDBPluginUserDialog):
             if layer.isSQL:
                 newLayer["options"]["query"] = layer.sql
             else:
+                qDebug('Layer {}'.format(layer.fullTableName()))
                 newLayer["options"]["query"] = ""
                 newLayer["options"]["table_name"] = layer.fullTableName()
             cartoDBApi.addLayerToMap(self.currentViz['map_id'], newLayer)
