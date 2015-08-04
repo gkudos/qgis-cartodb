@@ -4,10 +4,9 @@
 ### QGis for CartoDB
 #### The best of your Desktop GIS with the best of the web GIS.
 
+![QGisCartoDB](https://lh3.googleusercontent.com/aVV2C4SigQ6Tu15LCO9kSeHNDZIQe3qr1alt4NMMq6Y=w1161-h659-no "QGis CartoDB")
 
 ## Features
-
-![QGis CartoDB](https://lh3.googleusercontent.com/okJ9Dd7260GAKjt5PT-TpMpZFHw7qAoW_3Yw-mLFPQ8=w1157-h659-no "QGis CartoDB")
 
 * Manage CartoDB connections.
 * Add CartoDB layers to QGIS projects.
