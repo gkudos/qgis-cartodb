@@ -30,7 +30,7 @@ CartoDB Plugin for QGis.  It allows to view,  create, edit or delete data from  
 ## Limitations
 
 * Add new attributes.
-* Get visualizations or CartoCSS styles.
+* Get maps or CartoCSS styles.
 
 ## Supported Versions
 
