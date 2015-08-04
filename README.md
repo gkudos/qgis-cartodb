@@ -9,11 +9,28 @@ CartoDB Plugin for QGis.  It allows to view,  create, edit or delete data from  
 ![QGis CartoDB](images/screenshot.png?raw=true "QGis CartoDB")
 
 * Manage CartoDB connections.
-* Add CartoDB layers to QGis projects.
+* Add CartoDB layers to QGIS projects.
+* Create QGIS layers from SQL Queries.
 * Add features to CartoDB tables.
 * Edit data and update CartoDB tables.
 * Edit data and update geometries.
 * Delete features.
+* Upload vector layers to CartoDB.
+* Create maps, supported:
+    * Styles: (single symbol, categorized and graduated).
+    * Simple fill.
+    * Borders style: (solid line, no pen, dash line, dot line, dash dot line and dash dot dot line).
+    * Simple lines.
+    * Line and border join styles: (bevel, miter and round).
+    * Line and border line width.
+    * Simple markers: (fill, size, outline width).
+    * Layer transparency.
+    * Feature blending mode.
+
+## Limitations
+
+* Add new attributes.
+* Get visualizations or CartoCSS styles.
 
 ## Supported Versions
 
@@ -89,14 +106,6 @@ Click on the icon: ![Icon](images/icons/sql.png?raw=true "Icon") or on the web m
 
 ![Dialog 3](images/sql_dialog.png?raw=true "Adding SQL layer")
 
-## Testing
-
-Open a terminal and execute into project folder:
-
-``` bash
-python setup.py test
-```
-
 ## Dependencies
 
 * [CartoDB](https://github.com/Vizzuality/cartodb-python)
@@ -104,17 +113,17 @@ python setup.py test
 * simplejson
 * certifi
 
-## Limitations
-
-* Add new attributes.
-* Get visualizations or CartoCSS styles.
-
 ## Help Wanted
 
 Any idea, issue or comment?, Please open an issue with related label.
 Do You want to contribute? Fork this project and get to work. Your time and help is greatly appreciated.
 
 Please check our [Contributing Guide](CONTRIBUTING.md)
+
+### Translate
+
+* Please go to [QGISCartoDB transiflex project](https://www.transifex.com/kudos/qgis-cartodb/).
+* Click on 'HELP TRANSLATE "qgis-cartodb"'.
 
 ## Licence
 
