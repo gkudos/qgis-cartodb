@@ -52,15 +52,19 @@
       </layout>
      </item>
      <item>
-      <layout class="QVBoxLayout" name="toolsLayout">
-       <property name="spacing">
-        <number>0</number>
-       </property>
+      <layout class="QGridLayout" name="gridLayout" columnstretch="0">
        <property name="sizeConstraint">
         <enum>QLayout::SetMinimumSize</enum>
        </property>
-       <item>
-        <spacer name="topSpacer">
+       <item row="3" column="0">
+        <widget class="QPushButton" name="addAllBT">
+         <property name="text">
+          <string>Add all</string>
+         </property>
+        </widget>
+       </item>
+       <item row="5" column="0">
+        <spacer name="bottomSpacer">
          <property name="orientation">
           <enum>Qt::Vertical</enum>
          </property>
@@ -72,14 +76,7 @@
          </property>
         </spacer>
        </item>
-       <item>
-        <widget class="QToolButton" name="rightBT">
-         <property name="text">
-          <string>+</string>
-         </property>
-        </widget>
-       </item>
-       <item>
+       <item row="2" column="0" alignment="Qt::AlignHCenter">
         <widget class="QToolButton" name="leftBT">
          <property name="sizePolicy">
           <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
@@ -94,12 +91,19 @@
           </size>
          </property>
          <property name="text">
-          <string>-</string>
+          <string>Remove</string>
          </property>
         </widget>
        </item>
-       <item>
-        <spacer name="bottomSpacer">
+       <item row="1" column="0" alignment="Qt::AlignHCenter">
+        <widget class="QToolButton" name="rightBT">
+         <property name="text">
+          <string>Add</string>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="0">
+        <spacer name="topSpacer">
          <property name="orientation">
           <enum>Qt::Vertical</enum>
          </property>
@@ -110,6 +114,13 @@
           </size>
          </property>
         </spacer>
+       </item>
+       <item row="4" column="0">
+        <widget class="QPushButton" name="removeAllBT">
+         <property name="text">
+          <string>Remove all</string>
+         </property>
+        </widget>
        </item>
       </layout>
      </item>

@@ -22,7 +22,7 @@ from PyQt4.QtCore import Qt, QFile, QFileInfo, pyqtSlot, qDebug, QPyNullVariant
 from PyQt4.QtGui import QApplication, QAbstractItemView, QDialog, QListWidgetItem, QLabel, QPixmap, QPushButton, QSizePolicy
 from PyQt4.QtGui import QClipboard, QPainter, QColor
 
-from qgis.core import QGis, QgsMapLayerRegistry, QgsMapLayer, QgsPalLayerSettings
+from qgis.core import QGis, QgsMapLayerRegistry, QgsMapLayer, QgsPalLayerSettings, NULL
 from qgis.gui import QgsMessageBar
 
 import QgisCartoDB.CartoDBPlugin
@@ -123,7 +123,7 @@ class CartoDBPluginCreateViz(CartoDBPluginUserDialog):
             widget = self.ui.availableList.itemWidget(item)
             layer = widget.layer
             cartoCSS = self.convert2CartoCSS(layer)
-            qDebug('CartoCSS: {}'.format(cartoCSS))
+            qDebug('CartoCSS: {}'.format(cartoCSS.encode('utf8', 'ignore')))
 
     def createViz(self):
         self.ui.bar.clearWidgets()
@@ -253,7 +253,7 @@ class CartoDBPluginCreateViz(CartoDBPluginUserDialog):
             # qDebug('Categorized: ' + renderer.classAttribute())
             for cat in renderer.categories():
                 symbol = cat.symbol()
-                # qDebug("%s: %s type: %s" % (str(cat.value()), cat.label(), str(cat.value())))
+                # qDebug("%s: %s type: %s" % (str(cat.value()), cat.label(), type(cat.value())))
                 if cat.value() is not None and cat.value() != '' and not isinstance(cat.value(), QPyNullVariant):
                     if isinstance(cat.value(), (int, float, long)) or (isinstance(cat.value(), str) and cat.value().isdecimal()):
                         value = unicode(cat.value())
@@ -286,7 +286,6 @@ class CartoDBPluginCreateViz(CartoDBPluginUserDialog):
                 cartoCSS = cartoCSS + \
                     self.symbol2CartoCSS(layer, symbol, '#' + layer.tableName() + '[' + renderer.classAttribute() + '<=' + str(ran.upperValue()) + ']')
 
-        # qDebug('CartoCSS: ' + cartoCSS)
         return '/** Styles designed from QGISCartoDB Plugin */\n\n' + cartoCSS + '\n' + labelCSS
 
     def symbol2CartoCSS(self, layer, symbol, styleName):
