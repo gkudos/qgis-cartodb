@@ -7,7 +7,7 @@
 
 ## Features
 
-![QGis CartoDB](images/screenshot.png?raw=true "QGis CartoDB")
+![QGis CartoDB](https://lh3.googleusercontent.com/okJ9Dd7260GAKjt5PT-TpMpZFHw7qAoW_3Yw-mLFPQ8=w1157-h659-no "QGis CartoDB")
 
 * Manage CartoDB connections.
 * Add CartoDB layers to QGIS projects.
