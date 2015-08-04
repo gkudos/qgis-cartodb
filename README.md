@@ -1,7 +1,8 @@
 ![Logo](images/logo.jpg?raw=true "QGis CartoDB")
 ================================================
-
-CartoDB Plugin for QGis.  It allows to view,  create, edit or delete data from  your CartoDB account using your favorite opensource desktop GIS: QGIS.  
+# QGISCartoDB
+### QGis for CartoDB
+#### The best of your Desktop GIS with the best of the web GIS.
 
 
 ## Features
@@ -16,6 +17,7 @@ CartoDB Plugin for QGis.  It allows to view,  create, edit or delete data from  
 * Edit data and update geometries.
 * Delete features.
 * Upload vector layers to CartoDB.
+* Create CartoDB visualizations using QGIS
 
 ## Documentation
 
