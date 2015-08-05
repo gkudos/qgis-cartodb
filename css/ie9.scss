@@ -1,6 +1,9 @@
 ---
 ---
-@charset "utf-8";
+@import 'libs/vars';
+@import 'libs/functions';
+@import 'libs/mixins';
+@import 'libs/skel';
 
 /*
 	Landed by HTML5 UP
@@ -10,30 +13,46 @@
 
 /* Loader */
 
-body {
-  &.landing:before, &.landing:after {
-  	display: none !important;
-  }
-}
+	body.landing {
+		&:before, &:after {
+			display: none !important;
+		}
+	}
 
 /* Icon */
 
-.icon.alt {
-	color: inherit !important;
-}
+	.icon {
+		&.alt {
+			color: inherit !important;
+		}
 
-.icon.major.alt:before {
-	color: #ffffff !important;
-}
+		&.major {
+			&.alt {
+				&:before {
+					color: _palette(fg-bold) !important;
+				}
+			}
+		}
+	}
 
 /* Banner */
 
-#banner:after {
-	background-color: rgba(23, 24, 32, 0.95);
-}
+	#banner {
+		&:after {
+			background-color: _palette(bg-transparent);
+		}
+	}
 
 /* Footer */
 
-#footer .icons .icon.alt:before {
-	color: #ffffff !important;
-}
+	#footer {
+		.icons {
+			.icon {
+				&.alt {
+					&:before {
+						color: _palette(fg-bold) !important;
+					}
+				}
+			}
+		}
+	}
