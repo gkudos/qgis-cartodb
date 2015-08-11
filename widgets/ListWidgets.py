@@ -53,21 +53,22 @@ class CartoDBLayersListWidget(QListWidget):
     def dropEvent(self, event):
         if isinstance(event.source(), CartoDBLayersListWidget):
             event.setDropAction(Qt.MoveAction)
-            # QListWidget.dropEvent(self, event)
-            for item in event.source().selectedItems():
-                itemWidget = event.source().itemWidget(item)
-                newItemWidget = CartoDBLayerListItem(itemWidget.tableName, itemWidget.layer, itemWidget.size, itemWidget.rows)
-                newItem = event.source().takeItem(event.source().row(item))
-                itemAt = self.itemAt(event.pos())
+            if len(event.source().selectedItems()) > 0:
+                for item in event.source().selectedItems():
+                    itemWidget = event.source().itemWidget(item)
+                    newItemWidget = CartoDBLayerListItem(itemWidget.tableName, itemWidget.layer, itemWidget.size, itemWidget.rows)
+                    newItem = event.source().takeItem(event.source().row(item))
+                    itemAt = self.itemAt(event.pos())
 
-                if itemAt is not None:
-                    self.insertItem(self.row(itemAt), newItem)
-                else:
-                    self.addItem(newItem)
+                    if itemAt is not None:
+                        self.insertItem(self.row(itemAt), newItem)
+                    else:
+                        self.addItem(newItem)
 
-                self.setItemWidget(newItem, newItemWidget)
-                self.setItemSelected(newItem, True)
-                # event.accept()
+                    self.setItemWidget(newItem, newItemWidget)
+                    self.setItemSelected(newItem, True)
+
+                self.setFocus()
 
     def dropMimeData(self, index, mimedata, action):
         super(CartoDBLayersListWidget, self).dropMimeData(index, mimedata, action)

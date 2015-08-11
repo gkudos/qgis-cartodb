@@ -49,6 +49,10 @@
             <translation>Subiendo {}</translation>
         </message>
         <message>
+            <source>Upload Complete</source>
+            <translation>Capas Cargadas</translation>
+        </message>
+        <message>
             <source>Using {} of {}</source>
             <translation>Usando {} de {}</translation>
         </message>
@@ -99,6 +103,10 @@
         <message>
             <source>All layers are SQL layers</source>
             <translation>Todas las capas son capas SQL</translation>
+        </message>
+        <message>
+            <source>At least one CartoDB layer should belong or be visible to {}</source>
+            <translation>Al menos una capa de CartoDB debe pertenecer o ser visible a {}</translation>
         </message>
         <message>
             <source>Copy Link</source>
@@ -255,6 +263,22 @@
         <message>
             <source>Create</source>
             <translation>Crear</translation>
+        </message>
+        <message>
+            <source>Add</source>
+            <translation>Agregar</translation>
+        </message>
+        <message>
+            <source>Remove</source>
+            <translation>Remover</translation>
+        </message>
+        <message>
+            <source>Add all</source>
+            <translation>Agregar todas</translation>
+        </message>
+        <message>
+            <source>Remove all</source>
+            <translation>Remover todas</translation>
         </message>
     </context>
     <context>

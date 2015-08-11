@@ -49,6 +49,10 @@
             <translation>Uploading {}</translation>
         </message>
         <message>
+            <source>Upload Complete</source>
+            <translation>Upload Complete</translation>
+        </message>
+        <message>
             <source>Using {} of {}</source>
             <translation>Using {} of {}</translation>
         </message>
@@ -99,6 +103,10 @@
         <message>
             <source>All layers are SQL layers</source>
             <translation>All layers are SQL layers</translation>
+        </message>
+        <message>
+            <source>At least one CartoDB layer should belong or be visible to {}</source>
+            <translation>At least one CartoDB layer should belong or be visible to {}</translation>
         </message>
         <message>
             <source>Copy Link</source>
@@ -255,6 +263,22 @@
         <message>
             <source>Create</source>
             <translation>Create</translation>
+        </message>
+        <message>
+            <source>Add</source>
+            <translation>Add</translation>
+        </message>
+        <message>
+            <source>Remove</source>
+            <translation>Remove</translation>
+        </message>
+        <message>
+            <source>Add all</source>
+            <translation>Add all</translation>
+        </message>
+        <message>
+            <source>Remove all</source>
+            <translation>Remove all</translation>
         </message>
     </context>
     <context>

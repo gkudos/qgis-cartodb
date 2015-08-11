@@ -141,8 +141,9 @@ class CartoDBLayer(QgsVectorLayer):
             else:
                 QgsMessageLog.logMessage('Some error ocurred opening GeoJSON datasource', 'CartoDB Plugin', QgsMessageLog.WARNING)
         else:
-            QgsMessageLog.logMessage('New Layer created', 'CartoDB Plugin', QgsMessageLog.INFO)
-            QgsMessageLog.logMessage('New Connection: ' + spatiaLite, 'CartoDB Plugin', QgsMessageLog.INFO)
+            # QgsMessageLog.logMessage('New Layer created', 'CartoDB Plugin', QgsMessageLog.INFO)
+            # QgsMessageLog.logMessage('New Connection: ' + spatiaLite, 'CartoDB Plugin', QgsMessageLog.INFO)
+
             path = spatiaLite
             self.layerType = 'ogr'
             readonly = False
@@ -156,6 +157,9 @@ class CartoDBLayer(QgsVectorLayer):
             super(QgsVectorLayer, self).__init__(geoJSON, self.layerName, self.layerType)
         else:
             super(QgsVectorLayer, self).__init__(path, self.layerName, self.layerType)
+        # Set encoding to UTF-8
+        self.setProviderEncoding('UTF-8')
+
         self.readonly = readonly
         self._deletedFeatures = []
 

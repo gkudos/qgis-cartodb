@@ -36,6 +36,9 @@ install: transcompile compile
 	mkdir -p $(HOME)/$(QGISDIR)/python/plugins/$(PLUGINNAME)
 	cp -r ./* $(HOME)/$(QGISDIR)/python/plugins/$(PLUGINNAME)
 	rm -R $(HOME)/$(QGISDIR)/python/plugins/$(PLUGINNAME)/scripts
+	rm -R $(HOME)/$(QGISDIR)/python/plugins/$(PLUGINNAME)/test
+	rm -R $(HOME)/$(QGISDIR)/python/plugins/$(PLUGINNAME)/qgis_cartodb.egg-info
+	rm -R $(HOME)/$(QGISDIR)/python/plugins/$(PLUGINNAME)/_site
 	@echo " "
 
 uninstall:

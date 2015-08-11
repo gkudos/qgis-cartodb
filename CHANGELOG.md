@@ -1,11 +1,17 @@
-<a name="0.1.10"></a>
-### 0.1.10 (2015-07-31)
+<a name="0.2.0"></a>
+### 0.2.0 (2015-08-10)
+
+#### Enhancements
+
+* Add functionality to Create Map buttons.
 
 #### Fixes
 
 * Fix #25 Error creating map from CartoDB.
 * Fix #5 Filter data by attribute or extent.
 * Fix problems with SQL layers in maps.
+* Fix #31 Style Categorized: The generation of CartoCSS fails if there is data with special characters.
+* Remove unnecessary files in the plugin package.
 
 <a name="0.1.9"></a>
 ### 0.1.9 (2015-07-22)

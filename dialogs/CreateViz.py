@@ -43,7 +43,6 @@ import webbrowser
 class CartoDBPluginCreateViz(CartoDBPluginUserDialog):
     def __init__(self, toolbar, parent=None):
         CartoDBPluginUserDialog.__init__(self, toolbar, parent)
-        self.toolbar = toolbar
 
         self.ui = Ui_CreateViz()
         self.ui.setupUi(self)
@@ -77,6 +76,10 @@ class CartoDBPluginCreateViz(CartoDBPluginUserDialog):
         self.ui.cancelBT.clicked.connect(self.reject)
         self.ui.saveBT.clicked.connect(self.createViz)
         self.ui.cartoCssBT.clicked.connect(self.createCartoCss)
+        self.ui.addAllBT.clicked.connect(self.addAllItems)
+        self.ui.addBT.clicked.connect(self.addItems)
+        self.ui.removeAllBT.clicked.connect(self.removeAllItems)
+        self.ui.removeBT.clicked.connect(self.removeItems)
 
         # TODO Implement functionality
         self.ui.sqlBT.hide()
@@ -87,12 +90,52 @@ class CartoDBPluginCreateViz(CartoDBPluginUserDialog):
         layers = QgsMapLayerRegistry.instance().mapLayers()
 
         self.ui.availableList.clear()
+        cartoDBLayers = 0
         for id, ly in layers.iteritems():
             if ly.type() == QgsMapLayer.VectorLayer and isinstance(ly, CartoDBLayer):
-                item = QListWidgetItem(self.ui.availableList)
-                widget = CartoDBLayerListItem(ly.name(), ly, self.getSize(ly), ly.dataProvider().featureCount())
-                item.setSizeHint(widget.sizeHint())
-                self.ui.availableList.setItemWidget(item, widget)
+                cartoDBLayers = cartoDBLayers + 1
+                if ly.user == self.currentUser:
+                    item = QListWidgetItem(self.ui.availableList)
+                    widget = CartoDBLayerListItem(ly.name(), ly, self.getSize(ly), ly.dataProvider().featureCount())
+                    item.setSizeHint(widget.sizeHint())
+                    self.ui.availableList.setItemWidget(item, widget)
+
+        if cartoDBLayers > 0 and len(self.ui.availableList) == 0:
+            self.ui.bar.clearWidgets()
+            self.ui.bar.pushMessage(QApplication.translate('CartoDBPlugin', 'Warning') + '!!',
+                                    QApplication.translate('CartoDBPlugin',
+                                                           'At least one CartoDB layer should belong or be visible to {}').format(self.currentUser),
+                                    level=QgsMessageBar.WARNING)
+
+    def copyItem(self, source, dest, item):
+        itemWidget = source.itemWidget(item)
+        newItemWidget = CartoDBLayerListItem(itemWidget.tableName, itemWidget.layer, itemWidget.size, itemWidget.rows)
+        newItem = source.takeItem(source.row(item))
+
+        dest.addItem(newItem)
+        dest.setItemWidget(newItem, newItemWidget)
+        dest.setItemSelected(newItem, True)
+
+    def addAllItems(self):
+        self.ui.availableList.selectAll()
+        self.addItems()
+
+    def addItems(self):
+        if len(self.ui.availableList.selectedItems()) > 0:
+            for item in self.ui.availableList.selectedItems():
+                self.copyItem(self.ui.availableList, self.ui.mapList, item)
+            self.ui.mapList.setFocus()
+
+    def removeAllItems(self):
+        self.ui.mapList.selectAll()
+        self.removeItems()
+
+    def removeItems(self):
+        if len(self.ui.mapList.selectedItems()) > 0:
+            for item in self.ui.mapList.selectedItems():
+                self.copyItem(self.ui.mapList, self.ui.availableList, item)
+            self.ui.availableList.setFocus()
+            self.validateButtons()
 
     def getSize(self, layer):
         filePath = layer.dataProvider().dataSourceUri()
