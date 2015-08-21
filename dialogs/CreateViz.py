@@ -41,8 +41,10 @@ import webbrowser
 
 
 class CartoDBPluginCreateViz(CartoDBPluginUserDialog):
-    def __init__(self, toolbar, parent=None):
+    def __init__(self, toolbar, iface, parent=None):
         CartoDBPluginUserDialog.__init__(self, toolbar, parent)
+
+        self.iface = iface
 
         self.ui = Ui_CreateViz()
         self.ui.setupUi(self)
@@ -51,6 +53,7 @@ class CartoDBPluginCreateViz(CartoDBPluginUserDialog):
         self.ui.bar.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         self.ui.verticalLayout.insertWidget(0, self.ui.bar)
 
+        '''
         self.ui.availableList = CartoDBLayersListWidget(self, 'availableList')
         self.ui.availableList.setAcceptDrops(True)
         self.ui.availableList.viewport().setAcceptDrops(True)
@@ -70,16 +73,19 @@ class CartoDBPluginCreateViz(CartoDBPluginUserDialog):
         self.ui.mapList.setDefaultDropAction(Qt.MoveAction)
         self.ui.mapList.setSelectionMode(QAbstractItemView.ExtendedSelection)
         self.ui.mapLayout.addWidget(self.ui.mapList)
+        '''
 
         self.ui.mapNameTX.textChanged.connect(self.validateButtons)
-        self.ui.mapList.itemSelectionChanged.connect(self.validateButtons)
+        # self.ui.mapList.itemSelectionChanged.connect(self.validateButtons)
         self.ui.cancelBT.clicked.connect(self.reject)
         self.ui.saveBT.clicked.connect(self.createViz)
         self.ui.cartoCssBT.clicked.connect(self.createCartoCss)
+        '''
         self.ui.addAllBT.clicked.connect(self.addAllItems)
         self.ui.addBT.clicked.connect(self.addItems)
         self.ui.removeAllBT.clicked.connect(self.removeAllItems)
         self.ui.removeBT.clicked.connect(self.removeItems)
+        '''
 
         # TODO Implement functionality
         self.ui.sqlBT.hide()
@@ -87,25 +93,29 @@ class CartoDBPluginCreateViz(CartoDBPluginUserDialog):
 
         self.withWarnings = False
 
-        layers = QgsMapLayerRegistry.instance().mapLayers()
+        layers = self.iface.legendInterface().layers()
 
         self.ui.availableList.clear()
-        cartoDBLayers = 0
-        for id, ly in layers.iteritems():
+        self.cartoDBLayers = []
+        cartoDBLayersCount = 0
+        for ly in layers:
             if ly.type() == QgsMapLayer.VectorLayer and isinstance(ly, CartoDBLayer):
-                cartoDBLayers = cartoDBLayers + 1
+                cartoDBLayersCount = cartoDBLayersCount + 1
                 if ly.user == self.currentUser:
+                    self.cartoDBLayers.append(ly)
                     item = QListWidgetItem(self.ui.availableList)
                     widget = CartoDBLayerListItem(ly.name(), ly, self.getSize(ly), ly.dataProvider().featureCount())
                     item.setSizeHint(widget.sizeHint())
                     self.ui.availableList.setItemWidget(item, widget)
 
-        if cartoDBLayers > 0 and len(self.ui.availableList) == 0:
+        if cartoDBLayersCount > 0 and len(self.cartoDBLayers) == 0:
             self.ui.bar.clearWidgets()
             self.ui.bar.pushMessage(QApplication.translate('CartoDBPlugin', 'Warning') + '!!',
                                     QApplication.translate('CartoDBPlugin',
                                                            'At least one CartoDB layer should belong or be visible to {}').format(self.currentUser),
                                     level=QgsMessageBar.WARNING)
+        else:
+            self.cartoDBLayers.reverse()
 
     def copyItem(self, source, dest, item):
         itemWidget = source.itemWidget(item)
@@ -120,6 +130,7 @@ class CartoDBPluginCreateViz(CartoDBPluginUserDialog):
         self.ui.availableList.selectAll()
         self.addItems()
 
+    '''
     def addItems(self):
         if len(self.ui.availableList.selectedItems()) > 0:
             for item in self.ui.availableList.selectedItems():
@@ -136,6 +147,7 @@ class CartoDBPluginCreateViz(CartoDBPluginUserDialog):
                 self.copyItem(self.ui.mapList, self.ui.availableList, item)
             self.ui.availableList.setFocus()
             self.validateButtons()
+    '''
 
     def getSize(self, layer):
         filePath = layer.dataProvider().dataSourceUri()
@@ -173,10 +185,8 @@ class CartoDBPluginCreateViz(CartoDBPluginUserDialog):
         self.ui.bar.pushMessage("Info", QApplication.translate('CartoDBPlugin', 'Creating Map'), level=QgsMessageBar.INFO)
         self.withWarnings = False
 
-        for i in range(0, self.ui.mapList.count()):
-            item = self.ui.mapList.item(i)
-            widget = self.ui.mapList.itemWidget(item)
-            layer = widget.layer
+        for ly in self.cartoDBLayers:
+            layer = ly
             if not layer.isSQL:
                 break
             else:
@@ -185,7 +195,7 @@ class CartoDBPluginCreateViz(CartoDBPluginUserDialog):
         if layer is not None:
             cartoDBApi = CartoDBApi(self.currentUser, self.currentApiKey, self.currentMultiuser)
             cartoDBApi.fetchContent.connect(self.cbCreateViz)
-            cartoDBApi.createVizFromTable(layer.fullTableName(), self.ui.mapNameTX.text())
+            cartoDBApi.createVizFromTable(layer.fullTableName(), self.ui.mapNameTX.text(), self.ui.descriptionTX.toPlainText())
         else:
             self.ui.bar.clearWidgets()
             widget = self.ui.bar.createMessage(QApplication.translate('CartoDBPlugin', 'Error!!'),
@@ -200,9 +210,7 @@ class CartoDBPluginCreateViz(CartoDBPluginUserDialog):
         cartoDBApi.getLayersMap(data['map_id'])
 
     def cbGetLayers(self, data):
-        item = self.ui.mapList.item(0)
-        widget = self.ui.mapList.itemWidget(item)
-        layer = widget.layer
+        layer = self.cartoDBLayers[0]
         cartoCSS = self.convert2CartoCSS(layer)
         cartoDBApi = CartoDBApi(self.currentUser, self.currentApiKey, self.currentMultiuser)
         layer1 = data['layers'][1]
@@ -214,21 +222,21 @@ class CartoDBPluginCreateViz(CartoDBPluginUserDialog):
             layer1["options"]["table_name"] = layer.fullTableName()
         layer1['options']['tile_style'] = cartoCSS
         layer1["options"]["legend"] = None
+        layer1["options"]["order"] = 1
+        layer1["order"] = 1
         cartoDBApi.fetchContent.connect(self.showMessage)
         cartoDBApi.updateLayerInMap(self.currentViz['map_id'], layer1)
 
-        for i in range(1, self.ui.mapList.count()):
-            item = self.ui.mapList.item(i)
-            widget = self.ui.mapList.itemWidget(item)
-            layer = widget.layer
-            qDebug('Agregando: {} en pos: {}'.format(layer.tableName(), i))
+        for i, layer in enumerate(self.cartoDBLayers[1:len(self.cartoDBLayers)]):
+            order = i + 2
+            qDebug('Agregando: {} en pos: {}'.format(layer.tableName(), order))
             cartoCSS = self.convert2CartoCSS(layer)
             # cartoDBApi.fetchContent.connect(self.cbCreateViz)
             newLayer = copy.deepcopy(layer1)
             newLayer["options"]["tile_style"] = cartoCSS
-            newLayer["options"]["order"] = i + 1
+            newLayer["options"]["order"] = order
             newLayer["options"]["legend"] = None
-            newLayer["order"] = i + 1
+            newLayer["order"] = order
             newLayer["id"] = None
             if layer.isSQL:
                 newLayer["options"]["query"] = layer.sql
@@ -458,7 +466,7 @@ class CartoDBPluginCreateViz(CartoDBPluginUserDialog):
         return cartoCSS
 
     def validateButtons(self):
-        enabled = self.ui.mapNameTX.text() != '' and self.ui.mapList.count() > 0
+        enabled = self.ui.mapNameTX.text() != '' # and self.ui.mapList.count() > 0
         self.ui.saveBT.setEnabled(enabled)
 
     def _getLineJoin(self, lyr):

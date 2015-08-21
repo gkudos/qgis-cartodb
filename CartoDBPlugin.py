@@ -239,7 +239,7 @@ class CartoDBPlugin(QObject):
         result = dlg.exec_()
 
     def createNewMap(self):
-        dlg = CartoDBPluginCreateViz(self.toolbar)
+        dlg = CartoDBPluginCreateViz(self.toolbar, self.iface)
         dlg.show()
 
         result = dlg.exec_()

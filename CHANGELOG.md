@@ -1,4 +1,15 @@
 <a name="0.2.0"></a>
+### 0.2.1 (2015-08-19)
+
+#### Enhancements
+
+* Create maps without select layers.
+
+#### Fixes
+
+* Fix order layer in maps.
+
+<a name="0.2.0"></a>
 ### 0.2.0 (2015-08-10)
 
 #### Enhancements

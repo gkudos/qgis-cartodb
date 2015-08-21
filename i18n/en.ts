@@ -29,8 +29,8 @@
             <translation>Filter Tables</translation>
         </message>
         <message>
-            <source>Filter by current extent</source>
-            <translation>Filter by current extent</translation>
+            <source>Import data by current extent</source>
+            <translation>Import data by current extent</translation>
         </message>
         <message>
             <source>Name</source>
@@ -233,16 +233,20 @@
             <translation>Map Name:</translation>
         </message>
         <message>
-            <source>Map Name</source>
-            <translation>Map Name</translation>
+            <source>Description</source>
+            <translation>Description</translation>
+        </message>
+        <message>
+            <source>Map Name:</source>
+            <translation>Map Name:</translation>
         </message>
         <message>
             <source>Available Layers</source>
             <translation>Available Layers</translation>
         </message>
         <message>
-            <source>Map Layers</source>
-            <translation>Map Layers</translation>
+            <source>Map Layers:</source>
+            <translation>Map Layers:</translation>
         </message>
         <message>
             <source>Avatar</source>

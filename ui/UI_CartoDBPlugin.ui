@@ -63,7 +63,7 @@
      <item>
       <widget class="QCheckBox" name="extentCH">
        <property name="text">
-        <string>Filter by current extent</string>
+        <string>Import data by current extent</string>
        </property>
       </widget>
      </item>

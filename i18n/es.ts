@@ -29,8 +29,8 @@
             <translation>Filtrar Tablas</translation>
         </message>
         <message>
-            <source>Filter by current extent</source>
-            <translation>Filtrar por la extensión actual</translation>
+            <source>Import data by current extent</source>
+            <translation>Importar datos por la extensión actual</translation>
         </message>
         <message>
             <source>Name</source>
@@ -233,6 +233,10 @@
             <translation>Nombre:</translation>
         </message>
         <message>
+            <source>Description:</source>
+            <translation>Descripción:</translation>
+        </message>
+        <message>
             <source>Map Name</source>
             <translation>Nombre</translation>
         </message>
@@ -241,8 +245,8 @@
             <translation>Capas Disponibles</translation>
         </message>
         <message>
-            <source>Map Layers</source>
-            <translation>Capas en el Mapa</translation>
+            <source>Map Layers:</source>
+            <translation>Capas en el Mapa:</translation>
         </message>
         <message>
             <source>Avatar</source>
