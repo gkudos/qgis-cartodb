@@ -109,6 +109,10 @@
             <translation>At least one CartoDB layer should belong or be visible to {}</translation>
         </message>
         <message>
+            <source>At least there should be a CartoDB layer in the project.</source>
+            <translation>At least there should be a CartoDB layer in the project.</translation>
+        </message>
+        <message>
             <source>Copy Link</source>
             <translation>Copy Link</translation>
         </message>
@@ -237,8 +241,8 @@
             <translation>Description</translation>
         </message>
         <message>
-            <source>Map Name:</source>
-            <translation>Map Name:</translation>
+            <source>Map Name</source>
+            <translation>Map Name</translation>
         </message>
         <message>
             <source>Available Layers</source>
@@ -269,20 +273,8 @@
             <translation>Create</translation>
         </message>
         <message>
-            <source>Add</source>
-            <translation>Add</translation>
-        </message>
-        <message>
-            <source>Remove</source>
-            <translation>Remove</translation>
-        </message>
-        <message>
-            <source>Add all</source>
-            <translation>Add all</translation>
-        </message>
-        <message>
-            <source>Remove all</source>
-            <translation>Remove all</translation>
+            <source>Make Public</source>
+            <translation>Make Public</translation>
         </message>
     </context>
     <context>

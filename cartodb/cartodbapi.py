@@ -30,7 +30,7 @@ class CartoDBApi(QObject):
     def _getRequest(self, url):
         request = QNetworkRequest(url)
         request.setRawHeader("Content-Type", "application/json")
-        request.setRawHeader('User-Agent', 'QGIS 2.x')
+        request.setRawHeader('User-Agent', 'QGISCartoDB 0.2.x')
         return request
 
     def _createMultipart(self, data={}, files={}):
@@ -140,7 +140,7 @@ class CartoDBApi(QObject):
         multipart = self._createMultipart(files=files)
         request = QNetworkRequest(url)
         request.setHeader(QNetworkRequest.ContentTypeHeader, 'multipart/form-data; boundary=%s' % multipart.boundary())
-        request.setRawHeader('User-Agent', 'QGIS 2.x')
+        request.setRawHeader('User-Agent', 'QGISCartoDB 0.2.x')
         reply = self.manager.post(request, multipart)
         loop = QEventLoop()
         reply.uploadProgress.connect(self.progressCB)

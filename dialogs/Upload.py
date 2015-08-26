@@ -18,7 +18,7 @@ email                : michaelsalgado@gkudos.com, info@gkudos.com
  *                                                                         *
  ***************************************************************************/
 """
-from PyQt4.QtCore import Qt, QSettings, QFile, QFileInfo, pyqtSlot, qDebug
+from PyQt4.QtCore import Qt, QSettings, QFile, QFileInfo, QTimer, pyqtSlot, qDebug
 from PyQt4.QtGui import QApplication, QDialog, QPixmap, QListWidgetItem, QLabel, QSizePolicy
 
 from qgis.core import QgsMapLayerRegistry, QgsMapLayer, QgsVectorFileWriter
@@ -78,8 +78,44 @@ class CartoDBPluginUpload(CartoDBPluginUserDialog):
             self.uploadZip(zipPath, widget)
 
     def uploadZip(self, zipPath, widget):
+        def completeUpload(data):
+            timer = QTimer(self)
+
+            self.ui.uploadBar.hide()
+            self.ui.uploadingLB.hide()
+            self.ui.uploadBT.setEnabled(True)
+            self.ui.bar.clearWidgets()
+            self.ui.bar.pushMessage(QApplication.translate('CartoDBPlugin', 'Upload Complete'),
+                                    level=QgsMessageBar.INFO, duration=5)
+
+            def statusComplete(d):
+                if d['state'] == 'complete':
+                    timer.stop()
+                    self.ui.statusLB.setText(QApplication.translate('CartoDBPlugin', 'Ready'))
+                    widget.setStatus(d['state'], 100)
+                    self.ui.bar.clearWidgets()
+                    self.ui.bar.pushMessage(QApplication.translate('CartoDBPlugin', 'Table {} created').format(d['table_name']),
+                                            level=QgsMessageBar.INFO, duration=5)
+                elif d['state'] == 'failure':
+                    timer.stop()
+                    self.ui.statusLB.setText(QApplication.translate('CartoDBPlugin', '{} failed, {}').format(widget.layer.name(), d['get_error_text']['title']))
+                    widget.setStatus(d['state'])
+                    self.ui.bar.clearWidgets()
+                    self.ui.bar.pushMessage(QApplication.translate('CartoDBPlugin', 'Error uploading {}').format(widget.layer.name()),
+                                            level=QgsMessageBar.WARNING, duration=5)
+                else:
+                    widget.setStatus(d['state'])
+
+            def timerComplete():
+                cartodbApi = CartoDBApi(self.currentUser, self.currentApiKey, self.currentMultiuser)
+                cartodbApi.fetchContent.connect(statusComplete)
+                cartodbApi.checkUploadStatus(data['item_queue_id'])
+
+            timer.timeout.connect(timerComplete)
+            timer.start(500)
+
         cartodbApi = CartoDBApi(self.currentUser, self.currentApiKey, self.currentMultiuser)
-        cartodbApi.fetchContent.connect(self.completeUpload)
+        cartodbApi.fetchContent.connect(completeUpload)
         cartodbApi.progress.connect(self.progressUpload)
         self.ui.uploadBar.show()
         self.ui.uploadBT.setEnabled(False)
@@ -88,13 +124,6 @@ class CartoDBPluginUpload(CartoDBPluginUserDialog):
         self.ui.bar.clearWidgets()
         cartodbApi.upload(zipPath)
 
-    def completeUpload(self, data):
-        self.ui.uploadBar.hide()
-        self.ui.uploadingLB.hide()
-        self.ui.uploadBT.setEnabled(True)
-        self.ui.bar.clearWidgets()
-        self.ui.bar.pushMessage(QApplication.translate('CartoDBPlugin', 'Upload Complete'),
-                                level=QgsMessageBar.INFO, duration=5)
 
     def progressUpload(self, current, total):
         self.ui.uploadBar.setValue(math.ceil(float(current)/float(total)*100))

@@ -109,6 +109,10 @@
             <translation>Al menos una capa de CartoDB debe pertenecer o ser visible a {}</translation>
         </message>
         <message>
+            <source>At least there should be a CartoDB layer in the project.</source>
+            <translation>Al menos debe haber una capa de CartoDB en el proyecto.</translation>
+        </message>
+        <message>
             <source>Copy Link</source>
             <translation>Copiar Enlace</translation>
         </message>
@@ -269,20 +273,8 @@
             <translation>Crear</translation>
         </message>
         <message>
-            <source>Add</source>
-            <translation>Agregar</translation>
-        </message>
-        <message>
-            <source>Remove</source>
-            <translation>Remover</translation>
-        </message>
-        <message>
-            <source>Add all</source>
-            <translation>Agregar todas</translation>
-        </message>
-        <message>
-            <source>Remove all</source>
-            <translation>Remover todas</translation>
+            <source>Make Public</source>
+            <translation>Hacer público</translation>
         </message>
     </context>
     <context>

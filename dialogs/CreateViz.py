@@ -114,6 +114,18 @@ class CartoDBPluginCreateViz(CartoDBPluginUserDialog):
                                     QApplication.translate('CartoDBPlugin',
                                                            'At least one CartoDB layer should belong or be visible to {}').format(self.currentUser),
                                     level=QgsMessageBar.WARNING)
+            self.ui.mapNameTX.setEnabled(False)
+            self.ui.descriptionTX.setEnabled(False)
+            self.ui.publicCH.setEnabled(False)
+        elif cartoDBLayersCount == 0:
+            self.ui.bar.clearWidgets()
+            self.ui.bar.pushMessage(QApplication.translate('CartoDBPlugin', 'Warning') + '!!',
+                                    QApplication.translate('CartoDBPlugin',
+                                                           'At least there should be a CartoDB layer in the project.'),
+                                    level=QgsMessageBar.WARNING)
+            self.ui.mapNameTX.setEnabled(False)
+            self.ui.descriptionTX.setEnabled(False)
+            self.ui.publicCH.setEnabled(False)
         else:
             self.cartoDBLayers.reverse()
 

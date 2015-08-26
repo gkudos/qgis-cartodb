@@ -106,6 +106,15 @@
          <property name="value">
           <number>24</number>
          </property>
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+         <property name="textDirection">
+          <enum>QProgressBar::TopToBottom</enum>
+         </property>
+         <property name="format">
+          <string>%p%</string>
+         </property>
         </widget>
        </item>
        <item>
@@ -138,6 +147,13 @@
    </item>
    <item>
     <layout class="QHBoxLayout" name="horizontalLayout_3">
+     <item>
+      <widget class="QLabel" name="statusLB">
+       <property name="text">
+        <string>Ready</string>
+       </property>
+      </widget>
+     </item>
      <item>
       <spacer name="horizontalSpacer">
        <property name="orientation">

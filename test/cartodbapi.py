@@ -52,6 +52,15 @@ class SignalsObject(QObject):
         self.test.logger.debug("*******************************************************************************")
         self.test.logger.debug("Upload result: " + json.dumps(data, sort_keys=True, indent=2, separators=(',', ': ')))
         self.test.logger.debug("*******************************************************************************")
+        self.test.uploadId = data['item_queue_id']
+        self.test.assertTrue(data['success'])
+        self.test.assertIsNotNone(data['item_queue_id'])
+
+    @pyqtSlot(dict)
+    def cb_show_upload_status_result(self, data):
+        self.test.logger.debug("*******************************************************************************")
+        self.test.logger.debug("Upload status result: " + json.dumps(data, sort_keys=True, indent=2, separators=(',', ': ')))
+        self.test.logger.debug("*******************************************************************************")
         self.test.assertTrue(True)
 
     @pyqtSlot(dict)
@@ -164,9 +173,17 @@ class CartoDBApiTest(UsesQApplication):
         cartodbApi.fetchContent.connect(self.signalsObject.cb_show_upload_result)
         cartodbApi.progress.connect(self.signalsObject.cb_progress)
         path = os.path.dirname(os.path.abspath(__file__))
-        path = os.path.join(path, 'data')
-        path = os.path.join(path, 'constituencies.zip')
+        path = os.path.join(path, upload_file)
+        # path = '/home/elesdoar/Documents/QGIS CartoDB/lotes_simplificados.zip'
         cartodbApi.upload(path)
+
+    def test_upload_file_status(self):
+        self.logger.debug("\n*******************************************************************************")
+        self.logger.debug('\nTest upload file status for shape: constituencies.zip')
+        self.logger.debug("\n*******************************************************************************")
+        cartodbApi = CartoDBApi(cartodb_user, api_key, is_multiuser)
+        cartodbApi.fetchContent.connect(self.signalsObject.cb_show_upload_status_result)
+        cartodbApi.checkUploadStatus('53dc786b-6013-4e7f-977c-5136f9828494')
 
     @unittest.skip("testing skipping")
     def test_create_viz_from_table(self):
@@ -185,15 +202,16 @@ class CartoDBApiTest(UsesQApplication):
         cartodbApi = CartoDBApi(cartodb_user, api_key, is_multiuser)
         cartodbApi.fetchContent.connect(self.signalsObject.cb_add_layer_to_map_result)
         cartoCSS = '#test_ideca_localidades { polygon-fill: #7B00B4; polygon-opacity: 0.6; line-color: #0F3B82; line-width: 0.5; line-opacity: 1; }'
-        cartodbApi.addLayerToMap('df48f415-2ed5-4aaa-ac73-ded9d64f5bd3', 'test_ideca_localidades', cartoCSS)
+        cartodbApi.addLayerToMap(test_map, 'test_ideca_localidades', cartoCSS)
 
+    @unittest.skip("testing skipping")
     def test_get_layers_map(self):
         self.logger.debug("\n*******************************************************************************")
         self.logger.debug('\nTest get layers in map: Test map from QGISCartoDB 3')
         self.logger.debug("\n*******************************************************************************")
         cartodbApi = CartoDBApi(cartodb_user, api_key, is_multiuser)
         cartodbApi.fetchContent.connect(self.signalsObject.cb_get_layers_map_result)
-        cartodbApi.getLayersMap('df48f415-2ed5-4aaa-ac73-ded9d64f5bd3')
+        cartodbApi.getLayersMap(test_map)
 
 if __name__ == '__main__':
     # http://cgoldberg.github.io/python-unittest-tutorial/
