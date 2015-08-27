@@ -129,9 +129,14 @@ class CartoDBPluginUpload(CartoDBPluginUserDialog):
         self.ui.uploadBar.setValue(math.ceil(float(current)/float(total)*100))
 
     def getSize(self, layer):
+        isZipFile = False
         filePath = layer.dataProvider().dataSourceUri()
         if filePath.find('|') != -1:
             filePath = filePath[0:filePath.find('|')]
+
+        if filePath.startswith('/vsizip/'):
+            filePath = filePath.replace('/vsizip/', '')
+            isZipFile = True
 
         file = QFile(filePath)
         fileInfo = QFileInfo(file)
@@ -140,12 +145,12 @@ class CartoDBPluginUpload(CartoDBPluginUserDialog):
         fileName = fileInfo.completeBaseName()
 
         size = 0
-        if layer.storageType() == 'ESRI Shapefile':
+        if layer.storageType() == 'ESRI Shapefile' and not isZipFile:
             for suffix in ['.shp', '.dbf', '.prj', '.shx']:
                 file = QFile(os.path.join(dirName, fileName + suffix))
                 fileInfo = QFileInfo(file)
                 size = size + fileInfo.size()
-        elif layer.storageType() in ['GPX', 'GeoJSON', 'LIBKML']:
+        elif layer.storageType() in ['GPX', 'GeoJSON', 'LIBKML'] or isZipFile:
             size = size + fileInfo.size()
 
         return size
@@ -154,6 +159,11 @@ class CartoDBPluginUpload(CartoDBPluginUserDialog):
         filePath = layer.dataProvider().dataSourceUri()
         if filePath.find('|') != -1:
             filePath = filePath[0:filePath.find('|')]
+
+        if filePath.startswith('/vsizip/'):
+            filePath = filePath.replace('/vsizip/', '')
+            if layer.storageType() in ['ESRI Shapefile', 'GPX', 'GeoJSON', 'LIBKML']:
+                return filePath
 
         file = QFile(filePath)
         fileInfo = QFileInfo(file)
@@ -168,12 +178,17 @@ class CartoDBPluginUpload(CartoDBPluginUserDialog):
         zipPath = os.path.join(tempdir, layer.name() + '.zip')
         zipFile = zipfile.ZipFile(zipPath, 'w')
 
+
         if layer.storageType() == 'ESRI Shapefile':
             for suffix in ['.shp', '.dbf', '.prj', '.shx']:
                 if os.path.exists(os.path.join(dirName, fileName + suffix)):
                     zipFile.write(os.path.join(dirName, fileName + suffix), fileName + suffix, zipfile.ZIP_DEFLATED)
         elif layer.storageType() == 'GeoJSON':
             zipFile.write(filePath, layer.name() + '.geojson', zipfile.ZIP_DEFLATED)
+        elif layer.storageType() == 'GPX':
+            zipFile.write(filePath, layer.name() + '.gpx', zipfile.ZIP_DEFLATED)
+        elif layer.storageType() == 'LIBKML':
+            zipFile.write(filePath, layer.name() + '.kml', zipfile.ZIP_DEFLATED)
         else:
             geoJsonName = os.path.join(tempfile.tempdir, layer.name())
             error = QgsVectorFileWriter.writeAsVectorFormat(layer, geoJsonName, "utf-8", None, "GeoJSON")

@@ -93,6 +93,7 @@ class CartoDBLayerListItem(CartoDBDatasetsListItem):
         self.ui.statusBar = QProgressBar(self)
         self.ui.statusBar.setProperty("value", 0)
         self.ui.statusBar.setFormat("Init")
+        self.ui.statusBar.setAutoFillBackground(True)
         self.ui.statusBar.hide()
         self.ui.horizontalLayout.insertWidget(1, self.ui.statusBar)
 
@@ -100,7 +101,7 @@ class CartoDBLayerListItem(CartoDBDatasetsListItem):
 
     def setStatus(self, status, value = 0):
         self.ui.statusBar.setProperty("value", value)
-        self.ui.statusBar.setFormat(status)
+        self.ui.statusBar.setFormat(status.capitalize())
         self.ui.statusBar.show()
 
     def clone(self):
