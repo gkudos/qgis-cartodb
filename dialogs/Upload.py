@@ -138,9 +138,8 @@ class CartoDBPluginUpload(CartoDBPluginUserDialog):
         qDebug('New file {}'.format(tf.name))
         error = QgsVectorFileWriter.writeAsVectorFormat(layer, tf.name, "utf-8", None, "SQLite")
         if error == QgsVectorFileWriter.NoError:
-            sql = 'SELECT * FROM ' + tableName
             newLayer = CartoDBLayer(self.iface, tableName, self.currentUser, self.currentApiKey,
-                                 self.currentUser, sql, spatiaLite=(tf.name + '.sqlite'), multiuser=self.currentMultiuser)
+                                 self.currentUser, None, spatiaLite=(tf.name + '.sqlite'), multiuser=self.currentMultiuser)
             QgsMapLayerRegistry.instance().addMapLayer(newLayer)
         else:
             self.ui.bar.pushMessage(QApplication.translate('CartoDBPlugin', 'Error loading CartoDB layer {}').format(tableName),
