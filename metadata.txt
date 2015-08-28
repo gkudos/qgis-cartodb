@@ -26,6 +26,7 @@ email=michaelsalgado@gkudos.com
 changelog=0.2.1
   - Create maps without select layers.
   - Fix order layer in maps.
+  - Fix when you push a new layer to CartoDB, it doesn't register the layer with your current project as being a CartoDB layer.
   0.2.0
   - Add functionality to Create Map buttons.
   - Fix Style Categorized: The generation of CartoCSS fails if there is data with special characters.

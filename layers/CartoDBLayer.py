@@ -46,7 +46,6 @@ class CartoDBLayer(QgsVectorLayer):
 
     def __init__(self, iface, tableName, user, apiKey, owner=None, sql=None, geoJSON=None,
                  filterByExtent=False, spatiaLite=None, readonly=False, multiuser=False, isSQL=False):
-        # SQLite available?
         self.iface = iface
         self.user = user
         self._apiKey = apiKey
@@ -54,6 +53,7 @@ class CartoDBLayer(QgsVectorLayer):
         self.owner = owner
         self.isSQL = isSQL
         self.multiuser = multiuser
+        # SQLite available?
         driverName = "SQLite"
         sqLiteDrv = ogr.GetDriverByName(driverName)
         self.databasePath = QgisCartoDB.CartoDBPlugin.PLUGIN_DIR + '/db/database.sqlite'

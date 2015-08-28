@@ -10,6 +10,7 @@
 #### Fixes
 
 * Fix order layer in maps.
+* Fix #30 When you push a new layer to CartoDB, it doesn't register the layer with your current project as being a CartoDB layer.
 
 <a name="0.2.0"></a>
 ### 0.2.0 (2015-08-10)

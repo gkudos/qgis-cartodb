@@ -233,7 +233,7 @@ class CartoDBPlugin(QObject):
             self.iface.messageBar().popWidget(progressMessageBar)
 
     def upload(self):
-        dlg = CartoDBPluginUpload(self.toolbar)
+        dlg = CartoDBPluginUpload(self.iface, self.toolbar)
         dlg.show()
 
         result = dlg.exec_()

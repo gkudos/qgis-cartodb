@@ -37,8 +37,10 @@ import zipfile
 
 
 class CartoDBPluginUpload(CartoDBPluginUserDialog):
-    def __init__(self, toolbar, parent=None):
+    def __init__(self, iface, toolbar, parent=None):
         CartoDBPluginUserDialog.__init__(self, toolbar, parent)
+
+        self.iface = iface
 
         self.ui = Ui_Upload()
         self.ui.setupUi(self)
@@ -53,7 +55,7 @@ class CartoDBPluginUpload(CartoDBPluginUserDialog):
         layers = QgsMapLayerRegistry.instance().mapLayers()
 
         # TODO Implement add to project
-        self.ui.convertCH.hide()
+        # self.ui.convertCH.hide()
         self.ui.overideCH.hide()
 
         self.ui.layersList.clear()
@@ -96,6 +98,9 @@ class CartoDBPluginUpload(CartoDBPluginUserDialog):
                     self.ui.bar.clearWidgets()
                     self.ui.bar.pushMessage(QApplication.translate('CartoDBPlugin', 'Table {} created').format(d['table_name']),
                                             level=QgsMessageBar.INFO, duration=5)
+
+                    if self.ui.convertCH.isChecked():
+                        self.convert2CartoDB(widget.layer, d['table_name'])
                 elif d['state'] == 'failure':
                     timer.stop()
                     self.ui.statusLB.setText(QApplication.translate('CartoDBPlugin', '{} failed, {}').format(widget.layer.name(), d['get_error_text']['title']))
@@ -123,6 +128,24 @@ class CartoDBPluginUpload(CartoDBPluginUserDialog):
         self.ui.uploadingLB.show()
         self.ui.bar.clearWidgets()
         cartodbApi.upload(zipPath)
+
+    def convert2CartoDB(self, layer, tableName):
+        tempdir = tempfile.tempdir
+        if tempdir is None:
+            tempdir = tempfile.mkdtemp()
+
+        tf = tempfile.NamedTemporaryFile(delete=False)
+        qDebug('New file {}'.format(tf.name))
+        error = QgsVectorFileWriter.writeAsVectorFormat(layer, tf.name, "utf-8", None, "SQLite")
+        if error == QgsVectorFileWriter.NoError:
+            sql = 'SELECT * FROM ' + self.tableName
+            newLayer = CartoDBLayer(self.iface, tableName, self.currentUser, self.currentApiKey,
+                                 self.currentUser, sql, spatiaLite=(tf.name + '.sqlite'), multiuser=self.currentMultiuser)
+            QgsMapLayerRegistry.instance().addMapLayer(newLayer)
+        else:
+            self.ui.bar.pushMessage(QApplication.translate('CartoDBPlugin', 'Error loading CartoDB layer {}').format(tableName),
+                                    level=QgsMessageBar.WARNING, duration=5)
+        os.remove(tf.name)
 
 
     def progressUpload(self, current, total):

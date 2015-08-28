@@ -155,6 +155,9 @@
      <property name="text">
       <string>Add CartoDB layer to project</string>
      </property>
+     <property name="checked">
+      <bool>true</bool>
+     </property>
     </widget>
    </item>
    <item>
