@@ -234,6 +234,13 @@ class CartoDBPlugin(QObject):
 
     def upload(self):
         dlg = CartoDBPluginUpload(self.iface, self.toolbar)
+        def addLayer(fileName, tableName):
+            newLayer = CartoDBLayer(self.iface, tableName, dlg.currentUser, dlg.currentApiKey,
+                                 dlg.currentUser, None, spatiaLite=fileName, multiuser=dlg.currentMultiuser)
+            QgsMapLayerRegistry.instance().addMapLayer(newLayer)
+            self.layers.append(newLayer)
+
+        dlg.addedLayer.connect(addLayer)
         dlg.show()
 
         result = dlg.exec_()

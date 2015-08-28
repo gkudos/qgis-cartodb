@@ -18,7 +18,7 @@ email                : michaelsalgado@gkudos.com, info@gkudos.com
  *                                                                         *
  ***************************************************************************/
 """
-from PyQt4.QtCore import Qt, QSettings, QFile, QFileInfo, QTimer, pyqtSlot, qDebug
+from PyQt4.QtCore import Qt, QSettings, QFile, QFileInfo, QTimer, pyqtSignal, pyqtSlot, qDebug
 from PyQt4.QtGui import QApplication, QDialog, QPixmap, QListWidgetItem, QLabel, QSizePolicy
 
 from qgis.core import QgsMapLayerRegistry, QgsMapLayer, QgsVectorFileWriter
@@ -37,6 +37,8 @@ import zipfile
 
 
 class CartoDBPluginUpload(CartoDBPluginUserDialog):
+    addedLayer = pyqtSignal(str, str)
+
     def __init__(self, iface, toolbar, parent=None):
         CartoDBPluginUserDialog.__init__(self, toolbar, parent)
 
@@ -134,18 +136,14 @@ class CartoDBPluginUpload(CartoDBPluginUserDialog):
         if tempdir is None:
             tempdir = tempfile.mkdtemp()
 
-        tf = tempfile.NamedTemporaryFile(delete=False)
+        tf = tempfile.NamedTemporaryFile()
         qDebug('New file {}'.format(tf.name))
         error = QgsVectorFileWriter.writeAsVectorFormat(layer, tf.name, "utf-8", None, "SQLite")
         if error == QgsVectorFileWriter.NoError:
-            newLayer = CartoDBLayer(self.iface, tableName, self.currentUser, self.currentApiKey,
-                                 self.currentUser, None, spatiaLite=(tf.name + '.sqlite'), multiuser=self.currentMultiuser)
-            QgsMapLayerRegistry.instance().addMapLayer(newLayer)
+            self.addedLayer.emit(tf.name + '.sqlite', tableName)
         else:
             self.ui.bar.pushMessage(QApplication.translate('CartoDBPlugin', 'Error loading CartoDB layer {}').format(tableName),
                                     level=QgsMessageBar.WARNING, duration=5)
-        os.remove(tf.name)
-
 
     def progressUpload(self, current, total):
         self.ui.uploadBar.setValue(math.ceil(float(current)/float(total)*100))
