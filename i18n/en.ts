@@ -214,8 +214,8 @@
             <translation>Replace if exists</translation>
         </message>
         <message>
-            <source>Add CartoDB layer to project</source>
-            <translation>Add CartoDB layer to project</translation>
+            <source>Add CartoDB layer to project (this could truncate the column's names)</source>
+            <translation>Add CartoDB layer to project (this could truncate the column's names)</translation>
         </message>
         <message>
             <source>Cancel</source>
@@ -224,6 +224,10 @@
         <message>
             <source>Upload</source>
             <translation>Upload</translation>
+        </message>
+        <message>
+            <source>Ready</source>
+            <translation>Listo</translation>
         </message>
     </context>
     <context>

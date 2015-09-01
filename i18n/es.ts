@@ -214,8 +214,8 @@
             <translation>Reemplazar si existe en CartoDB</translation>
         </message>
         <message>
-            <source>Add CartoDB layer to project</source>
-            <translation>Agregar capa CartoDB al proyecto</translation>
+            <source>Add CartoDB layer to project (this could truncate the column's names)</source>
+            <translation>Agregar capa CartoDB al proyecto (esto podría truncar los nombres de las columnas)</translation>
         </message>
         <message>
             <source>Cancel</source>
@@ -224,6 +224,10 @@
         <message>
             <source>Upload</source>
             <translation>Subir</translation>
+        </message>
+        <message>
+            <source>Ready</source>
+            <translation>Listo</translation>
         </message>
     </context>
     <context>

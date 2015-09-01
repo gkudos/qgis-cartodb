@@ -22,12 +22,13 @@ email                : michaelsalgado@gkudos.com, info@gkudos.com
 # Import the PyQt and QGIS libraries
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
-from qgis.core import *
+
+from qgis.core import QgsMessageLog, QgsPluginLayerRegistry, QgsMapLayerRegistry
 from osgeo import gdal
 from osgeo import ogr
+
 import resources
 
-from cartodb import CartoDBAPIKey, CartoDBException
 from QgisCartoDB.dialogs import CartoDBPluginUpload, CartoDBPluginDialog, CartoDBNewSQLDialog, CartoDBPluginCreateViz
 from QgisCartoDB.dialogs.ConnectionManager import CartoDBConnectionsManager
 from QgisCartoDB.layers import CartoDBLayer, CartoDBPluginLayer, CartoDBPluginLayerType, CartoDBLayerWorker
@@ -37,9 +38,11 @@ from QgisCartoDB.utils import CartoDBPluginWorker
 import os.path
 import shutil
 
-from urllib import urlopen
+"""
+Class CartoDBPlugin
 
-
+Main plugin class.
+"""
 class CartoDBPlugin(QObject):
     # initialize plugin directory
     PLUGIN_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -236,7 +239,7 @@ class CartoDBPlugin(QObject):
         dlg = CartoDBPluginUpload(self.iface, self.toolbar)
         def addLayer(fileName, tableName):
             newLayer = CartoDBLayer(self.iface, tableName, dlg.currentUser, dlg.currentApiKey,
-                                 dlg.currentUser, None, spatiaLite=fileName, multiuser=dlg.currentMultiuser)
+                             dlg.currentUser, None, spatiaLite=fileName, multiuser=dlg.currentMultiuser)
             QgsMapLayerRegistry.instance().addMapLayer(newLayer)
             self.layers.append(newLayer)
 

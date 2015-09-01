@@ -21,12 +21,9 @@ email                : michaelsalgado@gkudos.com, info@gkudos.com
 
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
-from qgis.core import *
 
-from osgeo import gdal
+from qgis.core import QgsFeatureRequest, QgsVectorLayer, QgsMessageLog, QgsDataSourceURI
 from osgeo import ogr
-
-import os.path
 
 from urllib import urlopen
 
@@ -56,8 +53,8 @@ class CartoDBLayer(QgsVectorLayer):
         # SQLite available?
         driverName = "SQLite"
         sqLiteDrv = ogr.GetDriverByName(driverName)
-        self.databasePath = QgisCartoDB.CartoDBPlugin.PLUGIN_DIR + '/db/database.sqlite'
-        self.datasource = sqLiteDrv.Open(self.databasePath, True)
+        self.database_path = QgisCartoDB.CartoDBPlugin.PLUGIN_DIR + '/db/database.sqlite'
+        self.datasource = sqLiteDrv.Open(self.database_path, True)
         self.layerName = tableName
         self.cartoTable = tableName
 
@@ -127,7 +124,7 @@ class CartoDBLayer(QgsVectorLayer):
                     if newLyr is not None:
                         QgsMessageLog.logMessage('New Layer created', 'CartoDB Plugin', QgsMessageLog.INFO)
                         uri = QgsDataSourceURI()
-                        uri.setDatabase(self.databasePath)
+                        uri.setDatabase(self.database_path)
                         uri.setDataSource('', self.layerName, 'geometry')
                         QgsMessageLog.logMessage('New Connection: ' + uri.uri(), 'CartoDB Plugin', QgsMessageLog.INFO)
                         path = uri.uri()
@@ -190,14 +187,16 @@ class CartoDBLayer(QgsVectorLayer):
                 if pgField['data_type'] == 'timestamp with time zone':
                     self.setEditorWidgetV2(self.fieldNameIndex(pgField['column_name']), 'DateTime')
                     self.setEditorWidgetV2Config(self.fieldNameIndex(pgField['column_name']), {
-                                                 u'display_format': u'yyyy-MM-dd hh:mm:ss',
-                                                 u'field_format': u'yyyy-MM-dd hh:mm:ss',
-                                                 u'calendar_popup': True})
+                        u'display_format': u'yyyy-MM-dd hh:mm:ss',
+                        u'field_format': u'yyyy-MM-dd hh:mm:ss',
+                        u'calendar_popup': True
+                    })
                 elif pgField['data_type'] == 'boolean':
                     self.setEditorWidgetV2(self.fieldNameIndex(pgField['column_name']), 'CheckBox')
                     self.setEditorWidgetV2Config(self.fieldNameIndex(pgField['column_name']), {
-                                                 u'CheckedState': u'true',
-                                                 u'UncheckedState': u'false'})
+                        u'CheckedState': u'true',
+                        u'UncheckedState': u'false'
+                    })
         except CartoDBException as e:
             QgsMessageLog.logMessage(errorMsg + ' - ' + str(e), 'CartoDB Plugin', QgsMessageLog.CRITICAL)
 

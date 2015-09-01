@@ -18,10 +18,10 @@ email                : michaelsalgado@gkudos.com, info@gkudos.com
  *                                                                         *
  ***************************************************************************/
 """
-from PyQt4.QtCore import Qt, QSettings, QFile, QFileInfo, QTimer, pyqtSignal, pyqtSlot, qDebug
+from PyQt4.QtCore import Qt, QSettings, QFile, QFileInfo, QTimer, QVariant, pyqtSignal, pyqtSlot, qDebug
 from PyQt4.QtGui import QApplication, QDialog, QPixmap, QListWidgetItem, QLabel, QSizePolicy
 
-from qgis.core import QgsMapLayerRegistry, QgsMapLayer, QgsVectorFileWriter, QgsField
+from qgis.core import QgsMapLayerRegistry, QgsMapLayer, QgsVectorFileWriter, QgsField, QgsVectorLayer
 from qgis.gui import QgsMessageBar
 
 from QgisCartoDB.cartodb import CartoDBApi
@@ -76,11 +76,11 @@ class CartoDBPluginUpload(CartoDBPluginUserDialog):
         for layerItem in self.ui.layersList.selectedItems():
             widget = self.ui.layersList.itemWidget(layerItem)
             qDebug('Layer: ' + str(widget.layer.storageType()))
-            layer = self.checkCartoDBId(widget.layer)
-            zipPath = self.zipLayer(layer, self.ui.convertCH.isChecked())
-            self.uploadZip(zipPath, widget, self.ui.convertCH.isChecked())
+            layer = self.checkCartoDBId(widget.layer, self.ui.convertCH.isChecked())
+            zipPath = self.zipLayer(layer)
+            self.uploadZip(zipPath, widget, layer, self.ui.convertCH.isChecked())
 
-    def uploadZip(self, zipPath, widget, convert = False):
+    def uploadZip(self, zipPath, widget, convertLayer=None, convert=False):
         def completeUpload(data):
             timer = QTimer(self)
 
@@ -101,10 +101,11 @@ class CartoDBPluginUpload(CartoDBPluginUserDialog):
                                             level=QgsMessageBar.INFO, duration=5)
 
                     if convert:
-                        self.convert2CartoDB(widget.layer, d['table_name'])
+                        self.convert2CartoDB(convertLayer if convertLayer is not None else widget.layer, d['table_name'])
                 elif d['state'] == 'failure':
                     timer.stop()
-                    self.ui.statusLB.setText(QApplication.translate('CartoDBPlugin', '{} failed, {}').format(widget.layer.name(), d['get_error_text']['title']))
+                    self.ui.statusLB.setText(QApplication.translate('CartoDBPlugin', '{} failed, {}').format(
+                        widget.layer.name(), d['get_error_text']['title']))
                     widget.setStatus(d['state'])
                     self.ui.bar.clearWidgets()
                     self.ui.bar.pushMessage(QApplication.translate('CartoDBPlugin', 'Error uploading {}').format(widget.layer.name()),
@@ -179,7 +180,7 @@ class CartoDBPluginUpload(CartoDBPluginUserDialog):
             tf = tempfile.NamedTemporaryFile()
             error = QgsVectorFileWriter.writeAsVectorFormat(layer, tf.name, 'utf-8', None, 'ESRI Shapefile')
             if error == QgsVectorFileWriter.NoError:
-                ly = QgsVectorLayer(tf.name + '.shp', layer.name() + '-tmp', 'ogr')
+                ly = QgsVectorLayer(tf.name + '.shp', layer.name(), 'ogr')
                 res = ly.dataProvider().addAttributes([QgsField('cartodb_id', QVariant.Int)])
                 ly.updateFields()
                 features = ly.getFeatures()
@@ -218,7 +219,7 @@ class CartoDBPluginUpload(CartoDBPluginUserDialog):
         if layer.storageType() == 'ESRI Shapefile':
             for suffix in ['.shp', '.dbf', '.prj', '.shx']:
                 if os.path.exists(os.path.join(dirName, fileName + suffix)):
-                    zipFile.write(os.path.join(dirName, fileName + suffix), fileName + suffix, zipfile.ZIP_DEFLATED)
+                    zipFile.write(os.path.join(dirName, fileName + suffix), layer.name() + suffix, zipfile.ZIP_DEFLATED)
         elif layer.storageType() == 'GeoJSON':
             zipFile.write(filePath, layer.name() + '.geojson', zipfile.ZIP_DEFLATED)
         elif layer.storageType() == 'GPX':
