@@ -21,7 +21,7 @@ email                : michaelsalgado@gkudos.com, info@gkudos.com
 from PyQt4.QtCore import Qt, QSettings, QFile, QFileInfo, QTimer, pyqtSignal, pyqtSlot, qDebug
 from PyQt4.QtGui import QApplication, QDialog, QPixmap, QListWidgetItem, QLabel, QSizePolicy
 
-from qgis.core import QgsMapLayerRegistry, QgsMapLayer, QgsVectorFileWriter
+from qgis.core import QgsMapLayerRegistry, QgsMapLayer, QgsVectorFileWriter, QgsField
 from qgis.gui import QgsMessageBar
 
 from QgisCartoDB.cartodb import CartoDBApi
@@ -76,12 +76,11 @@ class CartoDBPluginUpload(CartoDBPluginUserDialog):
         for layerItem in self.ui.layersList.selectedItems():
             widget = self.ui.layersList.itemWidget(layerItem)
             qDebug('Layer: ' + str(widget.layer.storageType()))
-            storageType = widget.layer.storageType()
-            # if storageType in ['ESRI Shapefile', 'GPX', 'GeoJSON', 'LIBKML', 'SQLite database with SpatiaLite extension']:
-            zipPath = self.zipLayer(widget.layer)
-            self.uploadZip(zipPath, widget)
+            layer = self.checkCartoDBId(widget.layer)
+            zipPath = self.zipLayer(layer, self.ui.convertCH.isChecked())
+            self.uploadZip(zipPath, widget, self.ui.convertCH.isChecked())
 
-    def uploadZip(self, zipPath, widget):
+    def uploadZip(self, zipPath, widget, convert = False):
         def completeUpload(data):
             timer = QTimer(self)
 
@@ -101,7 +100,7 @@ class CartoDBPluginUpload(CartoDBPluginUserDialog):
                     self.ui.bar.pushMessage(QApplication.translate('CartoDBPlugin', 'Table {} created').format(d['table_name']),
                                             level=QgsMessageBar.INFO, duration=5)
 
-                    if self.ui.convertCH.isChecked():
+                    if convert:
                         self.convert2CartoDB(widget.layer, d['table_name'])
                 elif d['state'] == 'failure':
                     timer.stop()
@@ -132,10 +131,7 @@ class CartoDBPluginUpload(CartoDBPluginUserDialog):
         cartodbApi.upload(zipPath)
 
     def convert2CartoDB(self, layer, tableName):
-        tempdir = tempfile.tempdir
-        if tempdir is None:
-            tempdir = tempfile.mkdtemp()
-
+        self.checkTempDir()
         tf = tempfile.NamedTemporaryFile()
         qDebug('New file {}'.format(tf.name))
         error = QgsVectorFileWriter.writeAsVectorFormat(layer, tf.name, "utf-8", None, "SQLite")
@@ -175,6 +171,28 @@ class CartoDBPluginUpload(CartoDBPluginUserDialog):
 
         return size
 
+    def checkCartoDBId(self, layer, convert = False):
+        ly = layer
+
+        if convert and layer.fieldNameIndex('cartodb_id') == -1:
+            self.checkTempDir()
+            tf = tempfile.NamedTemporaryFile()
+            error = QgsVectorFileWriter.writeAsVectorFormat(layer, tf.name, 'utf-8', None, 'ESRI Shapefile')
+            if error == QgsVectorFileWriter.NoError:
+                ly = QgsVectorLayer(tf.name + '.shp', layer.name() + '-tmp', 'ogr')
+                res = ly.dataProvider().addAttributes([QgsField('cartodb_id', QVariant.Int)])
+                ly.updateFields()
+                features = ly.getFeatures()
+                i = 1
+                for f in features:
+                    fid = f.id()
+                    aid = ly.fieldNameIndex('cartodb_id')
+                    attrs = { aid: i }
+                    ly.dataProvider().changeAttributeValues({ fid : attrs })
+                    i = i + 1
+                    ly.updateFeature(f)
+        return ly
+
     def zipLayer(self, layer):
         filePath = layer.dataProvider().dataSourceUri()
         if filePath.find('|') != -1:
@@ -191,9 +209,7 @@ class CartoDBPluginUpload(CartoDBPluginUserDialog):
         dirName = fileInfo.dir().absolutePath()
         fileName = fileInfo.completeBaseName()
 
-        tempdir = tempfile.tempdir
-        if tempdir is None:
-            tempdir = tempfile.mkdtemp()
+        tempdir = self.checkTempDir()
 
         zipPath = os.path.join(tempdir, layer.name() + '.zip')
         zipFile = zipfile.ZipFile(zipPath, 'w')
@@ -220,3 +236,9 @@ class CartoDBPluginUpload(CartoDBPluginUserDialog):
     def reject(self):
         # Back out of dialogue
         QDialog.reject(self)
+
+    def checkTempDir(self):
+        tempdir = tempfile.tempdir
+        if tempdir is None:
+            tempdir = tempfile.mkdtemp()
+        return tempdir
