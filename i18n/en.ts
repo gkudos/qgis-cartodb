@@ -29,8 +29,8 @@
             <translation>Filter Tables</translation>
         </message>
         <message>
-            <source>Import data by current extent</source>
-            <translation>Import data by current extent</translation>
+            <source>Download data only within the current view</source>
+            <translation>Download data only within the current view</translation>
         </message>
         <message>
             <source>Name</source>
@@ -214,8 +214,8 @@
             <translation>Replace if exists</translation>
         </message>
         <message>
-            <source>Add CartoDB layer to project (this could truncate the column's names)</source>
-            <translation>Add CartoDB layer to project (this could truncate the column's names)</translation>
+            <source>Add CartoDB layer to project</source>
+            <translation>Add CartoDB layer to project</translation>
         </message>
         <message>
             <source>Cancel</source>
@@ -227,7 +227,7 @@
         </message>
         <message>
             <source>Ready</source>
-            <translation>Listo</translation>
+            <translation>Ready</translation>
         </message>
     </context>
     <context>
@@ -277,8 +277,8 @@
             <translation>Create</translation>
         </message>
         <message>
-            <source>Make Public</source>
-            <translation>Make Public</translation>
+            <source>Public</source>
+            <translation>Public</translation>
         </message>
     </context>
     <context>

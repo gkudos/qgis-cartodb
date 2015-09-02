@@ -1,10 +1,13 @@
+"""
+Unit Test for CartoDB api
+"""
+
 from config import *
 
 import logging
 import unittest
-import sys
 
-from PyQt4.QtCore import QObject, QEventLoop, pyqtSlot
+from PyQt4.QtCore import QObject, pyqtSlot
 from PyQt4.QtGui import QApplication
 from cartodb.cartodbapi import CartoDBApi
 
@@ -137,7 +140,6 @@ class CartoDBApiTest(UsesQApplication):
         cartodbApi.fetchContent.connect(self.signalsObject.cb_show_user_data)
         cartodbApi.getUserDetails()
 
-    @unittest.skip("testing skipping")
     def test_show_user_tables(self):
         self.logger.debug("\n*******************************************************************************")
         self.logger.debug('\nTest get user tables for: ' + cartodb_user)
@@ -177,6 +179,7 @@ class CartoDBApiTest(UsesQApplication):
         # path = '/home/elesdoar/Documents/QGIS CartoDB/lotes_simplificados.zip'
         cartodbApi.upload(path)
 
+    @unittest.skip("testing skipping")
     def test_upload_file_status(self):
         self.logger.debug("\n*******************************************************************************")
         self.logger.debug('\nTest upload file status for shape: constituencies.zip')
@@ -192,7 +195,7 @@ class CartoDBApiTest(UsesQApplication):
         self.logger.debug("\n*******************************************************************************")
         cartodbApi = CartoDBApi(cartodb_user, api_key, is_multiuser)
         cartodbApi.fetchContent.connect(self.signalsObject.cb_show_create_viz_result)
-        cartodbApi.createVizFromTable('test_ideca_manzanas', 'Test map from QGISCartoDB', 'Test map from Description')
+        cartodbApi.createVizFromTable('test_ideca_cuerpos_agua', 'Test map from QGISCartoDB', 'Test map from Description')
 
     @unittest.skip("testing skipping")
     def test_add_layer_to_map(self):

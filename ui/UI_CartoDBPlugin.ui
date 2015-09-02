@@ -63,7 +63,7 @@
      <item>
       <widget class="QCheckBox" name="extentCH">
        <property name="text">
-        <string>Import data by current extent</string>
+        <string>Download data only within the current view</string>
        </property>
       </widget>
      </item>
@@ -144,7 +144,7 @@
         <enum>Qt::Horizontal</enum>
        </property>
        <property name="standardButtons">
-        <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
+        <set>QDialogButtonBox::Close|QDialogButtonBox::Ok</set>
        </property>
       </widget>
      </item>

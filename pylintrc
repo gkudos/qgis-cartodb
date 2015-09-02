@@ -1,3 +1,25 @@
+[MASTER]
+extension-pkg-whitelist=PyQt4,qgis
+
+[BASIC]
+# Good names for variables
+good-names = i,j,k,r,g,b,d,ui,e,ex
+
+# Regular expression which should only match correct argument names
+argument-rgx=[a-z_][a-zA-Z0-9_]{2,30}$
+
+# Regular expression which should only match correct variable names
+variable-rgx=[a-z_][a-z0-9_]{1,30}$
+
+# Regular expression which should only match correct instance attribute names
+attr-rgx=[a-z_][a-z0-9_]{,30}
+
+# Regular expression which should only match correct function names
+function-rgx=[a-z_][a-zA-Z0-9_]{2,30}$
+
+# Regular expression which should only match correct method names
+method-rgx=[a-z_][a-zA-Z0-9_]{2,30}$
+
 [FORMAT]
 # Maximum number of characters on a single line.
 max-line-length = 150

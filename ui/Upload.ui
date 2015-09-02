@@ -153,7 +153,7 @@
       <bool>true</bool>
      </property>
      <property name="text">
-      <string>Add CartoDB layer to project (this could truncate the column's names)</string>
+      <string>Add CartoDB layer to project</string>
      </property>
      <property name="checked">
       <bool>true</bool>
@@ -191,6 +191,9 @@
      </item>
      <item>
       <widget class="QPushButton" name="uploadBT">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
        <property name="text">
         <string>Upload</string>
        </property>

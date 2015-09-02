@@ -23,6 +23,7 @@ class CartoDBApi(QObject):
         self.cartodbUser = cartodbUser
         self.hostname = hostname
         self.apiUrl = "https://{}.{}/api/v1/".format(cartodbUser, hostname)
+        self.returnDict = True
 
         self.manager = QNetworkAccessManager()
         self.manager.finished.connect(self.returnFetchContent)
@@ -174,6 +175,18 @@ class CartoDBApi(QObject):
         request = self._getRequest(url)
 
         reply = self.manager.post(request, json.dumps(payload))
+        loop = QEventLoop()
+        reply.downloadProgress.connect(self.progressCB)
+        reply.error.connect(self._error)
+        reply.finished.connect(loop.exit)
+        loop.exec_()
+
+    def updateViz(self, viz, returnDict=True):
+        self.returnDict = returnDict
+        url = QUrl(self.apiUrl + "viz/{}?api_key={}".format(viz['id'], self.apiKey))
+        request = self._getRequest(url)
+
+        reply = self.manager.put(request, json.dumps(viz))
         loop = QEventLoop()
         reply.downloadProgress.connect(self.progressCB)
         reply.error.connect(self._error)

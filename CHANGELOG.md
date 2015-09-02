@@ -1,3 +1,11 @@
+<a name="0.2.2"></a>
+### 0.2.2 (2015-09-02)
+
+#### Enhancements
+
+* Change privacy for maps (public checkbox).
+* Change some texts.
+
 <a name="0.2.1"></a>
 ### 0.2.1 (2015-08-19)
 

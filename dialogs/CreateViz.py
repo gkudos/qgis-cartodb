@@ -18,32 +18,35 @@ email                : michaelsalgado@gkudos.com, info@gkudos.com
  *                                                                         *
  ***************************************************************************/
 """
-from PyQt4.QtCore import Qt, QFile, QFileInfo, pyqtSlot, qDebug, QPyNullVariant
-from PyQt4.QtGui import QApplication, QAbstractItemView, QDialog, QListWidgetItem, QLabel, QPixmap, QPushButton, QSizePolicy
-from PyQt4.QtGui import QClipboard, QPainter, QColor
+# pylint: disable-msg=E0611
+from PyQt4.QtCore import Qt, qDebug, QPyNullVariant
+from PyQt4.QtGui import QApplication, QListWidgetItem, QPushButton, QSizePolicy
+from PyQt4.QtGui import QPainter, QColor
 
-from qgis.core import QGis, QgsMapLayerRegistry, QgsMapLayer, QgsPalLayerSettings, NULL
+from qgis.core import QGis, QgsMapLayer, QgsPalLayerSettings
 from qgis.gui import QgsMessageBar
 
+# pylint: disable-msg=F0401
 import QgisCartoDB.CartoDBPlugin
 from QgisCartoDB.cartodb import CartoDBApi
 from QgisCartoDB.dialogs.Basic import CartoDBPluginUserDialog
 from QgisCartoDB.layers import CartoDBLayer
 from QgisCartoDB.ui.CreateViz import Ui_CreateViz
-from QgisCartoDB.utils import randomColor
-from QgisCartoDB.widgets import CartoDBLayersListWidget, CartoDBLayerListItem
+from QgisCartoDB.utils import randomColor, getSize, getLineJoin, getLineDasharray
+from QgisCartoDB.widgets import CartoDBLayerListItem
 
 from string import Template
 
 import copy
-import os
 import webbrowser
 
 
 class CartoDBPluginCreateViz(CartoDBPluginUserDialog):
+    """Dialog for create map"""
     def __init__(self, toolbar, iface, parent=None):
         CartoDBPluginUserDialog.__init__(self, toolbar, parent)
 
+        self.currentViz = None
         self.iface = iface
 
         self.ui = Ui_CreateViz()
@@ -77,6 +80,7 @@ class CartoDBPluginCreateViz(CartoDBPluginUserDialog):
 
         self.ui.mapNameTX.textChanged.connect(self.validateButtons)
         # self.ui.mapList.itemSelectionChanged.connect(self.validateButtons)
+        # pylint: disable-msg=E1101
         self.ui.cancelBT.clicked.connect(self.reject)
         self.ui.saveBT.clicked.connect(self.createViz)
         self.ui.cartoCssBT.clicked.connect(self.createCartoCss)
@@ -97,19 +101,21 @@ class CartoDBPluginCreateViz(CartoDBPluginUserDialog):
 
         self.ui.availableList.clear()
         self.cartoDBLayers = []
-        cartoDBLayersCount = 0
+        cartodb_layers_count = 0
         for ly in layers:
             if ly.type() == QgsMapLayer.VectorLayer and isinstance(ly, CartoDBLayer):
-                cartoDBLayersCount = cartoDBLayersCount + 1
+                cartodb_layers_count = cartodb_layers_count + 1
+                # pylint: disable-msg=E1101
                 if ly.user == self.currentUser:
                     self.cartoDBLayers.append(ly)
                     item = QListWidgetItem(self.ui.availableList)
-                    widget = CartoDBLayerListItem(ly.name(), ly, self.getSize(ly), ly.dataProvider().featureCount())
+                    widget = CartoDBLayerListItem(ly.name(), ly, getSize(ly), ly.dataProvider().featureCount())
                     item.setSizeHint(widget.sizeHint())
                     self.ui.availableList.setItemWidget(item, widget)
 
-        if cartoDBLayersCount > 0 and len(self.cartoDBLayers) == 0:
+        if cartodb_layers_count > 0 and len(self.cartoDBLayers) == 0:
             self.ui.bar.clearWidgets()
+            # pylint: disable-msg=E1101
             self.ui.bar.pushMessage(QApplication.translate('CartoDBPlugin', 'Warning') + '!!',
                                     QApplication.translate('CartoDBPlugin',
                                                            'At least one CartoDB layer should belong or be visible to {}').format(self.currentUser),
@@ -117,7 +123,7 @@ class CartoDBPluginCreateViz(CartoDBPluginUserDialog):
             self.ui.mapNameTX.setEnabled(False)
             self.ui.descriptionTX.setEnabled(False)
             self.ui.publicCH.setEnabled(False)
-        elif cartoDBLayersCount == 0:
+        elif cartodb_layers_count == 0:
             self.ui.bar.clearWidgets()
             self.ui.bar.pushMessage(QApplication.translate('CartoDBPlugin', 'Warning') + '!!',
                                     QApplication.translate('CartoDBPlugin',
@@ -129,7 +135,9 @@ class CartoDBPluginCreateViz(CartoDBPluginUserDialog):
         else:
             self.cartoDBLayers.reverse()
 
+    '''
     def copyItem(self, source, dest, item):
+        """Copy Item from source to dest"""
         itemWidget = source.itemWidget(item)
         newItemWidget = CartoDBLayerListItem(itemWidget.tableName, itemWidget.layer, itemWidget.size, itemWidget.rows)
         newItem = source.takeItem(source.row(item))
@@ -142,7 +150,6 @@ class CartoDBPluginCreateViz(CartoDBPluginUserDialog):
         self.ui.availableList.selectAll()
         self.addItems()
 
-    '''
     def addItems(self):
         if len(self.ui.availableList.selectedItems()) > 0:
             for item in self.ui.availableList.selectedItems():
@@ -161,38 +168,18 @@ class CartoDBPluginCreateViz(CartoDBPluginUserDialog):
             self.validateButtons()
     '''
 
-    def getSize(self, layer):
-        filePath = layer.dataProvider().dataSourceUri()
-        if filePath.find('|') != -1:
-            filePath = filePath[0:filePath.find('|')]
-
-        file = QFile(filePath)
-        fileInfo = QFileInfo(file)
-
-        dirName = fileInfo.dir().absolutePath()
-        fileName = fileInfo.completeBaseName()
-
-        size = 0
-        if layer.storageType() == 'ESRI Shapefile':
-            for suffix in ['.shp', '.dbf', '.prj', '.shx']:
-                file = QFile(os.path.join(dirName, fileName + suffix))
-                fileInfo = QFileInfo(file)
-                size = size + fileInfo.size()
-        elif layer.storageType() in ['GPX', 'GeoJSON', 'LIBKML']:
-            size = size + fileInfo.size()
-
-        return size
-
     def createCartoCss(self):
+        """Create CartoCSS for selected layer"""
         item = self.ui.availableList.currentItem()
 
         if item is not None:
             widget = self.ui.availableList.itemWidget(item)
             layer = widget.layer
-            cartoCSS = self.convert2CartoCSS(layer)
-            qDebug('CartoCSS: {}'.format(cartoCSS.encode('utf8', 'ignore')))
+            carto_css = self.convert2CartoCSS(layer)
+            qDebug('CartoCSS: {}'.format(carto_css.encode('utf8', 'ignore')))
 
     def createViz(self):
+        """Create Map in CartoDB"""
         self.ui.bar.clearWidgets()
         self.ui.bar.pushMessage("Info", QApplication.translate('CartoDBPlugin', 'Creating Map'), level=QgsMessageBar.INFO)
         self.withWarnings = False
@@ -205,9 +192,10 @@ class CartoDBPluginCreateViz(CartoDBPluginUserDialog):
                 layer = None
 
         if layer is not None:
-            cartoDBApi = CartoDBApi(self.currentUser, self.currentApiKey, self.currentMultiuser)
-            cartoDBApi.fetchContent.connect(self.cbCreateViz)
-            cartoDBApi.createVizFromTable(layer.fullTableName(), self.ui.mapNameTX.text(), self.ui.descriptionTX.toPlainText())
+            # pylint: disable-msg=E1101
+            cartodb_api = CartoDBApi(self.currentUser, self.currentApiKey, self.currentMultiuser)
+            cartodb_api.fetchContent.connect(self.cbCreateViz)
+            cartodb_api.createVizFromTable(layer.fullTableName(), self.ui.mapNameTX.text(), self.ui.descriptionTX.toPlainText())
         else:
             self.ui.bar.clearWidgets()
             widget = self.ui.bar.createMessage(QApplication.translate('CartoDBPlugin', 'Error!!'),
@@ -215,16 +203,24 @@ class CartoDBPluginCreateViz(CartoDBPluginUserDialog):
             self.ui.bar.pushWidget(widget, QgsMessageBar.CRITICAL)
 
     def cbCreateViz(self, data):
+        """Callback for create map, get created map data"""
         self.currentViz = data
 
-        cartoDBApi = CartoDBApi(self.currentUser, self.currentApiKey, self.currentMultiuser)
-        cartoDBApi.fetchContent.connect(self.cbGetLayers)
-        cartoDBApi.getLayersMap(data['map_id'])
+        # pylint: disable-msg=E1101
+        cartodb_api = CartoDBApi(self.currentUser, self.currentApiKey, self.currentMultiuser)
+        cartodb_api.fetchContent.connect(self.cbGetLayers)
+        cartodb_api.getLayersMap(data['map_id'])
+        if self.ui.publicCH.isChecked():
+            data['privacy'] = 'PUBLIC'
+            cartodb_api = CartoDBApi(self.currentUser, self.currentApiKey, self.currentMultiuser)
+            cartodb_api.updateViz(data)
 
     def cbGetLayers(self, data):
+        """Callback for getLayers, update cartoCSS to map layers"""
         layer = self.cartoDBLayers[0]
-        cartoCSS = self.convert2CartoCSS(layer)
-        cartoDBApi = CartoDBApi(self.currentUser, self.currentApiKey, self.currentMultiuser)
+        carto_css = self.convert2CartoCSS(layer)
+        # pylint: disable-msg=E1101
+        cartodb_api = CartoDBApi(self.currentUser, self.currentApiKey, self.currentMultiuser)
         layer1 = data['layers'][1]
         if layer.isSQL:
             layer1["options"]["query"] = layer.sql
@@ -232,39 +228,44 @@ class CartoDBPluginCreateViz(CartoDBPluginUserDialog):
             layer1["options"]["query"] = ""
             qDebug('Layer {}'.format(layer.fullTableName()))
             layer1["options"]["table_name"] = layer.fullTableName()
-        layer1['options']['tile_style'] = cartoCSS
+        layer1['options']['tile_style'] = carto_css
         layer1["options"]["legend"] = None
         layer1["options"]["order"] = 1
         layer1["order"] = 1
-        cartoDBApi.fetchContent.connect(self.showMessage)
-        cartoDBApi.updateLayerInMap(self.currentViz['map_id'], layer1)
+        cartodb_api.fetchContent.connect(self.showMessage)
+        cartodb_api.updateLayerInMap(self.currentViz['map_id'], layer1)
 
         for i, layer in enumerate(self.cartoDBLayers[1:len(self.cartoDBLayers)]):
             order = i + 2
             qDebug('Agregando: {} en pos: {}'.format(layer.tableName(), order))
-            cartoCSS = self.convert2CartoCSS(layer)
-            # cartoDBApi.fetchContent.connect(self.cbCreateViz)
-            newLayer = copy.deepcopy(layer1)
-            newLayer["options"]["tile_style"] = cartoCSS
-            newLayer["options"]["order"] = order
-            newLayer["options"]["legend"] = None
-            newLayer["order"] = order
-            newLayer["id"] = None
+            carto_css = self.convert2CartoCSS(layer)
+            # cartodb_api.fetchContent.connect(self.cbCreateViz)
+            new_layer = copy.deepcopy(layer1)
+            new_layer["options"]["tile_style"] = carto_css
+            new_layer["options"]["order"] = order
+            new_layer["options"]["legend"] = None
+            new_layer["order"] = order
+            new_layer["id"] = None
             if layer.isSQL:
-                newLayer["options"]["query"] = layer.sql
+                new_layer["options"]["query"] = layer.sql
             else:
                 qDebug('Layer {}'.format(layer.fullTableName()))
-                newLayer["options"]["query"] = ""
-                newLayer["options"]["table_name"] = layer.fullTableName()
-            cartoDBApi.addLayerToMap(self.currentViz['map_id'], newLayer)
+                new_layer["options"]["query"] = ""
+                new_layer["options"]["table_name"] = layer.fullTableName()
+            cartodb_api.addLayerToMap(self.currentViz['map_id'], new_layer)
 
+    # pylint: disable-msg=W0613
     def showMessage(self, data):
+        """Show message to user"""
+        # pylint: disable-msg=E1101
         url = '{}/viz/{}/public_map'.format(self.currentUserData['base_url'], self.currentViz['id'])
 
         def openVis():
+            """Open map in default browser"""
             webbrowser.open(url)
 
         def copyURL():
+            """Copy map URL to clipboard"""
             QApplication.clipboard().setText(url)
 
 
@@ -288,29 +289,30 @@ class CartoDBPluginCreateViz(CartoDBPluginUserDialog):
         self.ui.bar.pushWidget(widget, QgsMessageBar.INFO if not self.withWarnings else QgsMessageBar.WARNING, duration=10)
 
     def convert2CartoCSS(self, layer):
+        """Convert layer symbology to CartoCSS"""
         renderer = layer.rendererV2()
-        cartoCSS = ''
-        labelCSS = ''
+        carto_css = ''
+        label_css = ''
 
-        labelSettings = QgsPalLayerSettings()
-        labelSettings.readFromLayer(layer)
-        if labelSettings.enabled:
+        label_settings = QgsPalLayerSettings()
+        label_settings.readFromLayer(layer)
+        if label_settings.enabled:
             d = {
                 'layername': '#' + layer.tableName(),
-                'field': labelSettings.getLabelExpression().dump(),
+                'field': label_settings.getLabelExpression().dump(),
                 # TODO Get font size
                 'size': 11,
-                'color': labelSettings.textColor.name()
+                'color': label_settings.textColor.name()
             }
             filein = open(QgisCartoDB.CartoDBPlugin.PLUGIN_DIR + '/templates/labels.less')
-            labelCSS = Template(filein.read())
-            labelCSS = labelCSS.substitute(d)
-        # qDebug('Label CSS: ' + labelCSS)
+            label_css = Template(filein.read())
+            label_css = label_css.substitute(d)
+        # qDebug('Label CSS: ' + label_css)
 
         # CSS for single symbols
         if renderer.type() == 'singleSymbol':
             symbol = renderer.symbol()
-            cartoCSS = self.symbol2CartoCSS(layer, symbol, '#' + layer.tableName())
+            carto_css = self.symbol2CartoCSS(layer, symbol, '#' + layer.tableName())
         # CSS for categorized symbols
         elif renderer.type() == 'categorizedSymbol':
             # qDebug('Categorized: ' + renderer.classAttribute())
@@ -325,15 +327,16 @@ class CartoDBPluginCreateViz(CartoDBPluginUserDialog):
 
                     value = str(value.encode('utf8', 'ignore'))
                     # qDebug('Value {}'.format(value))
-                    styleName = '#{}[{}={}]'.format(layer.tableName(), renderer.classAttribute(), value).decode('utf8')
-                    cartoCSS = cartoCSS + \
-                        self.symbol2CartoCSS(layer, symbol, styleName)
+                    style_name = '#{}[{}={}]'.format(layer.tableName(), renderer.classAttribute(), value).decode('utf8')
+                    carto_css = carto_css + \
+                        self.symbol2CartoCSS(layer, symbol, style_name)
                 else:
-                    cartoCSS = self.symbol2CartoCSS(layer, symbol, '#' + layer.tableName()) + cartoCSS
+                    carto_css = self.symbol2CartoCSS(layer, symbol, '#' + layer.tableName()) + carto_css
         # CSS for graduated symbols
         elif renderer.type() == 'graduatedSymbol':
             # qDebug('Graduated')
             def upperValue(ran):
+                """Get upper value from range"""
                 return ran.upperValue()
 
             ranges = sorted(renderer.ranges(), key=upperValue, reverse=True)
@@ -346,41 +349,44 @@ class CartoDBPluginCreateViz(CartoDBPluginUserDialog):
                     ran.label()
                 ))
                 '''
-                cartoCSS = cartoCSS + \
-                    self.symbol2CartoCSS(layer, symbol, '#' + layer.tableName() + '[' + renderer.classAttribute() + '<=' + str(ran.upperValue()) + ']')
+                carto_css = carto_css + \
+                    self.symbol2CartoCSS(layer, symbol, '#' + layer.tableName() + \
+                    '[' + renderer.classAttribute() + '<=' + str(ran.upperValue()) + ']')
 
-        return '/** Styles designed from QGISCartoDB Plugin */\n\n' + cartoCSS + '\n' + labelCSS
+        return '/** Styles designed from QGISCartoDB Plugin */\n\n' + carto_css + '\n' + label_css
 
     def symbol2CartoCSS(self, layer, symbol, styleName):
-        cartoCSS = ''
-        layerOpacity = str(float((100.0 - layer.layerTransparency())/100.0))
+        # pylint: disable-msg=R0914,R0912,R0915
+        """Convert QGIS symbol to cartoCSS"""
+        carto_css = ''
+        layer_opacity = str(float((100.0 - layer.layerTransparency())/100.0))
 
-        blendMode = layer.featureBlendMode()
-        compositionMode = 'src-over'
-        if blendMode == QPainter.CompositionMode_Lighten:
-            compositionMode = 'lighten'
-        elif blendMode == QPainter.CompositionMode_Screen:
-            compositionMode = 'screen'
-        elif blendMode ==  QPainter.CompositionMode_ColorDodge:
-            compositionMode = 'color-dodge'
-        elif blendMode == QPainter.CompositionMode_Plus:
-            compositionMode = 'plus'
-        elif blendMode == QPainter.CompositionMode_Darken:
-            compositionMode = 'darken'
-        elif blendMode == QPainter.CompositionMode_Multiply:
-            compositionMode = 'multiply'
-        elif blendMode == QPainter.CompositionMode_ColorBurn:
-            compositionMode = 'color-burn'
-        elif blendMode == QPainter.CompositionMode_Overlay:
-            compositionMode = 'overlay'
-        elif blendMode == QPainter.CompositionMode_SoftLight:
-            compositionMode = 'soft-light'
-        elif blendMode == QPainter.CompositionMode_HardLight:
-            compositionMode = 'hard-light'
-        elif blendMode == QPainter.CompositionMode_Difference:
-            compositionMode = 'difference'
-        elif blendMode == QPainter.CompositionMode_Exclusion:
-            compositionMode = 'exclusion'
+        blend_mode = layer.featureBlendMode()
+        composition_mode = 'src-over'
+        if blend_mode == QPainter.CompositionMode_Lighten:
+            composition_mode = 'lighten'
+        elif blend_mode == QPainter.CompositionMode_Screen:
+            composition_mode = 'screen'
+        elif blend_mode == QPainter.CompositionMode_ColorDodge:
+            composition_mode = 'color-dodge'
+        elif blend_mode == QPainter.CompositionMode_Plus:
+            composition_mode = 'plus'
+        elif blend_mode == QPainter.CompositionMode_Darken:
+            composition_mode = 'darken'
+        elif blend_mode == QPainter.CompositionMode_Multiply:
+            composition_mode = 'multiply'
+        elif blend_mode == QPainter.CompositionMode_ColorBurn:
+            composition_mode = 'color-burn'
+        elif blend_mode == QPainter.CompositionMode_Overlay:
+            composition_mode = 'overlay'
+        elif blend_mode == QPainter.CompositionMode_SoftLight:
+            composition_mode = 'soft-light'
+        elif blend_mode == QPainter.CompositionMode_HardLight:
+            composition_mode = 'hard-light'
+        elif blend_mode == QPainter.CompositionMode_Difference:
+            composition_mode = 'difference'
+        elif blend_mode == QPainter.CompositionMode_Exclusion:
+            composition_mode = 'exclusion'
 
         if symbol.symbolLayerCount() > 0:
             lyr = None
@@ -400,41 +406,41 @@ class CartoDBPluginCreateViz(CartoDBPluginUserDialog):
                         'fillColor': lyr.fillColor().name(),
                         # 96 ppi = 3.7795275552 mm
                         'width': round(3.7795275552 * lyr.size(), 0),
-                        'opacity': layerOpacity,
+                        'opacity': layer_opacity,
                         'borderColor': lyr.outlineColor().name(),
                         'borderWidth': round(3.7795275552 * lyr.outlineWidth(), 0),
-                        'markerCompOp': compositionMode
+                        'markerCompOp': composition_mode
                     }
                     filein = open(QgisCartoDB.CartoDBPlugin.PLUGIN_DIR + '/templates/simplepoint.less')
                 elif layer.geometryType() == QGis.Line:
-                    lineWidth = round(3.7795275552 * lyr.width(), 0)
+                    line_width = round(3.7795275552 * lyr.width(), 0)
                     if lyr.penStyle() == Qt.NoPen:
-                        lineWidth = 0
+                        line_width = 0
 
                     d = {
                         'layername': styleName,
                         'lineColor': lyr.color().name(),
-                        'lineWidth': lineWidth,
-                        'opacity': layerOpacity,
-                        'lineCompOp': compositionMode,
-                        'lineJoin': self._getLineJoin(lyr),
-                        'lineDasharray': self._getLineDasharray(lyr.penStyle(), lineWidth)
+                        'lineWidth': line_width,
+                        'opacity': layer_opacity,
+                        'lineCompOp': composition_mode,
+                        'lineJoin': getLineJoin(lyr),
+                        'lineDasharray': getLineDasharray(lyr.penStyle(), line_width)
                     }
                     filein = open(QgisCartoDB.CartoDBPlugin.PLUGIN_DIR + '/templates/simpleline.less')
                 elif layer.geometryType() == QGis.Polygon:
-                    borderWidth = round(3.7795275552 * lyr.borderWidth(), 0)
+                    border_width = round(3.7795275552 * lyr.borderWidth(), 0)
                     if lyr.borderStyle() == Qt.NoPen:
-                        borderWidth = 0
+                        border_width = 0
 
                     d = {
                         'layername': styleName,
                         'fillColor': lyr.fillColor().name(),
-                        'opacity': layerOpacity,
+                        'opacity': layer_opacity,
                         'borderColor': lyr.outlineColor().name(),
-                        'borderWidth': borderWidth,
-                        'polygonCompOp': compositionMode,
-                        'lineJoin': self._getLineJoin(lyr),
-                        'lineDasharray': self._getLineDasharray(lyr.borderStyle(), borderWidth)
+                        'borderWidth': border_width,
+                        'polygonCompOp': composition_mode,
+                        'lineJoin': getLineJoin(lyr),
+                        'lineDasharray': getLineDasharray(lyr.borderStyle(), border_width)
                     }
                     filein = open(QgisCartoDB.CartoDBPlugin.PLUGIN_DIR + '/templates/simplepolygon.less')
 
@@ -452,51 +458,34 @@ class CartoDBPluginCreateViz(CartoDBPluginUserDialog):
                     d = {
                         'layername': styleName,
                         'fillColor': QColor(r, g, b, 255).name(),
-                        'markerCompOp': compositionMode
+                        'markerCompOp': composition_mode
                     }
                     filein = open(QgisCartoDB.CartoDBPlugin.PLUGIN_DIR + '/templates/defaultpoint.less')
                 elif layer.geometryType() == QGis.Line:
                     d = {
                         'layername': styleName,
                         'lineColor': QColor(r, g, b, 255).name(),
-                        'lineCompOp': compositionMode,
+                        'lineCompOp': composition_mode,
                     }
                     filein = open(QgisCartoDB.CartoDBPlugin.PLUGIN_DIR + '/templates/defaultline.less')
                 elif layer.geometryType() == QGis.Polygon:
                     d = {
                         'layername': styleName,
                         'fillColor': QColor(r, g, b, 255).name(),
-                        'polygonCompOp': compositionMode,
+                        'polygonCompOp': composition_mode,
                     }
                     filein = open(QgisCartoDB.CartoDBPlugin.PLUGIN_DIR + '/templates/defaultpolygon.less')
 
-        cartoCSS = Template(filein.read())
-        cartoCSS = cartoCSS.substitute(d,
-                            input_encoding='utf-8',
-                            output_encoding='utf-8',
-                            encoding_errors='replace')
-        return cartoCSS
+        carto_css = Template(filein.read())
+        carto_css = carto_css.substitute(
+            d,
+            input_encoding='utf-8',
+            output_encoding='utf-8',
+            encoding_errors='replace'
+        )
+        return carto_css
 
     def validateButtons(self):
+        """Validate save button"""
         enabled = self.ui.mapNameTX.text() != '' # and self.ui.mapList.count() > 0
         self.ui.saveBT.setEnabled(enabled)
-
-    def _getLineJoin(self, lyr):
-        joinStyle = 'miter'
-        if lyr.penJoinStyle() == Qt.BevelJoin:
-            joinStyle = 'bevel'
-        elif lyr.penJoinStyle() == Qt.RoundJoin:
-            joinStyle = 'round'
-        return joinStyle
-
-    def _getLineDasharray(self, lineStyle, lineWidth):
-        lineDasharray = '0'
-        if lineStyle == Qt.DashLine:
-            lineDasharray = '5,5'
-        elif lineStyle == Qt.DotLine:
-            lineDasharray = '{},{}'.format(lineWidth, lineWidth*5)
-        elif lineStyle == Qt.DashDotLine:
-            lineDasharray = '{},{},{},{}'.format(lineWidth*10, lineWidth*10, lineWidth, lineWidth*10)
-        elif lineStyle == Qt.DashDotDotLine:
-            lineDasharray = '{},{},{},{},{},{}'.format(lineWidth*5, lineWidth*5, lineWidth, lineWidth*5, lineWidth, lineWidth*5)
-        return lineDasharray

@@ -29,8 +29,8 @@
             <translation>Filtrar Tablas</translation>
         </message>
         <message>
-            <source>Import data by current extent</source>
-            <translation>Importar datos por la extensión actual</translation>
+            <source>Download data only within the current view</source>
+            <translation>Descargar datos únicamente dentro de la vista actual</translation>
         </message>
         <message>
             <source>Name</source>
@@ -214,8 +214,8 @@
             <translation>Reemplazar si existe en CartoDB</translation>
         </message>
         <message>
-            <source>Add CartoDB layer to project (this could truncate the column's names)</source>
-            <translation>Agregar capa CartoDB al proyecto (esto podría truncar los nombres de las columnas)</translation>
+            <source>Add CartoDB layer to project</source>
+            <translation>Agregar capa CartoDB al proyecto</translation>
         </message>
         <message>
             <source>Cancel</source>
@@ -277,8 +277,8 @@
             <translation>Crear</translation>
         </message>
         <message>
-            <source>Make Public</source>
-            <translation>Hacer público</translation>
+            <source>Public</source>
+            <translation>Público</translation>
         </message>
     </context>
     <context>
