@@ -1,8 +1,7 @@
-![Logo](images/logo.jpg?raw=true "QGis CartoDB")
+![Logo](images/logo.jpg?raw=true "CartoDB plugin for QGis")
 ================================================
-# QGISCartoDB
-### QGis for CartoDB
-#### The best of your Desktop GIS with the best of the web GIS.
+# CartoDB plugin for QGis
+### The best of your Desktop GIS with the best of the web GIS.
 
 ![QGisCartoDB](https://lh3.googleusercontent.com/aVV2C4SigQ6Tu15LCO9kSeHNDZIQe3qr1alt4NMMq6Y=w1161-h659-no "QGis CartoDB")
 
