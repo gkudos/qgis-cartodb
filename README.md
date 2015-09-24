@@ -19,7 +19,7 @@
 
 ## Documentation
 
-* [QgisCartoDB Wiki](https://github.com/gkudos/qgis-cartodb/wiki)
+* [CartoDB plugin for QGIS Wiki](https://github.com/gkudos/qgis-cartodb/wiki)
 
 
 ## Sponsors
