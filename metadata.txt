@@ -1,5 +1,5 @@
 [general]
-name=QGISCartoDB
+name=CartoDB
 description=CartoDB Plugin for QGis. It allows to view, create, edit or delete data from your CartoDB account using your favorite opensource desktop GIS: QGIS.
 category=Web
 version=0.2.2
