@@ -1,3 +1,10 @@
+<a name="0.2.3"></a>
+### 0.2.3 (2015-10-04)
+
+#### Fixes
+
+* Fix #33 Error updating recently uploaded data
+
 <a name="0.2.2"></a>
 ### 0.2.2 (2015-09-02)
 

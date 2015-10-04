@@ -19,8 +19,7 @@ email                : michaelsalgado@gkudos.com, info@gkudos.com
 ***************************************************************************/
 """
 
-from PyQt4.QtCore import *
-from PyQt4.QtGui import *
+from PyQt4.QtCore import Qt, QDate, QObject, QEventLoop, pyqtSignal, qDebug
 
 from qgis.core import QgsFeatureRequest, QgsVectorLayer, QgsMessageLog, QgsDataSourceURI
 from osgeo import ogr
@@ -29,14 +28,14 @@ from urllib import urlopen
 
 from PyQt4.QtCore import pyqtSlot
 
-from qgis.core import *
-
 import QgisCartoDB.CartoDBPlugin
 from QgisCartoDB.cartodb import CartoDBAPIKey, CartoDBException, CartoDBApi
 from QgisCartoDB.utils import CartoDBPluginWorker
 
-
 class CartoDBLayer(QgsVectorLayer):
+    """
+    CartoDB Layer
+    """
     LAYER_CNAME_PROPERTY = 'user'
     LAYER_TNAME_PROPERTY = 'tableName'
     LAYER_SQL_PROPERTY = 'cartoSQL'
@@ -57,6 +56,9 @@ class CartoDBLayer(QgsVectorLayer):
         self.datasource = sqLiteDrv.Open(self.database_path, True)
         self.layerName = tableName
         self.cartoTable = tableName
+        self.readonly = False
+        self._deletedFeatures = []
+        self.sql = sql
 
         self.forceReadOnly = False or readonly
 
@@ -92,27 +94,6 @@ class CartoDBLayer(QgsVectorLayer):
                 jsonLayer = dsGeoJSON.GetLayerByName('OGRGeoJSON')
 
                 if jsonLayer is not None:
-                    """ TODO Convert to numbers numeric fields when it's null.
-                    layerDefinition = jsonLayer.GetLayerDefn()
-                    QgsMessageLog.logMessage("Layer def: " + str(layerDefinition), 'CartoDB Plugin', QgsMessageLog.INFO)
-                    for i in range(layerDefinition.GetFieldCount()):
-                        fieldName = layerDefinition.GetFieldDefn(i).GetName()
-                        fieldTypeCode = layerDefinition.GetFieldDefn(i).GetType()
-                        fieldType = layerDefinition.GetFieldDefn(i).GetFieldTypeName(fieldTypeCode)
-                        fieldWidth = layerDefinition.GetFieldDefn(i).GetWidth()
-                        GetPrecision = layerDefinition.GetFieldDefn(i).GetPrecision()
-                        if fieldName == 'number':
-                            layerDefinition.GetFieldDefn(i).SetType(2)
-                            jsonLayer.StartTransaction()
-                            jsonLayer.AlterFieldDefn(i, layerDefinition.GetFieldDefn(i), ogr.ALTER_TYPE_FLAG)
-                            jsonLayer.CommitTransaction()
-
-                        fieldTypeCode = layerDefinition.GetFieldDefn(i).GetType()
-                        fieldType = layerDefinition.GetFieldDefn(i).GetFieldTypeName(fieldTypeCode)
-
-                        QgsMessageLog.logMessage(fieldName + " - " + fieldType + " " + str(fieldWidth) + " " + str(GetPrecision) + " code: " + str(fieldTypeCode), 'CartoDB Plugin', QgsMessageLog.INFO)
-                    """
-
                     i = 1
                     tempLayerName = self.layerName
                     while self.datasource.GetLayerByName(str(tempLayerName)) is not None:
@@ -158,7 +139,6 @@ class CartoDBLayer(QgsVectorLayer):
         self.setProviderEncoding('UTF-8')
 
         self.readonly = readonly
-        self._deletedFeatures = []
 
         if not self.readonly:
             self.initConnections()
@@ -198,14 +178,18 @@ class CartoDBLayer(QgsVectorLayer):
                         u'UncheckedState': u'false'
                     })
         except CartoDBException as e:
-            QgsMessageLog.logMessage(errorMsg + ' - ' + str(e), 'CartoDB Plugin', QgsMessageLog.CRITICAL)
+            QgsMessageLog.logMessage('Error - ' + str(e), 'CartoDB Plugin', QgsMessageLog.CRITICAL)
 
         self.setFieldEditable(self.fieldNameIndex('cartodb_id'), False)
         self.setEditorWidgetV2(self.fieldNameIndex('cartodb_id'), 'Hidden')
-        self.setFieldEditable(self.fieldNameIndex('updated_at'), False)
-        self.setEditorWidgetV2(self.fieldNameIndex('updated_at'), 'Hidden')
-        self.setFieldEditable(self.fieldNameIndex('created_at'), False)
-        self.setEditorWidgetV2(self.fieldNameIndex('created_at'), 'Hidden')
+
+        if self.fieldNameIndex('updated_at') != -1:
+            self.setFieldEditable(self.fieldNameIndex('updated_at'), False)
+            self.setEditorWidgetV2(self.fieldNameIndex('updated_at'), 'Hidden')
+
+        if self.fieldNameIndex('created_at') != -1:
+            self.setFieldEditable(self.fieldNameIndex('created_at'), False)
+            self.setEditorWidgetV2(self.fieldNameIndex('created_at'), 'Hidden')
         self.setFieldEditable(self.fieldNameIndex('OGC_FID'), False)
         self.setFieldEditable(self.fieldNameIndex('GEOMETRY'), False)
 
@@ -290,39 +274,56 @@ class CartoDBLayer(QgsVectorLayer):
                                                     level=self.iface.messageBar().WARNING, duration=10)
 
     def _addFeatures(self, addedFeatures):
-        provider = self.dataProvider()
         for featureID, feature in addedFeatures.iteritems():
             QgsMessageLog.logMessage('Add feature with feature ID: ' + str(featureID), 'CartoDB Plugin', QgsMessageLog.INFO)
             sql = "INSERT INTO " + self._schema() + self.cartoTable + " ("
             addComma = False
+
+            fieldsStr = ""
+            valuesStr = ""
             for field in feature.fields():
-                if unicode(feature[field.name()]) == 'NULL' or feature[field.name()] is None:
+                value = feature[field.name()]
+                if unicode(value) == 'NULL' or value is None:
                     continue
+                elif isinstance(value, QDate):
+                    if value.isNull():
+                        continue
+                    else:
+                        value = value.toString(Qt.ISODate)
+
                 if addComma:
-                    sql = sql + ", "
-                sql = sql + field.name()
+                    fieldsStr = fieldsStr + ", "
+                    valuesStr = valuesStr + ", "
+
+                fieldsStr = fieldsStr + field.name()
+                valuesStr = valuesStr + "'" + unicode(value) + "'"
                 addComma = True
             if addComma:
-                sql = sql + ", "
-            sql = sql + "the_geom) VALUES ("
-            addComma = False
-            for field in feature.fields():
-                if unicode(feature[field.name()]) == 'NULL' or feature[field.name()] is None:
-                    continue
-                if addComma:
-                    sql = sql + ", "
-                sql = sql + "'" + unicode(feature[field.name()]) + "'"
-                addComma = True
-            if addComma:
-                sql = sql + ", "
-            sql = sql + "ST_GeomFromText('" + feature.geometry().exportToWkt() + "', 4326)) RETURNING cartodb_id, created_at, updated_at"
+                fieldsStr = fieldsStr + ", "
+                valuesStr = valuesStr + ", "
+
+            fieldsStr = fieldsStr + "the_geom"
+            valuesStr = valuesStr + "ST_GeomFromText('" + feature.geometry().exportToWkt() + "', 4326)"
+
+            sql = sql + fieldsStr + ") VALUES (" + valuesStr + ") RETURNING cartodb_id"
+
+
+            nullableFields = ['cartodb_id']
+            if feature.fieldNameIndex("created_at") != -1:
+                sql = sql + ", created_at"
+                nullableFields.append('created_at')
+            if feature.fieldNameIndex("updated_at") != -1:
+                sql = sql + ", updated_at"
+                nullableFields.append('updated_at')
+
             sql = sql.encode('utf-8')
+
             res = self._updateSQL(sql, 'Some error ocurred inserting feature')
             if isinstance(res, dict) and res['total_rows'] == 1:
                 self.iface.messageBar().pushMessage('Info',
                                                     'Feature inserted at CartoDB servers',
                                                     level=self.iface.messageBar().INFO, duration=10)
-                for f in ['cartodb_id', 'created_at', 'updated_at']:
+                for f in nullableFields:
                     self._updateNullableFields(featureID, f, res['rows'][0][f])
 
     def _updateNullableFields(self, featureID, fieldName, value):
@@ -404,6 +405,7 @@ class CartoDBLayerWorker(QObject):
         self.dlg = dlg
         self.sql = sql
         self.filterByExtent = filterByExtent
+        self.loop = None
 
     def load(self):
         worker = CartoDBPluginWorker(self, 'loadLayer')
@@ -435,9 +437,16 @@ class CartoDBLayerWorker(QObject):
         # cartoDBApi.getDataFromTable(sql, False)
         # geoJSON = self._loadData()
 
+    """
+    On worker has finished
+    """
     def workerFinished(self, ret):
         QgsMessageLog.logMessage('Task finished:\n' + str(ret), 'CartoDB Plugin', QgsMessageLog.INFO)
         self.loop.exit()
 
+    """
+    On worker error
+    """
     def workerError(self, e, exception_string):
-        QgsMessageLog.logMessage('Worker thread raised an exception:\n'.format(exception_string), 'CartoDB Plugin', QgsMessageLog.CRITICAL)
+        QgsMessageLog.logMessage('Worker thread raised an exception: {} - {}\n'.format(exception_string, str(e)),
+                                 'CartoDB Plugin', QgsMessageLog.CRITICAL)
