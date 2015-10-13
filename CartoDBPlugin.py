@@ -103,10 +103,10 @@ class CartoDBPlugin(QObject):
             self._createVizAction.setEnabled(False)
             self._addSQLAction.setEnabled(False)
 
-        self._mainAction.activated.connect(self.run)
-        self._loadDataAction.activated.connect(self.upload)
-        self._createVizAction.activated.connect(self.createNewMap)
-        self._addSQLAction.activated.connect(self.addSQL)
+        self._mainAction.triggered.connect(self.run)
+        self._loadDataAction.triggered.connect(self.upload)
+        self._createVizAction.triggered.connect(self.createNewMap)
+        self._addSQLAction.triggered.connect(self.addSQL)
 
         self._cdbMenu.addAction(self._mainAction)
         self._cdbMenu.addAction(self._loadDataAction)
