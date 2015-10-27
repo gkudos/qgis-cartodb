@@ -112,10 +112,16 @@ class CartoDBPlugin(QObject):
         self._cdbMenu.addAction(self._loadDataAction)
         self._cdbMenu.addAction(self._createVizAction)
         self._cdbMenu.addAction(self._addSQLAction)
-        self.iface.addWebToolBarIcon(self._mainAction)
+        try:
+            self.iface.layerToolBar().addAction(self._mainAction)
+        except:
+            self.iface.addWebToolBarIcon(self._mainAction)
         self.iface.addWebToolBarIcon(self._loadDataAction)
         self.iface.addWebToolBarIcon(self._createVizAction)
-        self.iface.addWebToolBarIcon(self._addSQLAction)
+        try:
+            self.iface.layerToolBar().addAction(self._addSQLAction)
+        except:
+            self.iface.addWebToolBarIcon(self._addSQLAction)
 
         # Create Web menu, if it doesn't exist yet
         tmpAction = QAction("Temporal", self.iface.mainWindow())
