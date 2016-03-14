@@ -25,7 +25,11 @@ import os
 import random
 import tempfile
 import zipfile
+import unicodedata
 
+def stripAccents(text):
+    """Strips accent to text"""
+    return ''.join(c for c in unicodedata.normalize('NFD', text) if unicodedata.category(c) != 'Mn')
 
 def randomColor(mix=(255, 255, 255)):
     """Generate Random Color"""
@@ -78,34 +82,34 @@ def zipLayer(layer):
         file_path = file_path.replace('/vsizip/', '')
         if layer.storageType() in ['ESRI Shapefile', 'GPX', 'GeoJSON', 'LIBKML']:
             return file_path
-
     _file = QFile(file_path)
     file_info = QFileInfo(_file)
 
     dirname = file_info.dir().absolutePath()
-    filename = file_info.completeBaseName()
+    filename = stripAccents(file_info.completeBaseName())
+    layername = stripAccents(layer.name())
 
     tempdir = checkTempDir()
 
-    zip_path = os.path.join(tempdir, layer.name() + '.zip')
+    zip_path = os.path.join(tempdir, layername + '.zip')
     zip_file = zipfile.ZipFile(zip_path, 'w')
 
 
     if layer.storageType() == 'ESRI Shapefile':
         for suffix in ['.shp', '.dbf', '.prj', '.shx']:
             if os.path.exists(os.path.join(dirname, filename + suffix)):
-                zip_file.write(os.path.join(dirname, filename + suffix), layer.name() + suffix, zipfile.ZIP_DEFLATED)
+                zip_file.write(os.path.join(dirname, filename + suffix), layername + suffix, zipfile.ZIP_DEFLATED)
     elif layer.storageType() == 'GeoJSON':
-        zip_file.write(file_path, layer.name() + '.geojson', zipfile.ZIP_DEFLATED)
+        zip_file.write(file_path, layername + '.geojson', zipfile.ZIP_DEFLATED)
     elif layer.storageType() == 'GPX':
-        zip_file.write(file_path, layer.name() + '.gpx', zipfile.ZIP_DEFLATED)
+        zip_file.write(file_path, layername + '.gpx', zipfile.ZIP_DEFLATED)
     elif layer.storageType() == 'LIBKML':
-        zip_file.write(file_path, layer.name() + '.kml', zipfile.ZIP_DEFLATED)
+        zip_file.write(file_path, layername + '.kml', zipfile.ZIP_DEFLATED)
     else:
-        geo_json_name = os.path.join(tempfile.tempdir, layer.name())
+        geo_json_name = os.path.join(tempfile.tempdir, layername)
         error = QgsVectorFileWriter.writeAsVectorFormat(layer, geo_json_name, "utf-8", None, "GeoJSON")
         if error == QgsVectorFileWriter.NoError:
-            zip_file.write(geo_json_name + '.geojson', layer.name() + '.geojson', zipfile.ZIP_DEFLATED)
+            zip_file.write(geo_json_name + '.geojson', layername + '.geojson', zipfile.ZIP_DEFLATED)
     zip_file.close()
     return zip_path
 

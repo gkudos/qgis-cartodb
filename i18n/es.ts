@@ -53,6 +53,10 @@
             <translation>Capas Cargadas</translation>
         </message>
         <message>
+            <source>Error uploading layer: {}</source>
+            <translation>Error subiendo capa: {}</translation>
+        </message>
+        <message>
             <source>Using {} of {}</source>
             <translation>Usando {} de {}</translation>
         </message>

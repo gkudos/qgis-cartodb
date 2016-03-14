@@ -23,7 +23,11 @@ about=
   - simplejson
   - certifi
 email=michaelsalgado@gkudos.com
-changelog=0.2.3
+changelog=0.2.4
+  - Change 'Add CartoDB Layer' button to layer toolbar. (Left side on QGIS).
+  - Change 'Add SQL CartoDB Layer' button to layer toolbar. (Left side on QGIS).
+  - Fix error when the layer name contains non-ascii characters
+  0.2.3
   - Fix error updating recently uploaded data.
   0.2.2
   - Change privacy for maps, (public checkbox).

@@ -53,6 +53,10 @@
             <translation>Upload Complete</translation>
         </message>
         <message>
+            <source>Error uploading layer: {}</source>
+            <translation>Error uploading layer: {}</translation>
+        </message>
+        <message>
             <source>Using {} of {}</source>
             <translation>Using {} of {}</translation>
         </message>
