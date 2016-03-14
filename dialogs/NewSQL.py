@@ -207,12 +207,3 @@ class CartoDBNewSQLDialog(CartoDBUserDataDialog):
     def showEvent(self, event):
         worker = CartoDBPluginWorker(self, 'findTables')
         worker.start()
-
-'''
-WITH usertables AS (SELECT CDB_UserTables() table_name)
-SELECT ut.table_name, c.column_name, c.data_type column_type, ut.privileges
-  FROM usertables ut
-  JOIN information_schema.columns c ON c.table_name = ut.table_name
-WHERE c.data_type != 'USER-DEFINED'
-ORDER BY ut.table_name, c.column_name
-'''
