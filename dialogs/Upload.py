@@ -28,7 +28,7 @@ from QgisCartoDB.cartodb import CartoDBApi
 from QgisCartoDB.layers import CartoDBLayer
 from QgisCartoDB.dialogs.Basic import CartoDBPluginUserDialog
 from QgisCartoDB.ui.Upload import Ui_Upload
-from QgisCartoDB.utils import getSize, checkTempDir, zipLayer, checkCartoDBId
+from QgisCartoDB.utils import getSize, checkTempDir, zipLayer, checkCartoDBId, stripAccents
 from QgisCartoDB.widgets import CartoDBLayerListItem
 
 import math
@@ -66,7 +66,7 @@ class CartoDBPluginUpload(CartoDBPluginUserDialog):
         self.ui.uploadBar.hide()
         self.ui.uploadingLB.hide()
         for id_ly, ly in layers.iteritems():
-            qDebug('Layer id {}'.format(id_ly))
+            qDebug('Layer id {}'.format(stripAccents(id_ly)))
             if ly.type() == QgsMapLayer.VectorLayer and not isinstance(ly, CartoDBLayer):
                 item = QListWidgetItem(self.ui.layersList)
                 widget = CartoDBLayerListItem(ly.name(), ly, getSize(ly), ly.dataProvider().featureCount())
@@ -87,6 +87,14 @@ class CartoDBPluginUpload(CartoDBPluginUserDialog):
         def completeUpload(data):
             """On complete upload"""
             timer = QTimer(self)
+            qDebug('data: {}'.format(str(data)))
+
+            if 'error' in data and data['error'] is not None:
+                self.ui.bar.clearWidgets()
+                self.ui.bar.pushMessage(QApplication.translate('CartoDBPlugin', 'Error uploading layer: {}').format(data['error']),
+                                        level=QgsMessageBar.CRITICAL, duration=5)
+                widget.setStatus('Error', 0)
+                return
 
             self.ui.uploadBar.hide()
             self.ui.uploadingLB.hide()

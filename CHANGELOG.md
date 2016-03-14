@@ -1,6 +1,15 @@
 <a name="0.2.4"></a>
 ### 0.2.4 (2016-03-14)
 
+#### Refactor
+
+* Change 'Add CartoDB Layer' button to layer toolbar on QGIS >= 2.12. (Left side on QGIS).
+* Change 'Add SQL CartoDB Layer' button to layer toolbar on QGIS >= 2.12. (Left side on QGIS).
+
+#### Fixes
+
+* Fix #40 error when the layer name contains non-ascii characters
+
 <a name="0.2.3"></a>
 ### 0.2.3 (2015-10-04)
 
