@@ -1,7 +1,7 @@
 <a name="0.2.4"></a>
 ### 0.2.4 (2016-03-14)
 
-#### Refactor
+#### Refactoring
 
 * Change 'Add CartoDB Layer' button to layer toolbar on QGIS >= 2.12. (Left side on QGIS).
 * Change 'Add SQL CartoDB Layer' button to layer toolbar on QGIS >= 2.12. (Left side on QGIS).
