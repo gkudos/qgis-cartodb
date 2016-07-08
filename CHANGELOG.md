@@ -1,4 +1,10 @@
-<a name="0.2.4"></a>
+<a name="0.2.5"></a>
+### 0.2.5 (2016-07-08)
+
+#### Fixes
+
+* Fix #44 problems with domain changes.
+
 ### 0.2.4 (2016-03-14)
 
 #### Refactoring
