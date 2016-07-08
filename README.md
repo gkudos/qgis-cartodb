@@ -1,34 +1,34 @@
-![Logo](images/logo.jpg?raw=true "CartoDB plugin for QGis")
+![Logo](images/logo.jpg?raw=true "Carto plugin for QGis")
 ================================================
-# CartoDB plugin for QGis
+# Carto plugin for QGis
 ### The best of your Desktop GIS with the best of the web GIS.
 
-![QGisCartoDB](https://lh3.googleusercontent.com/aVV2C4SigQ6Tu15LCO9kSeHNDZIQe3qr1alt4NMMq6Y=w1161-h659-no "QGis CartoDB")
+![QGisCartoDB](https://lh3.googleusercontent.com/aVV2C4SigQ6Tu15LCO9kSeHNDZIQe3qr1alt4NMMq6Y=w1161-h659-no "QGis Carto")
 
 ## Features
 
-* Manage CartoDB connections.
-* Add CartoDB layers to QGIS projects.
+* Manage Carto connections.
+* Add Carto layers to QGIS projects.
 * Create QGIS layers from SQL Queries.
-* Add features to CartoDB tables.
-* Edit data and update CartoDB tables.
+* Add features to Carto tables.
+* Edit data and update Carto tables.
 * Edit data and update geometries.
 * Delete features.
-* Upload vector layers to CartoDB.
-* Create CartoDB visualizations using QGIS
+* Upload vector layers to Carto.
+* Create Carto visualizations using QGIS
 
 ## Documentation
 
-* [CartoDB plugin for QGIS Wiki](https://github.com/gkudos/qgis-cartodb/wiki)
+* [Carto plugin for QGIS Wiki](https://github.com/gkudos/qgis-cartodb/wiki)
 
 
 ## Sponsors
 
 This project was sponsored by:
 
-### CartoDB
+### Carto
 
-[![CartoDB](https://cartodb-libs.global.ssl.fastly.net/cartodb.com/static/logos_full_cartodb_light.png)](https://cartodb.com/)
+[![Carto](https://cartodb-libs.global.ssl.fastly.net/cartodb.com/static/logos_full_cartodb_light.png)](https://cartodb.com/)
 
 Versions 0.1.x / 0.2
 
