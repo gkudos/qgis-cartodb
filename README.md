@@ -28,7 +28,7 @@ This project was sponsored by:
 
 ### Carto
 
-[![Carto](https://cartodb-libs.global.ssl.fastly.net/cartodb.com/static/logos_full_cartodb_light.png)](https://cartodb.com/)
+[![Carto](images/logo_carto.png)](https://cartodb.com/)
 
 Versions 0.1.x / 0.2
 
