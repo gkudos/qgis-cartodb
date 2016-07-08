@@ -16,7 +16,7 @@ class CartoDBApi(QObject):
     progress = pyqtSignal(int, int)
     error = pyqtSignal(object)
 
-    def __init__(self, cartodbUser, apiKey, multiuser=False, hostname='cartodb.com'):
+    def __init__(self, cartodbUser, apiKey, multiuser=False, hostname='carto.com'):
         QObject.__init__(self)
         self.multiuser = multiuser
         self.apiKey = apiKey

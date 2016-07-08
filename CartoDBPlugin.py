@@ -20,8 +20,8 @@ email                : michaelsalgado@gkudos.com, info@gkudos.com
  This script initializes the plugin, making it known to QGIS.
 """
 # Import the PyQt and QGIS libraries
-from PyQt4.QtCore import *
-from PyQt4.QtGui import *
+from PyQt4.QtCore import Qt, QCoreApplication, QObject, QSettings, QTranslator, qDebug, qVersion
+from PyQt4.QtGui import QMenu, QIcon, QAction, QProgressBar
 
 from qgis.core import QgsMessageLog, QgsPluginLayerRegistry, QgsMapLayerRegistry
 from osgeo import gdal
@@ -48,7 +48,7 @@ class CartoDBPlugin(QObject):
     PLUGIN_DIR = os.path.dirname(os.path.abspath(__file__))
 
     def __init__(self, iface):
-        super(QObject, self).__init__()
+        QObject.__init__(self)
         QgsMessageLog.logMessage('GDAL Version: ' + str(gdal.VersionInfo('VERSION_NUM')), 'CartoDB Plugin', QgsMessageLog.INFO)
 
         # Save reference to the QGIS interface
@@ -78,6 +78,15 @@ class CartoDBPlugin(QObject):
         self.countLoadingLayers = 0
         self.countLoadedLayers = 0
 
+        self._cdbMenu = None
+        self._mainAction = None
+        self._loadDataAction = None
+        self._createVizAction = None
+        self._addSQLAction = None
+        self.toolbar = CartoDBToolbar()
+        self._toolbarAction = None
+        self._menu = None
+
     def initGui(self):
         self._cdbMenu = QMenu("CartoDB plugin", self.iface.mainWindow())
         self._cdbMenu.setIcon(QIcon(":/plugins/qgis-cartodb/images/icon.png"))
@@ -90,7 +99,6 @@ class CartoDBPlugin(QObject):
         self._addSQLAction = QAction(self.tr('Add SQL CartoDB Layer'), self.iface.mainWindow())
         self._addSQLAction.setIcon(QIcon(":/plugins/qgis-cartodb/images/icons/sql.png"))
 
-        self.toolbar = CartoDBToolbar()
         self.toolbar.setClick(self.connectionManager)
         self.toolbar.error.connect(self.toolbarError)
         self._toolbarAction = self.iface.addWebToolBarWidget(self.toolbar)
@@ -251,14 +259,12 @@ class CartoDBPlugin(QObject):
 
         dlg.addedLayer.connect(addLayer)
         dlg.show()
-
-        result = dlg.exec_()
+        dlg.exec_()
 
     def createNewMap(self):
         dlg = CartoDBPluginCreateViz(self.toolbar, self.iface)
         dlg.show()
-
-        result = dlg.exec_()
+        dlg.exec_()
 
     def addLoadingMsg(self, countLayers, barText='Downloading datasets'):
         barText = self.tr(barText)

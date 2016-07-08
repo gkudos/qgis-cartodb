@@ -1,5 +1,5 @@
 [MASTER]
-extension-pkg-whitelist=PyQt4,qgis
+extension-pkg-whitelist=PyQt4,qgis,QgisCartoDB
 
 [BASIC]
 # Good names for variables
