@@ -238,7 +238,8 @@ class CartoDBApi(QObject):
         # qDebug('Error: ' + str(reply.error()))
         # qDebug('Status: ' + str(reply.rawHeader('Location')))
 
-        if reply.rawHeader('Location') == 'http://cartodb.com/noneuser.html':
+        if reply.rawHeader('Location') == 'http://cartodb.com/noneuser.html' or \
+           reply.rawHeader('Location') == 'http://carto.com/noneuser.html':
             response = '{"error": "User not found"}'
         elif reply.error() == QNetworkReply.AuthenticationRequiredError:
             response = '{"error": "Confirm user credentials"}'

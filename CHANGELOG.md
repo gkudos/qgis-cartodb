@@ -1,3 +1,11 @@
+<a name="0.2.6"></a>
+### 0.2.6 (2016-09-16)
+
+#### Fixes
+
+* Fix #47 changing entry points to carto.com domain.
+* Resolve some deprecated warnings.
+
 <a name="0.2.5"></a>
 ### 0.2.5 (2016-07-08)
 

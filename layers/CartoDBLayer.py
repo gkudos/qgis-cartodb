@@ -21,7 +21,7 @@ email                : michaelsalgado@gkudos.com, info@gkudos.com
 
 from PyQt4.QtCore import Qt, QDate, QObject, QEventLoop, pyqtSignal, qDebug
 
-from qgis.core import QgsFeatureRequest, QgsVectorLayer, QgsMessageLog, QgsDataSourceURI
+from qgis.core import QGis, QgsFeatureRequest, QgsVectorLayer, QgsMessageLog, QgsDataSourceURI
 from osgeo import ogr
 
 from urllib import urlopen
@@ -82,7 +82,7 @@ class CartoDBLayer(QgsVectorLayer):
         readonly = True
         if spatiaLite is None:
             if geoJSON is None:
-                cartoUrl = 'http://{}.cartodb.com/api/v2/sql?format=GeoJSON&q={}&api_key={}'.format(self.user, sql, self._apiKey)
+                cartoUrl = 'http://{}.carto.com/api/v2/sql?format=GeoJSON&q={}&api_key={}'.format(self.user, sql, self._apiKey)
                 response = urlopen(cartoUrl)
                 geoJSON = response.read()
             else:
@@ -180,16 +180,22 @@ class CartoDBLayer(QgsVectorLayer):
         except CartoDBException as e:
             QgsMessageLog.logMessage('Error - ' + str(e), 'CartoDB Plugin', QgsMessageLog.CRITICAL)
 
+        setEditorType = None
+        if QGis.QGIS_VERSION_INT < 21400:
+            setEditorType = self.setEditorWidgetV2
+        else:
+            setEditorType = self.editFormConfig().setWidgetType
+
         self.setFieldEditable(self.fieldNameIndex('cartodb_id'), False)
-        self.setEditorWidgetV2(self.fieldNameIndex('cartodb_id'), 'Hidden')
+        setEditorType(self.fieldNameIndex('cartodb_id'), 'Hidden')
 
         if self.fieldNameIndex('updated_at') != -1:
             self.setFieldEditable(self.fieldNameIndex('updated_at'), False)
-            self.setEditorWidgetV2(self.fieldNameIndex('updated_at'), 'Hidden')
+            setEditorType(self.fieldNameIndex('updated_at'), 'Hidden')
 
         if self.fieldNameIndex('created_at') != -1:
             self.setFieldEditable(self.fieldNameIndex('created_at'), False)
-            self.setEditorWidgetV2(self.fieldNameIndex('created_at'), 'Hidden')
+            setEditorType(self.fieldNameIndex('created_at'), 'Hidden')
         self.setFieldEditable(self.fieldNameIndex('OGC_FID'), False)
         self.setFieldEditable(self.fieldNameIndex('GEOMETRY'), False)
 
@@ -242,6 +248,7 @@ class CartoDBLayer(QgsVectorLayer):
                 sql = sql + " WHERE cartodb_id = " + unicode(feature['cartodb_id'])
                 sql = sql.encode('utf-8')
 
+                qDebug('SQL Update: ' + sql)
                 res = self._updateSQL(sql, 'Some error ocurred getting tables')
                 if isinstance(res, dict) and res['total_rows'] == 1:
                     self.iface.messageBar().pushMessage('Info',
@@ -298,15 +305,16 @@ class CartoDBLayer(QgsVectorLayer):
                 fieldsStr = fieldsStr + field.name()
                 valuesStr = valuesStr + "'" + unicode(value) + "'"
                 addComma = True
-            if addComma:
-                fieldsStr = fieldsStr + ", "
-                valuesStr = valuesStr + ", "
 
-            fieldsStr = fieldsStr + "the_geom"
-            valuesStr = valuesStr + "ST_GeomFromText('" + feature.geometry().exportToWkt() + "', 4326)"
+            if feature.geometry() is not None:
+                if addComma:
+                    fieldsStr = fieldsStr + ", "
+                    valuesStr = valuesStr + ", "
+
+                fieldsStr = fieldsStr + "the_geom"
+                valuesStr = valuesStr + "ST_GeomFromText('" + feature.geometry().exportToWkt() + "', 4326)"
 
             sql = sql + fieldsStr + ") VALUES (" + valuesStr + ") RETURNING cartodb_id"
-
 
             nullableFields = ['cartodb_id']
             if feature.fieldNameIndex("created_at") != -1:
@@ -359,6 +367,7 @@ class CartoDBLayer(QgsVectorLayer):
             return res
         except CartoDBException as e:
             QgsMessageLog.logMessage(errorMsg + ' - ' + str(e), 'CartoDB Plugin', QgsMessageLog.CRITICAL)
+            QgsMessageLog.logMessage('SQL: ' + str(sql), 'CartoDB Plugin', QgsMessageLog.CRITICAL)
             self.iface.messageBar().pushMessage('Error!!', errorMsg, level=self.iface.messageBar().CRITICAL, duration=10)
             return e
 
