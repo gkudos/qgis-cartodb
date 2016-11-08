@@ -91,7 +91,7 @@ class CartoDBApi(QObject):
 
     def getDataFromTable(self, sql, returnDict=True):
         self.returnDict = returnDict
-        apiUrl = 'http://{}.{}/api/v2/sql?api_key={}&format=GeoJSON&q={}'.format(self.cartodbUser, self.hostname, self.apiKey, sql)
+        apiUrl = 'https://{}/user/{}/api/v2/sql?api_key={}&format=GeoJSON&q={}'.format(self.hostname, self.cartodbUser, self.apiKey, sql)
         url = QUrl(apiUrl)
         request = self._getRequest(url)
 
@@ -103,8 +103,9 @@ class CartoDBApi(QObject):
         loop.exec_()
 
     def download(self, sql):
-        apiUrl = 'http://{}.{}/api/v2/sql?api_key={}&format=spatialite&q={}'.format(self.cartodbUser, self.hostname, self.apiKey, sql)
+        apiUrl = 'https://{}/user/{}/api/v2/sql?api_key={}&format=spatialite&q={}'.format(self.hostname, self.cartodbUser, self.apiKey, sql)
         url = QUrl(apiUrl)
+
         request = self._getRequest(url)
 
         def finished(reply):

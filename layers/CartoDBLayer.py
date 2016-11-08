@@ -433,7 +433,7 @@ class CartoDBLayerWorker(QObject):
     @pyqtSlot()
     def loadLayer(self):
         if self.sql is None:
-            sql = 'SELECT * FROM ' + ((self.owner + '.') if self.owner != self.dlg.currentUser else '') + self.tableName
+            sql = 'SELECT * FROM ' + (('"' + self.owner + '".') if self.owner != self.dlg.currentUser else '') + self.tableName
             if self.filterByExtent:
                 extent = self.iface.mapCanvas().extent()
                 sql = sql + " WHERE ST_Intersects(ST_GeometryFromText('{}', 4326), the_geom)".format(extent.asWktPolygon())

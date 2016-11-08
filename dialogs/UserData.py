@@ -73,7 +73,7 @@ class CartoDBUserDataDialog(QDialog):
             if 's3.amazonaws.com' in data['avatar_url']:
                 imageUrl = QUrl(data['avatar_url'])
             else:
-                imageUrl = QUrl('http:' + data['avatar_url'])
+                imageUrl = QUrl('https:' + data['avatar_url'])
 
             request = QNetworkRequest(imageUrl)
             request.setRawHeader('User-Agent', 'QGIS 2.x')
