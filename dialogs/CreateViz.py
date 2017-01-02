@@ -428,9 +428,26 @@ class CartoDBPluginCreateViz(CartoDBPluginUserDialog):
                     }
                     filein = open(QgisCartoDB.CartoDBPlugin.PLUGIN_DIR + '/templates/simpleline.less')
                 elif layer.geometryType() == QGis.Polygon:
-                    border_width = round(3.7795275552 * lyr.borderWidth(), 0)
-                    if lyr.borderStyle() == Qt.NoPen:
-                        border_width = 0
+                    border_width = 1
+                    polygon_opacity = 0.9
+                    line_dash_array = '0'
+                    if lyr.layerType() in ['SimpleFill']:
+                        qDebug('Color opacity: {}'.format(lyr.fillColor().alpha()))
+                        qDebug('Brush Style: {}'.format(lyr.brushStyle()))
+                        border_width = round(3.7795275552 * lyr.borderWidth(), 0)
+                        if lyr.borderStyle() == Qt.NoPen:
+                            border_width = 0
+
+                        if lyr.brushStyle() == 0:
+                            polygon_opacity = 0
+                        else:
+                            polygon_opacity = round(float(lyr.fillColor().alpha()/255.0), 2)
+
+                        line_dash_array = getLineDasharray(lyr.borderStyle(), border_width)
+                    elif lyr.layerType() in ['SimpleLine']:
+                        polygon_opacity = 0
+                        border_width = round(3.7795275552 * lyr.width(), 0)
+                        line_dash_array = getLineDasharray(lyr.penStyle(), border_width)
 
                     d = {
                         'layername': styleName,
@@ -438,9 +455,10 @@ class CartoDBPluginCreateViz(CartoDBPluginUserDialog):
                         'opacity': layer_opacity,
                         'borderColor': lyr.outlineColor().name(),
                         'borderWidth': border_width,
+                        'polygonOpacity': polygon_opacity,
                         'polygonCompOp': composition_mode,
                         'lineJoin': getLineJoin(lyr),
-                        'lineDasharray': getLineDasharray(lyr.borderStyle(), border_width)
+                        'lineDasharray': line_dash_array
                     }
                     filein = open(QgisCartoDB.CartoDBPlugin.PLUGIN_DIR + '/templates/simplepolygon.less')
 
