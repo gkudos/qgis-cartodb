@@ -193,7 +193,7 @@ class CartoDBPluginCreateViz(CartoDBPluginUserDialog):
 
         if layer is not None:
             # pylint: disable-msg=E1101
-            cartodb_api = CartoDBApi(self.currentUser, self.currentApiKey, self.currentMultiuser)
+            cartodb_api = CartoDBApi(self.currentUser, self.currentApiKey, self.currentMultiuser, self.currentHostName)
             cartodb_api.fetchContent.connect(self.cbCreateViz)
             cartodb_api.createVizFromTable(layer.fullTableName(), self.ui.mapNameTX.text(), self.ui.descriptionTX.toPlainText())
         else:
@@ -207,12 +207,12 @@ class CartoDBPluginCreateViz(CartoDBPluginUserDialog):
         self.currentViz = data
 
         # pylint: disable-msg=E1101
-        cartodb_api = CartoDBApi(self.currentUser, self.currentApiKey, self.currentMultiuser)
+        cartodb_api = CartoDBApi(self.currentUser, self.currentApiKey, self.currentMultiuser, self.currentHostName)
         cartodb_api.fetchContent.connect(self.cbGetLayers)
         cartodb_api.getLayersMap(data['map_id'])
         if self.ui.publicCH.isChecked():
             data['privacy'] = 'PUBLIC'
-            cartodb_api = CartoDBApi(self.currentUser, self.currentApiKey, self.currentMultiuser)
+            cartodb_api = CartoDBApi(self.currentUser, self.currentApiKey, self.currentMultiuser, self.currentHostName)
             cartodb_api.updateViz(data)
 
     def cbGetLayers(self, data):
@@ -220,7 +220,7 @@ class CartoDBPluginCreateViz(CartoDBPluginUserDialog):
         layer = self.cartoDBLayers[0]
         carto_css = self.convert2CartoCSS(layer)
         # pylint: disable-msg=E1101
-        cartodb_api = CartoDBApi(self.currentUser, self.currentApiKey, self.currentMultiuser)
+        cartodb_api = CartoDBApi(self.currentUser, self.currentApiKey, self.currentMultiuser, self.currentHostName)
         layer1 = data['layers'][1]
         if layer.isSQL:
             layer1["options"]["query"] = layer.sql

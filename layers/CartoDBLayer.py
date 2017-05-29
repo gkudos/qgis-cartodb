@@ -82,7 +82,7 @@ class CartoDBLayer(QgsVectorLayer):
         readonly = True
         if spatiaLite is None:
             if geoJSON is None:
-                cartoUrl = 'http://{}.carto.com/api/v2/sql?format=GeoJSON&q={}&api_key={}'.format(self.user, sql, self._apiKey)
+                cartoUrl = 'https://maps.geografia.com.au/user/{}/api/v2/sql?format=GeoJSON&q={}&api_key={}'.format(self.user, sql, self._apiKey)
                 response = urlopen(cartoUrl)
                 geoJSON = response.read()
             else:
@@ -433,7 +433,7 @@ class CartoDBLayerWorker(QObject):
     @pyqtSlot()
     def loadLayer(self):
         if self.sql is None:
-            sql = 'SELECT * FROM ' + ((self.owner + '.') if self.owner != self.dlg.currentUser else '') + self.tableName
+            sql = 'SELECT * FROM ' + (('"' + self.owner + '".') if self.owner != self.dlg.currentUser else '') + self.tableName
             if self.filterByExtent:
                 extent = self.iface.mapCanvas().extent()
                 sql = sql + " WHERE ST_Intersects(ST_GeometryFromText('{}', 4326), the_geom)".format(extent.asWktPolygon())

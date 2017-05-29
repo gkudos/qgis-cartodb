@@ -183,7 +183,7 @@ class CartoDBNewSQLDialog(CartoDBUserDataDialog):
             return
 
         sql = 'SELECT count(cartodb_id) num, ST_Union(the_geom) the_geom FROM (' + sql + ') a'
-        cartoUrl = 'http://{}.carto.com/api/v2/sql?format=GeoJSON&q={}&api_key={}'.format(self.currentUser, sql, self.currentApiKey)
+        cartoUrl = 'https://maps.geografia.com.au/user/{}/api/v2/sql?format=GeoJSON&q={}&api_key={}'.format(self.currentUser, sql, self.currentApiKey)
         response = urlopen(cartoUrl)
         result = json.loads(response.read())
 

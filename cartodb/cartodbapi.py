@@ -16,13 +16,13 @@ class CartoDBApi(QObject):
     progress = pyqtSignal(int, int)
     error = pyqtSignal(object)
 
-    def __init__(self, cartodbUser, apiKey, multiuser=False, hostname='carto.com'):
+    def __init__(self, cartodbUser, apiKey, multiuser=False, hostname='maps.geografia.com.au'):
         QObject.__init__(self)
         self.multiuser = multiuser
         self.apiKey = apiKey
         self.cartodbUser = cartodbUser
         self.hostname = hostname
-        self.apiUrl = "https://{}.{}/api/v1/".format(cartodbUser, hostname)
+        self.apiUrl = "https://{}/user/{}/api/v1/".format(hostname, cartodbUser)
         self.returnDict = True
 
         self.manager = QNetworkAccessManager()
@@ -91,7 +91,7 @@ class CartoDBApi(QObject):
 
     def getDataFromTable(self, sql, returnDict=True):
         self.returnDict = returnDict
-        apiUrl = 'http://{}.{}/api/v2/sql?api_key={}&format=GeoJSON&q={}'.format(self.cartodbUser, self.hostname, self.apiKey, sql)
+        apiUrl = 'https://{}/user/{}/api/v2/sql?api_key={}&format=GeoJSON&q={}'.format(self.hostname, self.cartodbUser, self.apiKey, sql)
         url = QUrl(apiUrl)
         request = self._getRequest(url)
 
@@ -103,8 +103,9 @@ class CartoDBApi(QObject):
         loop.exec_()
 
     def download(self, sql):
-        apiUrl = 'http://{}.{}/api/v2/sql?api_key={}&format=spatialite&q={}'.format(self.cartodbUser, self.hostname, self.apiKey, sql)
+        apiUrl = 'https://{}/user/{}/api/v2/sql?api_key={}&format=spatialite&q={}'.format(self.hostname, self.cartodbUser, self.apiKey, sql)
         url = QUrl(apiUrl)
+
         request = self._getRequest(url)
 
         def finished(reply):
@@ -239,7 +240,7 @@ class CartoDBApi(QObject):
         # qDebug('Status: ' + str(reply.rawHeader('Location')))
 
         if reply.rawHeader('Location') == 'http://cartodb.com/noneuser.html' or \
-           reply.rawHeader('Location') == 'http://carto.com/noneuser.html':
+           reply.rawHeader('Location') == 'https://maps.geografia.com.au/noneuser.html':
             response = '{"error": "User not found"}'
         elif reply.error() == QNetworkReply.AuthenticationRequiredError:
             response = '{"error": "Confirm user credentials"}'

@@ -72,7 +72,7 @@ class CartoDBPluginDialog(CartoDBUserDataDialog):
         self.tablesPage = 1
         self.noLoadTables = False
         self.ui.searchTX.setText('')
-        self.getTables(self.currentUser, self.currentApiKey, self.currentMultiuser)
+        self.getTables(self.currentUser, self.currentApiKey, self.currentMultiuser, self.currentHostName)
 
     def filterTables(self):
         text = self.ui.searchTX.text()
