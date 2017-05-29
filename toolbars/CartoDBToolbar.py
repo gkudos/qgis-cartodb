@@ -38,11 +38,13 @@ class CartoDBToolbar(QWidget):
 
         if self.currentUser:
             self.currentApiKey = self.settings.value('/CartoDBPlugin/%s/api' % self.currentUser)
+            self.currentHostName = self.settings.value('/CartoDBPlugin/%s/hostname' % self.currentUser)
             self.currentMultiuser = self.settings.value('/CartoDBPlugin/%s/multiuser' % self.currentUser, False)
             self.currentMultiuser = self.currentMultiuser in ['True', 'true', True]
         else:
             self.currentApiKey = None
             self.currentMultiuser = None
+            self.currentHostName = None
 
         self.click = None
 
@@ -67,8 +69,8 @@ class CartoDBToolbar(QWidget):
         self.connectLayout.addWidget(self.avatarLB)
         self.connectLayout.addWidget(self.nameLB)
 
-    def getUserData(self, cartodbUser, apiKey, multiuser=False):
-        cartoDBApi = CartoDBApi(cartodbUser, apiKey, multiuser)
+    def getUserData(self, cartodbUser, apiKey, multiuser=False, hostName='maps.geografia.com.au'):
+        cartoDBApi = CartoDBApi(cartodbUser, apiKey, multiuser, hostName)
         cartoDBApi.fetchContent.connect(self.cbUserData)
         cartoDBApi.getUserDetails()
 
@@ -116,12 +118,13 @@ class CartoDBToolbar(QWidget):
     @pyqtSlot()
     def connectCartoDB(self):
         if self.isCurrentUserValid():
-            self.getUserData(self.currentUser, self.currentApiKey, self.currentMultiuser)
+            self.getUserData(self.currentUser, self.currentApiKey, self.currentMultiuser, self.currentHostName)
 
-    def setUserCredentials(self, user, apiKey, multiuser=False):
+    def setUserCredentials(self, user, apiKey, multiuser=False, hostName='maps.geografia.com.au'):
         self.currentUser = user
         self.currentApiKey = apiKey
         self.currentMultiuser = multiuser
+        self.currentHostName = hostName
         worker = CartoDBPluginWorker(self, 'connectCartoDB')
         worker.start()
 

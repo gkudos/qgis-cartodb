@@ -47,12 +47,14 @@ class CartoDBConnectionsManager(QDialog):
 
         self.currentUser = None
         self.currentApiKey = None
+        self.currentHostName = None
         self.currentMultiuser = None
 
     def connect(self):
         # Get tables from CartoDB.
         self.currentUser = self.ui.connectionList.currentText()
         self.currentApiKey = self.settings.value('/CartoDBPlugin/%s/api' % self.currentUser)
+        self.currentHostName = self.settings.value('/CartoDBPlugin/%s/hostname' % self.currentUser)
         self.currentMultiuser = self.settings.value('/CartoDBPlugin/%s/multiuser' % self.currentUser, False)
         self.currentMultiuser = self.currentMultiuser in ['True', 'true', True]
         self.settings.setValue('/CartoDBPlugin/selected', self.currentUser)
@@ -122,6 +124,7 @@ class CartoDBConnectionsManager(QDialog):
         # Modify existing connection.
         currentText = self.ui.connectionList.currentText()
         apiKey = self.settings.value('/CartoDBPlugin/%s/api' % currentText)
+        hostName = self.settings.value('/CartoDBPlugin/%s/hostname' % currentText)
         multiuser = self.settings.value('/CartoDBPlugin/%s/multiuser' % currentText, False)
         QgsMessageLog.logMessage('Multiuser:' + str(multiuser) + ' - ' + str(bool(multiuser)), 'CartoDB Plugin', QgsMessageLog.INFO)
 
@@ -130,6 +133,7 @@ class CartoDBConnectionsManager(QDialog):
         conEdit.ui.userTX.setText(currentText)
         conEdit.ui.apiKeyTX.setText(apiKey)
         conEdit.ui.multiuserCH.setChecked(str(multiuser) in ['true', '1', 'True'])
+        conEdit.ui.hostNameTX.setText(hostName)
         result = conEdit.exec_()
 
         if result == QDialog.Accepted:

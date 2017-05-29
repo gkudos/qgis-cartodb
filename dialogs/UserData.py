@@ -35,6 +35,7 @@ class CartoDBUserDataDialog(QDialog):
 
         self.currentUser = self.toolbar.currentUser
         self.currentApiKey = self.toolbar.currentApiKey
+        self.currentHostName = self.toolbar.currentHostName
         self.currentMultiuser = self.toolbar.currentMultiuser
 
         self.totalTables = None
@@ -46,9 +47,9 @@ class CartoDBUserDataDialog(QDialog):
 
     @pyqtSlot()
     def connectUser(self):
-        self.getUserData(self.currentUser, self.currentApiKey, self.currentMultiuser)
+        self.getUserData(self.currentUser, self.currentApiKey, self.currentMultiuser, self.currentHostName)
 
-    def getUserData(self, cartodbUser, apiKey, multiuser=False):
+    def getUserData(self, cartodbUser, apiKey, multiuser=False, hostName='maps.geografia.com.au'):
         if self.toolbar.avatarImage is not None:
             pixMap = QPixmap.fromImage(self.toolbar.avatarImage).scaled(self.ui.avatarLB.size(), Qt.KeepAspectRatio)
             self.ui.avatarLB.setPixmap(pixMap)
