@@ -1,6 +1,6 @@
 [general]
-name=CartoDB
-description=CartoDB Plugin for QGis. It allows to view, create, edit or delete data from your CartoDB account using your favorite opensource desktop GIS: QGIS.
+name=CARTO
+description=CARTO Plugin for QGIS. Allows you to view, create, edit, or delete data from your CARTO account by using your favorite opensource desktop GIS: QGIS.
 category=Web
 version=0.2.6
 qgisMinimumVersion=2.4
@@ -8,22 +8,24 @@ icon=images/icon.png
 author=Kudos Ltda. and contributors
 about=
   Features:
-  - Manage CartoDB connections.
-  - Add CartoDB layers to QGis projects.
-  - Add features to CartoDB tables.
-  - Edit data and update CartoDB tables.
+  - Manage CARTO connections.
+  - Add CARTO layers to QGIS projects.
+  - Add features to CARTO tables.
+  - Edit data and update CARTO tables.
   - Edit data and update geometries.
   - Delete features.
-  - Upload tables
-  - Create maps
+  - Upload tables.
+  - Create maps.
 
   Dependencies:
-  - CartoDB
+  - CARTO
   - oauth2
   - simplejson
   - certifi
 email=michaelsalgado@gkudos.com
 changelog=
+  0.2.7
+  - CARTO rebranding applied to QGIS UI.
   0.2.6
   - Fix some errors changing entry points to carto.com domain.
   - Resolve some deprecated warnings.
@@ -101,7 +103,7 @@ changelog=
   - Add, edit and delete data.
   - Manage connections
 ; tags are in comma separated value format, spaces are allowed
-tags=cartodb,OSM,tiles,kudos
+tags=cartodb,carto, OSM,tiles,kudos
 homepage=https://github.com/gkudos/qgis-cartodb
 tracker=https://github.com/gkudos/qgis-cartodb/issues
 repository=https://github.com/gkudos/qgis-cartodb

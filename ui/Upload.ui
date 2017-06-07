@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Upload layers to CartoDB</string>
+   <string>Upload layers to CARTO</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
@@ -153,7 +153,7 @@
       <bool>true</bool>
      </property>
      <property name="text">
-      <string>Add CartoDB layer to project</string>
+      <string>Add CARTO layer to project</string>
      </property>
      <property name="checked">
       <bool>true</bool>

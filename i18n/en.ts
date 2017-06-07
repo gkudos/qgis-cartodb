@@ -5,24 +5,24 @@
         <name>CartoDBPlugin</name>
         <message>
             <!-- <location filename="test_translations.py" line="48"/> -->
-            <source>Add CartoDB Layer</source>
-            <translation>Add CartoDB Layer</translation>
+            <source>Add CARTO Layer</source>
+            <translation>Add CARTO Layer</translation>
         </message>
         <message>
-            <source>Add SQL CartoDB Layer</source>
-            <translation>Add SQL CartoDB Layer</translation>
+            <source>Add SQL CARTO Layer</source>
+            <translation>Add SQL CARTO Layer</translation>
         </message>
         <message>
-            <source>Upload layers to CartoDB</source>
-            <translation>Upload layers to CartoDB</translation>
+            <source>Upload layers to CARTO</source>
+            <translation>Upload layers to CARTO</translation>
         </message>
         <message>
             <source>Create New Map</source>
             <translation>Create New Map</translation>
         </message>
         <message>
-            <source>CartoDB Layers</source>
-            <translation>CartoDB Layers</translation>
+            <source>CARTO Layers</source>
+            <translation>CARTO Layers</translation>
         </message>
         <message>
             <source>Filter Tables</source>
@@ -109,12 +109,12 @@
             <translation>All layers are SQL layers</translation>
         </message>
         <message>
-            <source>At least one CartoDB layer should belong or be visible to {}</source>
-            <translation>At least one CartoDB layer should belong or be visible to {}</translation>
+            <source>At least one CARTO layer should belong or be visible to {}</source>
+            <translation>At least one CARTO layer should belong or be visible to {}</translation>
         </message>
         <message>
-            <source>At least there should be a CartoDB layer in the project.</source>
-            <translation>At least there should be a CartoDB layer in the project.</translation>
+            <source>There should be at least one CARTO layer in the project.</source>
+            <translation>There should be at least one CARTO layer in the project.</translation>
         </message>
         <message>
             <source>Copy Link</source>
@@ -125,8 +125,8 @@
             <translation>Open</translation>
         </message>
         <message>
-            <source>Add CartoDB Connection</source>
-            <translation>Add CartoDB Connection</translation>
+            <source>Add CARTO Connection</source>
+            <translation>Add CARTO Connection</translation>
         </message>
         <message>
             <source>Remove connection {}?</source>
@@ -137,8 +137,8 @@
             <translation>Confirm delete</translation>
         </message>
         <message>
-            <source>Error loading data from CartoDB</source>
-            <translation>Error loading data from CartoDB</translation>
+            <source>Error loading data from CARTO</source>
+            <translation>Error loading data from CARTO</translation>
         </message>
         <message>
             <source>Error getting tables</source>
@@ -156,20 +156,20 @@
     <context>
         <name>NewConnection</name>
         <message>
-            <source>New CartoDB Connection</source>
-            <translation>New CartoDB Connection</translation>
+            <source>New CARTO Connection</source>
+            <translation>New CARTO Connection</translation>
         </message>
         <message>
             <source>New Connection</source>
             <translation>New Connection</translation>
         </message>
         <message>
-            <source>CartoDB User</source>
-            <translation>CartoDB User</translation>
+            <source>CARTO User</source>
+            <translation>CARTO User</translation>
         </message>
         <message>
-            <source>Carto DB Api Key:</source>
-            <translation>Carto DB Api Key:</translation>
+            <source>CARTO API Key:</source>
+            <translation>CARTO API Key:</translation>
         </message>
         <message>
             <source>Multiuser Account?</source>
@@ -206,8 +206,8 @@
     <context>
         <name>Upload</name>
         <message>
-            <source>Upload layers to CartoDB</source>
-            <translation>Upload layers to CartoDB</translation>
+            <source>Upload layers to CARTO</source>
+            <translation>Upload layers to CARTO</translation>
         </message>
         <message>
             <source>Project Layers</source>
@@ -218,8 +218,8 @@
             <translation>Replace if exists</translation>
         </message>
         <message>
-            <source>Add CartoDB layer to project</source>
-            <translation>Add CartoDB layer to project</translation>
+            <source>Add CARTO layer to project</source>
+            <translation>Add CARTO layer to project</translation>
         </message>
         <message>
             <source>Cancel</source>
@@ -288,8 +288,8 @@
     <context>
         <name>NewSQL</name>
         <message>
-            <source>Add CartoDB SQL Layer</source>
-            <translation>Add CartoDB SQL Layer</translation>
+            <source>Add CARTO SQL Layer</source>
+            <translation>Add CARTO SQL Layer</translation>
         </message>
         <message>
             <source>SQL Query</source>
