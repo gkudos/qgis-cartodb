@@ -1,34 +1,34 @@
-![Logo](images/logo.jpg?raw=true "Carto plugin for QGis")
+![Logo](images/logo.jpg?raw=true "CARTO plugin for QGis")
 ================================================
-# Carto plugin for QGis
+# CARTO plugin for QGis
 ### The best of your Desktop GIS with the best of the web GIS.
 
-![QGisCartoDB](https://lh3.googleusercontent.com/aVV2C4SigQ6Tu15LCO9kSeHNDZIQe3qr1alt4NMMq6Y=w1161-h659-no "QGis Carto")
+![QGisCartoDB](https://lh3.googleusercontent.com/aVV2C4SigQ6Tu15LCO9kSeHNDZIQe3qr1alt4NMMq6Y=w1161-h659-no "QGIS CARTO")
 
 ## Features
 
-* Manage Carto connections.
-* Add Carto layers to QGIS projects.
+* Manage CARTO connections.
+* Add CARTO layers to QGIS projects.
 * Create QGIS layers from SQL Queries.
-* Add features to Carto tables.
-* Edit data and update Carto tables.
+* Add features to CARTO tables.
+* Edit data and update CARTO tables.
 * Edit data and update geometries.
 * Delete features.
-* Upload vector layers to Carto.
-* Create Carto visualizations using QGIS
+* Upload vector layers to CARTO.
+* Create CARTO visualizations using QGIS.
 
 ## Documentation
 
-* [Carto plugin for QGIS Wiki](https://github.com/gkudos/qgis-cartodb/wiki)
+* [CARTO plugin for QGIS Wiki](https://github.com/gkudos/qgis-cartodb/wiki)
 
 
 ## Sponsors
 
 This project was sponsored by:
 
-### Carto
+### CARTO
 
-[![Carto](images/logo_carto.png)](https://carto.com/)
+[![CARTO](images/logo_carto.png)](https://carto.com/)
 
 Versions 0.1.x / 0.2
 

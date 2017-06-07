@@ -36,7 +36,7 @@ import tempfile
 
 
 class CartoDBPluginUpload(CartoDBPluginUserDialog):
-    """Dialog for Upload data to CartoDB"""
+    """Dialog for Upload data to CARTO"""
     addedLayer = pyqtSignal(str, str)
 
     def __init__(self, iface, toolbar, parent=None):
@@ -104,7 +104,7 @@ class CartoDBPluginUpload(CartoDBPluginUserDialog):
                                     level=QgsMessageBar.INFO, duration=5)
 
             def statusComplete(res):
-                """On CartoDB import proccess complete o fail"""
+                """On CARTO import proccess complete o fail"""
                 if res['state'] == 'complete':
                     timer.stop()
                     self.ui.statusLB.setText(QApplication.translate('CartoDBPlugin', 'Ready'))
@@ -127,7 +127,7 @@ class CartoDBPluginUpload(CartoDBPluginUserDialog):
                     widget.setStatus(res['state'])
 
             def timerComplete():
-                """On timer complete, check import process in CartoDB Servers"""
+                """On timer complete, check import process in CARTO Servers"""
                 # pylint: disable-msg=E1101
                 cartodb_api = CartoDBApi(self.currentUser, self.currentApiKey, self.currentMultiuser)
                 cartodb_api.fetchContent.connect(statusComplete)
@@ -157,7 +157,7 @@ class CartoDBPluginUpload(CartoDBPluginUserDialog):
         if error == QgsVectorFileWriter.NoError:
             self.addedLayer.emit(temp.name + '.sqlite', tableName)
         else:
-            self.ui.bar.pushMessage(QApplication.translate('CartoDBPlugin', 'Error loading CartoDB layer {}').format(tableName),
+            self.ui.bar.pushMessage(QApplication.translate('CartoDBPlugin', 'Error loading CARTO layer {}').format(tableName),
                                     level=QgsMessageBar.WARNING, duration=5)
 
     def progressUpload(self, current, total):

@@ -1,3 +1,10 @@
+<a name="0.2.7"></a>
+### 0.2.7 (2017-06-06)
+
+#### Fixes
+
+* Fix #51 CARTO rebranding applied in QGIS UI.
+
 <a name="0.2.6"></a>
 ### 0.2.6 (2016-09-16)
 
