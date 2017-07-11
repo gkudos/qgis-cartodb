@@ -6,7 +6,7 @@
         <message>
             <!-- <location filename="test_translations.py" line="48"/> -->
             <source>Add CartoDB Layer</source>
-            <translation>Agregar Capa CartoDB</translation>
+            <translation>Agregar capa CartoDB</translation>
         </message>
         <message>
             <source>Add SQL CartoDB Layer</source>
@@ -22,7 +22,7 @@
         </message>
         <message>
             <source>CartoDB Layers</source>
-            <translation>Tablas en CartoDB</translation>
+            <translation>Capas en CartoDB</translation>
         </message>
         <message>
             <source>Filter Tables</source>
@@ -74,7 +74,7 @@
         </message>
         <message>
             <source>Downloading datasets</source>
-            <translation>Descargando tablas</translation>
+            <translation>Descargando conjunto de datos</translation>
         </message>
         <message>
             <source>Save connection</source>
@@ -82,7 +82,7 @@
         </message>
         <message>
             <source>Both User and Api Key must be provided</source>
-            <translation>El usuario y el api key deben ser completados</translation>
+            <translation>El usuario y la clave de la API deben ser suministrados</translation>
         </message>
         <message>
             <source>Overwrite {}?</source>
@@ -169,7 +169,7 @@
         </message>
         <message>
             <source>Carto DB Api Key:</source>
-            <translation>Api Key de CartoDB:</translation>
+            <translation>Clave API de CartoDB:</translation>
         </message>
         <message>
             <source>Multiuser Account?</source>
